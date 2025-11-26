@@ -1,0 +1,12 @@
+[submodule "src/ip/submodule/edge_detect"]
+	path = src/ip/submodule/edge_detect
+	url = http://git.parman.net/fpga/design/ip-repository/general/general/basic/edge-detect/design.git
+	branch = submodule
+[submodule "sim/ip/submodule/ethernet_switch_hvl"]
+	path = sim/ip/submodule/ethernet_switch_hvl
+	url = http://git.parman.net/fpga/design/ip-repository/ethernet/ethernet-switch/design.git
+	branch = submodule_hvl
+[submodule "sim/ip/submodule/ethernet_switch_hdl"]
+	path = sim/ip/submodule/ethernet_switch_hdl
+	url = http://git.parman.net/fpga/design/ip-repository/ethernet/ethernet-switch/design.git
+	branch = submodule

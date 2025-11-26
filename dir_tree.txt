@@ -1,0 +1,327 @@
+Folder PATH listing
+Volume serial number is EA0C-A270
+C:.
+|   .gitignore
+|   .gitmodules
+|   dir_tree.txt
+|   Makefile
+|   quick_start.bash
+|   test_flow.sh
+|   usage.bash
+|   usage_example.bash
+|   
++---docs
+|       doc_v2.md
+|       qos_integration_guide.md
+|       
++---out
+|   \---hw_history
+|           config_hist.csv
+|           
++---scr
+|   |   check_project.bat
+|   |   clear_junks.bat
+|   |   files_list.tcl
+|   |   
+|   +---analysis
+|   |       qos_performance_analyzer.py
+|   |       timing_analyzer.tcl
+|   |       
+|   +---build_hw
+|   |   |   build_all_qos_configs.sh
+|   |   |   build_hw.bat
+|   |   |   build_qos_sweep.py
+|   |   |   build_single_config.sh
+|   |   |   build_switches_main.tcl
+|   |   |   build_switches_main_qos.tcl
+|   |   |   build_switches_run.tcl
+|   |   |   
+|   |   \---tcl_hooks
+|   |           synth.pre.qos.tcl
+|   |           synth.pre.tcl
+|   |           
+|   +---git_submodules
+|   |       git_submodule.bat
+|   |       git_submodule_hvl.bat
+|   |       submodule_update.bat
+|   |       submodule_update_init.bat
+|   |       
+|   +---inc_archive
+|   |       implement_options_archive.vh
+|   |       implement_options_archive_10g.vh
+|   |       
+|   +---micro_interface
+|   |       switch_fabric.csv
+|   |       
+|   +---regression
+|   |       run_regression.sh
+|   |       sim_manager.py
+|   |       
+|   \---save_configs
+|       |   save_configs.py
+|       |   
+|       \---config_generator
+|               config_generator.py
+|               config_generator_cell.py
+|               config_generator_packet.py
+|               config_generator_qos.py
+|               config_generator_simple.py
+|               config_sweep_qos.py
+|               
++---sim
+|   |   run_sim.bat
+|   |   sim.tcl
+|   |   sim_qos.tcl
+|   |   wave_tb_fabric_qos_sweep.do
+|   |   
+|   +---hvl
+|   |   +---dfifo_models
+|   |   |       fifo_array_model.sv
+|   |   |       packet_mode_dfifo_with_mem.sv
+|   |   |       packet_mode_fifo_array_model.sv
+|   |   |       
+|   |   +---models
+|   |   |       credit_flow_model.sv
+|   |   |       voq_model.sv
+|   |   |       xpq_model.sv
+|   |   |       
+|   |   +---model_for_verification
+|   |   |   |   fabric_driver.sv
+|   |   |   |   fabric_monitor.sv
+|   |   |   |   switch_fabric_model_qos.sv
+|   |   |   |   
+|   |   |   +---classes
+|   |   |   |       fabric_frame_pkg.sv
+|   |   |   |       Fabric_frame_tr.sv
+|   |   |   |       
+|   |   |   \---switch_fabric_model
+|   |   |           switch_fabric_model.sv
+|   |   |           
+|   |   \---verification
+|   |           fabric_scoreboard.sv
+|   |           qos_checker.sv
+|   |           qos_checker_enhanced.sv
+|   |           qos_checker_scoreboard.sv
+|   |           qos_latency_monitor.sv
+|   |           
+|   +---inc
+|   |   |   sim_options.vh
+|   |   |   
+|   |   \---mem_init
+|   |           mem_init_0_39.mem
+|   |           mem_init_0_7.mem
+|   |           mem_init_40_511.mem
+|   |           mem_init_41_511.mem
+|   |           mem_init_8_511.mem
+|   |           mem_init_8_63.mem
+|   |           mem_init_9_511.mem
+|   |           mem_init_9_63.mem
+|   |           mem_init_all_0_depth_512.mem
+|   |           mem_init_all_1_depth_40.mem
+|   |           
+|   +---ip
+|   |   +---submodule
+|   |   |   +---ethernet_switch_hdl
+|   |   |   \---ethernet_switch_hvl
+|   |   \---xilinx_ips_sim
+|   |           ila_ips.sv
+|   |           
+|   +---scr
+|   |   +---tb_ethernet_switch
+|   |   |       compile_all.tcl
+|   |   |       wave.tcl
+|   |   |       
+|   |   +---tb_fabric_basic
+|   |   |       compile_all.tcl
+|   |   |       
+|   |   +---tb_fabric_qos
+|   |   |       compile_all.tcl
+|   |   |       
+|   |   +---tb_fifo_array
+|   |   |       compile_all.tcl
+|   |   |       wave.tcl
+|   |   |       
+|   |   +---tb_packet_mode_fifo_array
+|   |   |       compile_all.tcl
+|   |   |       wave.tcl
+|   |   |       
+|   |   +---tb_pipeline_mux
+|   |   |       compile_all.tcl
+|   |   |       wave.tcl
+|   |   |       
+|   |   \---tb_qos_classifier_unit
+|   |           compile_all.tcl
+|   |           wave.tcl
+|   |           
+|   \---tb
+|       +---dfifo
+|       |       tb_fifo_array.sv
+|       |       tb_packet_mode_fifo_array.sv
+|       |       
+|       +---ethernet_switch
+|       |       generator_frame.sv
+|       |       tb_ethernet_switch.sv
+|       |       
+|       +---fabric
+|       |       tb_fabric_basic.sv
+|       |       tb_fabric_qos.sv
+|       |       tb_fabric_qos_complete.sv
+|       |       tb_fabric_qos_enhanced.sv
+|       |       tb_fabric_qos_stress.sv
+|       |       tb_fabric_qos_sweep.sv
+|       |       
+|       +---pipeline_mux
+|       |       mux_tb.sv
+|       |       
+|       \---unit
+|               tb_qos_classifier_unit.sv
+|               tb_qos_scheduler_unit.sv
+|               tb_voq_unit.sv
+|               
+\---src
+    +---hdl
+    |   |   switch_fabric.sv
+    |   |   switch_fabric_qos_wrapper.sv
+    |   |   
+    |   +---arbitration
+    |   |       crosspoint_arbiter.sv
+    |   |       egress_arbiter.sv
+    |   |       voq_arbiter.sv
+    |   |       
+    |   +---buffers
+    |   |       packet_buffer.sv
+    |   |       voq_buffer.sv
+    |   |       xpq_buffer.sv
+    |   |       
+    |   +---core
+    |   |       credit_manager.sv
+    |   |       packet_id_manager.sv
+    |   |       qos_classifier.sv
+    |   |       qos_scheduler.sv
+    |   |       qos_shaper.sv
+    |   |       round_robin_arbiter.sv
+    |   |       
+    |   +---fabric
+    |   |       fabric_crosspoint.sv
+    |   |       fabric_egress.sv
+    |   |       fabric_ingress.sv
+    |   |       switch_fabric.sv
+    |   |       
+    |   +---interfaces
+    |   |       axis_if.sv
+    |   |       micro_if.sv
+    |   |       switch_data_if.sv
+    |   |       switch_matadata_if.sv
+    |   |       
+    |   +---ip
+    |   |   +---combinational_components
+    |   |   |       first_none_zero_except_k_qos.sv
+    |   |   |       
+    |   |   +---delayed_regs
+    |   |   |       delayed_regs.sv
+    |   |   |       
+    |   |   +---dest_mask_modules
+    |   |   |       first_none_zero_datavalid.sv
+    |   |   |       first_none_zero_except_k.sv
+    |   |   |       first_non_zero.sv
+    |   |   |       first_non_zero_after_k.sv
+    |   |   |       first_non_zero_no_delay.sv
+    |   |   |       multicast_mask_to_index.sv
+    |   |   |       num_non_zero.sv
+    |   |   |       num_non_zero_no_delay.sv
+    |   |   |       one_hot_none_zero.sv
+    |   |   |       
+    |   |   +---fifos
+    |   |   |   +---axis_fifo
+    |   |   |   |       axis_fifo.sv
+    |   |   |   |       
+    |   |   |   +---dynamic_fifo
+    |   |   |   |       linklist_dynamic_fifo.sv
+    |   |   |   |       packet_mode_fifo_array.sv
+    |   |   |   |       packet_mode_fifo_array_multicast.sv
+    |   |   |   |       
+    |   |   |   +---init_fifo
+    |   |   |   |       sync_fifo_init_value.sv
+    |   |   |   |       
+    |   |   |   \---simple_fifo
+    |   |   |           simple_fifo.sv
+    |   |   |           
+    |   |   +---memories
+    |   |   |   +---init_mem
+    |   |   |   |       sdpram_init_value.sv
+    |   |   |   |       sdpram_init_value_all_same.sv
+    |   |   |   |       sdpram_init_value_n1_n2.sv
+    |   |   |   |       
+    |   |   |   +---pipeline_mem
+    |   |   |   |       pipeline_mem.sv
+    |   |   |   |       
+    |   |   |   \---sdpram_xpm
+    |   |   |           sdpram_xpm.sv
+    |   |   |           
+    |   |   +---pipeline_mem
+    |   |   |       barrel_shifter.sv
+    |   |   |       pipeline_mem.sv
+    |   |   |       pipeline_mem_with_inout_barrel.sv
+    |   |   |       pipeline_mem_with_in_barrel.sv
+    |   |   |       
+    |   |   +---pipeline_mux
+    |   |   |       mux_tile.sv
+    |   |   |       pipeline_mux.sv
+    |   |   |       
+    |   |   \---register_replicator
+    |   |           register_replicator.sv
+    |   |           regtree_replicator.sv
+    |   |           
+    |   +---line_modules
+    |   |       cell_to_packet.sv
+    |   |       egress_line.sv
+    |   |       egress_switch.sv
+    |   |       ingress_line.sv
+    |   |       ingress_line_qos.sv
+    |   |       ingress_line_wrapper.sv
+    |   |       ingress_switch.sv
+    |   |       packet_to_cell.sv
+    |   |       
+    |   +---micro_interface
+    |   |       micro_interface_qos_enhanced.sv
+    |   |       
+    |   +---switches
+    |   |       switch_2s.sv
+    |   |       switch_high_radix.sv
+    |   |       switch_high_radix_matching.sv
+    |   |       switch_s.sv
+    |   |       
+    |   +---switch_ips
+    |   |       cell_to_packet_s_port_with_barrel.sv
+    |   |       col_pipeline_mux.sv
+    |   |       dest_finder_col.sv
+    |   |       dest_finder_row.sv
+    |   |       dest_finder_row_matching.sv
+    |   |       dest_finder_s.sv
+    |   |       des_finder_row_matching_qos.sv
+    |   |       row_mux.sv
+    |   |       shared_voq.sv
+    |   |       shared_xpq.sv
+    |   |       
+    |   \---wrappers
+    |           wrapper_dest_finder_row.sv
+    |           wrapper_dest_finder_row_matching.sv
+    |           wrapper_fifo_array.sv
+    |           wrapper_first_none_zero_except_k.sv
+    |           wrapper_first_non_zero_after_k.sv
+    |           wrapper_packet_mode_fifo_array.sv
+    |           wrapper_switch_fabric.sv
+    |           
+    +---inc
+    |       fabric_params.vh
+    |       implement_options.vh
+    |       qos_defines.vh
+    |       
+    +---ip
+    |   +---ila
+    |   \---submodule
+    |       \---edge_detect
+    \---xdc
+            timing.xdc
+            timing_qos.xdc
+            

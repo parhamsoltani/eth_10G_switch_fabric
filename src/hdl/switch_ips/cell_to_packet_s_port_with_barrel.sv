@@ -1,0 +1,163 @@
+`timescale 1ns / 1ps
+`default_nettype none
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Parman
+// Engineer: Alireza Abbasian
+// 
+// Create Date:  2025-08-11 18:43:08
+// Module Name: cell_to_packet_s_port_with_barrel
+// Project Name: 
+// Target Devices: 
+// Tool Versions: Vivado 2022.2
+// Description: 
+// Dependencies: 
+// 
+// Additional Comments: 
+
+//////////////////////////////////////////////////////////////////////////////////
+
+
+
+module cell_to_packet_s_port_with_barrel #(
+    parameter   S                       = 10,            // speed up
+    parameter   W_MINI                  = 64,            // bus data width (mini cell data width)
+    parameter   START_OF_CELL_DELAY     = 0,
+    // DO NOT CHANGE
+    parameter   KEEP_WIDTH              = $clog2((W_MINI/8) + 1),
+    parameter   S_LOG                   = $clog2(S),
+    parameter   META_DATA_WIDTH         = S + KEEP_WIDTH + 1 + S_LOG // minicells_keep, last_minicell_keep, is_bad_frame
+) (
+    input   wire                                clk,
+    input   wire                                start_of_cell_i,
+    input   wire [META_DATA_WIDTH-1:0]          metadata_i, // sync with start_of_cell_i
+    input   wire                                last_cell_i,// sync with start_of_cell_i
+    input   wire [S_LOG-1:0]                    barrel_sel, // 1 delay respect to start_of_cell_i
+    input   wire [W_MINI-1:0]                   data_i [S],  // first minicell has 1 delay respect to start_of_cell_i
+
+    output  wire [W_MINI-1:0]                   data_tx[S] ,
+    output  wire [KEEP_WIDTH-1:0]               keep_tx[S] ,
+    output  wire                                valid_tx[S] ,
+    output  wire                                is_bad_frame_tx[S] ,
+    output  wire                                last_tx[S]
+);
+
+    //==============================================================================
+    // local parameters and integers
+    //==============================================================================
+
+    //==============================================================================
+    // wires, regs and memories
+    //==============================================================================
+
+    // -- barrel_rd_data wires
+    wire [W_MINI-1:0] barrel_rd_data_data_in [S];
+    wire [W_MINI-1:0] barrel_rd_data_data_out [S];
+
+
+    // === cell_to_packet wires ===
+    wire                      c2p_start_of_cell_i  [S];
+    wire [W_MINI-1:0]         c2p_data_i           [S];
+    wire [META_DATA_WIDTH - 1:0] c2p_metadata_i [S];
+    wire                      c2p_last_cell_i      [S];
+
+    wire [W_MINI-1:0]         c2p_data_tx          [S];
+    wire [KEEP_WIDTH-1:0]     c2p_keep_tx          [S];
+    wire                      c2p_valid_tx         [S];
+    wire                      c2p_is_bad_frame_tx  [S];
+    wire                      c2p_last_tx          [S];
+
+
+    reg                                 rr_sel [S];
+
+    initial begin
+        rr_sel[S-1] = 1'b1;
+        for (int i = 0; i < S-1; i++) begin
+            rr_sel[i] = 1'b0;
+        end
+    end
+
+
+    assign barrel_rd_data_data_in = data_i;
+
+    generate
+        for (genvar i = 0; i < S; i++) begin : gen_assign_p2c
+
+            
+            assign c2p_start_of_cell_i[i]    = start_of_cell_i && rr_sel[rr_index(i,START_OF_CELL_DELAY)];
+            assign c2p_data_i[i]             = barrel_rd_data_data_out[i];
+            assign c2p_metadata_i[i]         = metadata_i;
+            assign c2p_last_cell_i[i]        = last_cell_i;
+
+
+            
+        end
+    endgenerate
+
+    generate
+        for (genvar i = 0; i < S; i++) begin
+
+            assign data_tx [i]          = c2p_data_tx[i];
+            assign keep_tx [i]          = c2p_keep_tx[i];
+            assign valid_tx [i]         = c2p_valid_tx[i];
+            assign is_bad_frame_tx [i]  = c2p_is_bad_frame_tx[i];        
+            assign last_tx [i]          = c2p_last_tx[i];
+        end
+    endgenerate
+
+    //==============================================================================
+    // Main Controls
+    //==============================================================================
+
+    always @(posedge clk) begin
+        for (int i = S-1; i > 0; i--) begin
+            rr_sel[i] <= rr_sel[i-1];
+        end
+        rr_sel[0] <= rr_sel[S-1];
+    end
+
+
+    //==============================================================================
+    // Instantiated Modules
+    //==============================================================================
+
+    generate
+        for (genvar i = 0; i < S; i++) begin : gen_c2p
+            cell_to_packet #(
+                .S(S),
+                .W_MINI(W_MINI)
+            ) c2p (
+                .clk        (clk),
+                .start_of_cell_i(c2p_start_of_cell_i[i]),
+                .data_i(c2p_data_i[i]),
+                .metadata_i(c2p_metadata_i[i]),
+                .last_cell_i(c2p_last_cell_i[i]),
+                .data_tx(c2p_data_tx[i]),
+                .keep_tx(c2p_keep_tx[i]),
+                .valid_tx(c2p_valid_tx[i]),
+                .is_bad_frame_tx(c2p_is_bad_frame_tx[i]),
+                .last_tx(c2p_last_tx[i])
+            );
+        end
+    endgenerate
+
+    barrel_shifter #(
+        .WIDTH(W_MINI),
+        .NUM_PORT(S)
+    ) barrel_rd_data (
+        .clk        (clk),
+        .data_in    (barrel_rd_data_data_in),
+        .shift_val  (barrel_sel),
+        .data_out   (barrel_rd_data_data_out)
+    );
+
+    //==============================================================================
+    // Functions
+    //==============================================================================
+
+    function automatic int rr_index(input int port_index, input int delay_val);
+        return (port_index + delay_val + 10*S) % S;
+    endfunction
+
+endmodule
+
+`default_nettype wire 

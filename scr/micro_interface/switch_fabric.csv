@@ -1,0 +1,2 @@
+"Address","Register Name","read or write","Description","Default Value"
+"0x0000","m_int_debug_reg","R/W","for debug","0xabba"

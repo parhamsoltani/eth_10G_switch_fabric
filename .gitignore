@@ -1,0 +1,69 @@
+##############################################
+##      .gitignore for Vivado IP Cores      ##
+##############################################
+# src/ip/*/*
+
+# !src/ip/*/*.xci
+# !src/ip/mmcm_sys_clk/*.v
+
+src/ip/*/Xil_generated/*
+src/ip/ila/*/Xil_generated/*
+
+# Whitelists externals
+!src/ip/submodule/*
+
+# Whitelist desired Non-Xilinx IPs here.
+!src/ip/gtx_backplane/*
+
+
+##############################################
+##   .gitignore for Vivado (Project Mode)   ##
+##############################################
+prj/*
+
+##############################################
+## .gitignore for Vivado (Non-project Mode) ##
+##############################################
+scr/build_hw/.Xil/*
+scr/build_hw/vivado.log
+scr/build_hw/*.txt
+
+scr/dbg_assistant/*
+!scr/dbg_assistant/*.bat
+!scr/dbg_assistant/*.h
+
+scr/dbg_mux_gen/*/ip/*
+!scr/dbg_mux_gen/*/ip/*.xci
+!scr/dbg_mux_gen/*/ip/*.dcp
+
+scr/save_configs/config_generator/configs/*
+
+out/reports/*
+# !out/reports/postroutePhysopt
+# out/reports/postroutePhysopt/*
+# !out/reports/postroutePhysopt/*.rpt
+
+
+out/hw_history/*
+!out/hw_history/config_hist.csv
+
+out/products/*
+# !out/products/bitgen
+# out/products/bitgen/*
+# !out/products/bitgen/*.bit
+
+##############################################
+##         .gitignore for Modelsim          ##
+##############################################
+sim/*
+!sim/tb
+!sim/scr
+!sim/*.tcl
+!sim/*.do
+!sim/*.bat
+!sim/model
+!sim/hvl
+!sim/ip
+!sim/inc
+
+src/inc/mem_init/*
