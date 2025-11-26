@@ -11,31 +11,38 @@ interface switch_data_if #(
 );
     // Data path signals
     logic [DATA_WIDTH-1:0]      data;
-    logic [KEEP_WIDTH-1:0]      keep;       // Byte enables
+    logic [KEEP_WIDTH-1:0]      keep;
     logic                       valid;
     logic                       ready;
-    logic                       last;       // End of packet
+    logic                       last;
 
     // Metadata
     logic                       is_bad_frame;
-    logic [ID_WIDTH-1:0]        id;         // Packet identifier
+    logic [ID_WIDTH-1:0]        id;
+    logic [2:0]                 qos_tag;
 
-    // QoS (optional, can be separated)
-    logic [2:0]                 qos_tag;    // Priority level
+    // FIXED: Added master_mp/slave_mp for array instantiation compatibility
+    modport master_mp (
+        input  ready,
+        output data, keep, valid, last, is_bad_frame, id, qos_tag
+    );
 
-    // Master modport (driver)
+    modport slave_mp (
+        input  data, keep, valid, last, is_bad_frame, id, qos_tag,
+        output ready
+    );
+
+    // Legacy modports (for backward compatibility)
     modport master (
         input  ready,
         output data, keep, valid, last, is_bad_frame, id, qos_tag
     );
 
-    // Slave modport (receiver)
     modport slave (
         input  data, keep, valid, last, is_bad_frame, id, qos_tag,
         output ready
     );
 
-    // Monitor modport
     modport monitor (
         input  data, keep, valid, ready, last, is_bad_frame, id, qos_tag
     );
