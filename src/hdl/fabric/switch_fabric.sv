@@ -19,6 +19,24 @@ module switch_fabric #(
     switch_metadata_if.slave    rx_meta_if [NUM_PORTS],
     switch_data_if.master       tx_data_if [NUM_PORTS],
 
+    // AXI4-Lite microprocessor interface (NEW)
+    input  wire [15:0]          uif_awaddr,
+    input  wire                 uif_awvalid,
+    output wire                 uif_awready,
+    input  wire [31:0]          uif_wdata,
+    input  wire                 uif_wvalid,
+    output wire                 uif_wready,
+    output wire [1:0]           uif_bresp,
+    output wire                 uif_bvalid,
+    input  wire                 uif_bready,
+    input  wire [15:0]          uif_araddr,
+    input  wire                 uif_arvalid,
+    output wire                 uif_arready,
+    output wire [31:0]          uif_rdata,
+    output wire [1:0]           uif_rresp,
+    output wire                 uif_rvalid,
+    input  wire                 uif_rready,
+
     // Statistics/debug
     output logic [31:0]         pkt_count_rx [NUM_PORTS],
     output logic [31:0]         pkt_count_tx [NUM_PORTS],
@@ -75,6 +93,13 @@ module switch_fabric #(
     logic [2:0]             xpq_rd_qos [NUM_PORTS][NUM_PORTS];
     logic                   xpq_rd_ready [NUM_PORTS][NUM_PORTS];
 
+    // QoS configuration signals (from microprocessor)
+    logic qos_enable_micro;
+    logic use_vlan_pcp_micro;
+    logic use_ip_dscp_micro;
+    logic use_port_classify_micro;
+    logic [15:0] aging_threshold;
+
     // =========================================================================
     // Packet ID Manager
     // =========================================================================
@@ -93,31 +118,42 @@ module switch_fabric #(
         .free_id_count(free_ids)
     );
 
-    // =========================================================================
-    // Fabric Ingress
-    // =========================================================================
+    //═══════════════════════════════════════════════════════════════════════════
+    // Fabric Ingress (WITH QoS INTEGRATION)
+    //═══════════════════════════════════════════════════════════════════════════
 
-    fabric_ingress #(
-        .NUM_PORTS(NUM_PORTS),
-        .DATA_WIDTH(DATA_WIDTH),
-        .ID_WIDTH(ID_WIDTH)
-    ) ingress_stage (
-        .clk(clk),
-        .rst_n(rst_n),
-        .rx_data_if(rx_data_if),
-        .rx_meta_if(rx_meta_if),
-        .voq_wr_valid(voq_wr_valid),
-        .voq_wr_data(voq_wr_data),
-        .voq_wr_keep(voq_wr_keep),
-        .voq_wr_last(voq_wr_last),
-        .voq_wr_id(voq_wr_id),
-        .voq_wr_is_bad(voq_wr_is_bad),
-        .voq_wr_qos(voq_wr_qos),
-        .voq_wr_ready(voq_wr_ready),
-        .id_alloc_req(id_alloc_req),
-        .id_alloc_grant(id_alloc_grant),
-        .allocated_id(allocated_id)
-    );
+    generate
+        for (genvar i = 0; i < NUM_PORTS; i++) begin : gen_ingress_port
+            
+            ingress_line_wrapper #(
+                .DATA_WIDTH(DATA_WIDTH),
+                .NUM_PORTS(NUM_PORTS),
+                .ID_WIDTH(ID_WIDTH),
+                .ENABLE_QOS(`ENABLE_QOS)  // CHANGED: Now uses wrapper
+            ) ingress_inst (
+                .clk(clk),
+                .rst_n(rst_n),
+                .rx_data_if(rx_data_if[i]),
+                .rx_meta_if(rx_meta_if[i]),
+                .voq_wr_valid(voq_wr_valid[i]),
+                .voq_wr_data(voq_wr_data[i]),
+                .voq_wr_keep(voq_wr_keep[i]),
+                .voq_wr_last(voq_wr_last[i]),
+                .voq_wr_id(voq_wr_id[i]),
+                .voq_wr_is_bad(voq_wr_is_bad[i]),
+                .voq_wr_qos(voq_wr_qos[i]),
+                .voq_wr_ready(voq_wr_ready[i]),
+                .id_alloc_req(id_alloc_req[i]),
+                .id_alloc_grant(id_alloc_grant[i]),
+                .allocated_id(allocated_id[i]),
+                .qos_enable(qos_enable_micro),
+                .use_vlan_pcp(use_vlan_pcp_micro),
+                .use_ip_dscp(use_ip_dscp_micro),
+                .use_port_classify(use_port_classify_micro)
+            );
+
+        end
+    endgenerate
 
     // =========================================================================
     // VOQ Array (NUM_PORTS × NUM_PORTS)
@@ -256,6 +292,49 @@ module switch_fabric #(
         .tx_data_if(tx_data_if),
         .id_release_req(id_release_req),
         .release_id(release_id)
+    );
+
+    //═══════════════════════════════════════════════════════════════════════════
+    // Microprocessor Interface (NEW)
+    //═══════════════════════════════════════════════════════════════════════════
+
+    micro_interface_qos_enhanced #(
+        .NUM_PORTS(NUM_PORTS),
+        .QOS_LEVELS(`QOS_LEVELS)
+    ) u_micro_if (
+        .clk(clk),
+        .rst_n(rst_n),
+        
+        // AXI4-Lite
+        .s_axi_awaddr(uif_awaddr),
+        .s_axi_awvalid(uif_awvalid),
+        .s_axi_awready(uif_awready),
+        .s_axi_wdata(uif_wdata),
+        .s_axi_wvalid(uif_wvalid),
+        .s_axi_wready(uif_wready),
+        .s_axi_bresp(uif_bresp),
+        .s_axi_bvalid(uif_bvalid),
+        .s_axi_bready(uif_bready),
+        .s_axi_araddr(uif_araddr),
+        .s_axi_arvalid(uif_arvalid),
+        .s_axi_arready(uif_arready),
+        .s_axi_rdata(uif_rdata),
+        .s_axi_rresp(uif_rresp),
+        .s_axi_rvalid(uif_rvalid),
+        .s_axi_rready(uif_rready),
+
+        // QoS configuration
+        .qos_enable(qos_enable_micro),
+        .use_vlan_pcp(use_vlan_pcp_micro),
+        .use_ip_dscp(use_ip_dscp_micro),
+        .use_port_classify(use_port_classify_micro),
+        .aging_threshold(aging_threshold),
+
+        // Statistics
+        .rx_pkt_count(pkt_count_rx),
+        .tx_pkt_count(pkt_count_tx),
+        .drop_count(pkt_drop_count),
+        .qos_stats()  // TODO: Connect per-QoS statistics from VOQs
     );
 
     // =========================================================================
