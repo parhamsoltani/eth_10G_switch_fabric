@@ -1,0 +1,74 @@
+{
+  "testbench": "tb_fabric_qos_sweep",
+  "version": "1.0",
+  "description": "QoS sweep test vectors for automated regression",
+  
+  "configurations": [
+    {
+      "test_id": 1,
+      "name": "uniform_high_priority",
+      "num_packets": 100,
+      "qos_distribution": {
+        "critical": 1.0,
+        "high": 0.0,
+        "medium": 0.0,
+        "low": 0.0
+      },
+      "traffic_pattern": "uniform_random",
+      "expected_latency_max_ns": 500
+    },
+    
+    {
+      "test_id": 2,
+      "name": "mixed_priority_50_50",
+      "num_packets": 200,
+      "qos_distribution": {
+        "critical": 0.0,
+        "high": 0.5,
+        "medium": 0.0,
+        "low": 0.5
+      },
+      "traffic_pattern": "all_to_all",
+      "expected_priority_inversion": false
+    },
+
+    {
+      "test_id": 3,
+      "name": "starvation_test",
+      "num_packets": 500,
+      "qos_distribution": {
+        "critical": 0.9,
+        "high": 0.05,
+        "medium": 0.04,
+        "low": 0.01
+      },
+      "traffic_pattern": "hotspot",
+      "hotspot_port": 5,
+      "aging_enabled": true,
+      "aging_threshold": 1000,
+      "expected_low_priority_grants_min": 5
+    },
+
+    {
+      "test_id": 4,
+      "name": "multicast_qos",
+      "num_packets": 50,
+      "qos_distribution": {
+        "critical": 1.0,
+        "high": 0.0,
+        "medium": 0.0,
+        "low": 0.0
+      },
+      "traffic_pattern": "multicast",
+      "multicast_fanout": 5,
+      "expected_latency_max_ns": 800
+    }
+  ],
+
+  "global_config": {
+    "num_ports": 10,
+    "clock_period_ns": 3.0,
+    "timeout_cycles": 50000,
+    "enable_waveforms": false
+  }
+}
