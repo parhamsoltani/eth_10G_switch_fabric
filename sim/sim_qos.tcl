@@ -111,22 +111,23 @@ if {[file exists "scr/$TB/compile_all.tcl"]} {
 #===============================================================================
 # Compile testbench
 #===============================================================================
+# Compile testbench
 puts "\n[3/4] Compiling testbench: $TB"
 
 # Find testbench file
 set TB_FILE ""
-if {[file exists "tb/fabric/${TB}.sv"]} {
-    set TB_FILE "tb/fabric/${TB}.sv"
-} elseif {[file exists "tb/unit/${TB}.sv"]} {
-    set TB_FILE "tb/unit/${TB}.sv"
-} elseif {[file exists "tb/ethernet_switch/${TB}.sv"]} {
-    set TB_FILE "tb/ethernet_switch/${TB}.sv"
-} else {
-    puts "ERROR: Testbench file not found for $TB"
-    set compile_error 1
+foreach search_path {fabric unit ethernet_switch dfifo pipeline_mux} {
+    if {[file exists "tb/${search_path}/${TB}.sv"]} {
+        set TB_FILE "tb/${search_path}/${TB}.sv"
+        break
+    }
 }
 
-if {$compile_error == 0} {
+if {$TB_FILE == ""} {
+    puts "ERROR: Testbench file not found for $TB"
+    puts "  Searched: tb/fabric/, tb/unit/, tb/ethernet_switch/"
+    set compile_error 1
+} else {
     vlog -sv $INCLUDE_OPTS $TB_FILE
 }
 
