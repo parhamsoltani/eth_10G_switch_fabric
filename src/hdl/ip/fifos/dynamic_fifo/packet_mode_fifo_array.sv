@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
-// Company: Parman
-// Engineer: Alireza Abbasian
+// Company: IUST
+// Engineer: Parham Soltani
 // 
 // Create Date:  2025-07-27 17:58:20
 // Module Name: packet_mode_fifo_array

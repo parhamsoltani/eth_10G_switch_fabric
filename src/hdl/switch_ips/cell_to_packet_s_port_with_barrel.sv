@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
-// Company: Parman
-// Engineer: Alireza Abbasian
+// Company: IUST
+// Engineer: Parham Soltani
 // 
 // Create Date:  2025-08-11 18:43:08
 // Module Name: cell_to_packet_s_port_with_barrel

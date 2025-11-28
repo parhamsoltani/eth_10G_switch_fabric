@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 
 //////////////////////////////////////////////////////////////////////////////////
-// Company: Parman
-// Engineer: Alireza Abbasian
+// Company: IUST
+// Engineer: Parham Soltani
 // 
 // Create Date:  2025-04-10 17:32:46
 // Module Name: ila_general

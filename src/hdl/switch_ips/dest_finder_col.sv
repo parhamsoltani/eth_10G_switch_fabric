@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
-// Company: Parman
-// Engineer: Alireza Abbasian
+// Company: IUST
+// Engineer: Parham Soltani
 // 
 // Create Date:  2025-08-13 20:36:24
 // Module Name: dest_finder_col

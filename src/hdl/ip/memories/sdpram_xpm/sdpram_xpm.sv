@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
-// Company: Parman
-// Engineer: Alireza Abbasian
+// Company: IUST
+// Engineer: Parham Soltani
 // 
 // Create Date:  2025-07-26 10:20:00
 // Module Name: sdpram_xpm

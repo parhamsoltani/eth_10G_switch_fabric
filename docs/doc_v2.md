@@ -7,7 +7,7 @@
 
 **Version:** 2.0
 **Date:** November 26, 2025
-**Authors:** Parman Engineering Team
+**Authors:** IUST 
 **Status:** Production Release
 **Classification:** Technical Reference
 
@@ -7150,7 +7150,6 @@ v1.0 (July 2025):
 
 This design builds upon the foundational work of:
 - Original 10-port switch fabric architecture team
-- Parman Engineering verification team
 - Open-source SystemVerilog community
 - Xilinx FPGA support engineers
 
@@ -7161,7 +7160,7 @@ Special thanks to all contributors who provided feedback and testing.
 # **License**
 
 ```
-Copyright (c) 2025 Parman Engineering
+Copyright (c) 2025 IUST Electrical Engineering Department
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this hardware design and associated documentation files (the "Design"), to
@@ -7182,24 +7181,6 @@ OUT OF OR IN CONNECTION WITH THE DESIGN OR THE USE OR OTHER DEALINGS IN THE
 DESIGN.
 ```
 
----
-
-# **Contact Information**
-
-**Project Repository:**
-https://github.com/parman-engineering/switch_fabric_v2
-
-**Issue Tracker:**
-https://github.com/parman-engineering/switch_fabric_v2/issues
-
-**Documentation:**
-https://parman-engineering.github.io/switch_fabric_v2/
-
-**Email:**
-support@parman.engineering
-
-**Community Forum:**
-https://forum.parman.engineering/c/switch-fabric
 
 ---
 

@@ -1,5 +1,14 @@
 `timescale 1ns / 1ps
 `default_nettype none
+//////////////////////////////////////////////////////////////////////////////////
+// Company: IUST
+// Engineer: Parham Soltani
+//
+// Create Date:  2025-11-25
+// Module Name: micro_interface_qos_enhanced
+// Description: Enhanced micro interface with QoS statistics collection
+// Extends your existing micro_interface.sv with per-QoS-level counters
+//////////////////////////////////////////////////////////////////////////////////
 
 `include "fabric_params.vh"
 `include "qos_defines.vh"

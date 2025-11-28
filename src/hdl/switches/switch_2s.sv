@@ -5,8 +5,8 @@
 `include "qos_defines.vh"
 
 //////////////////////////////////////////////////////////////////////////////////
-// Company: Parman
-// Engineer: Alireza Abbasian
+// Company: IUST
+// Engineer: Parham Soltani
 // 
 // Create Date:  2025-08-16 19:16:16
 // Module Name: switch_2s

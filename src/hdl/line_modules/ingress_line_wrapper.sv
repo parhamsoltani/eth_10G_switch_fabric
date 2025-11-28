@@ -1,5 +1,14 @@
 `timescale 1ns / 1ps
 `default_nettype none
+//////////////////////////////////////////////////////////////////////////////////
+// Company: IUST
+// Engineer: Parham Soltani
+//
+// Create Date:  2025-11-25
+// Module Name: ingress_line_wrapper
+// Description: Parametric wrapper switching between QoS-aware and standard ingress
+// Maintains backward compatibility with your existing designs
+//////////////////////////////////////////////////////////////////////////////////
 
 `include "fabric_params.vh"
 

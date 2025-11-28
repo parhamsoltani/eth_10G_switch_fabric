@@ -1,9 +1,10 @@
 Folder PATH listing
-Volume serial number is EA0C-A270
+Volume serial number is 5C72-3C7D
 C:.
 |   .gitignore
 |   .gitmodules
 |   dir_tree.txt
+|   LICENSE
 |   Makefile
 |   quick_start.bash
 |   test_flow.sh
@@ -12,6 +13,7 @@ C:.
 |   
 +---docs
 |       doc_v2.md
+|       enhancement_v2.md
 |       qos_integration_guide.md
 |       
 +---out
@@ -211,7 +213,7 @@ C:.
     |   |       axis_if.sv
     |   |       micro_if.sv
     |   |       switch_data_if.sv
-    |   |       switch_matadata_if.sv
+    |   |       switch_metadata_if.sv
     |   |       
     |   +---ip
     |   |   +---combinational_components

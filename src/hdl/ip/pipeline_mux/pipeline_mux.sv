@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
-// Company: Parman
+// Company: IUST
 // Engineer: Morteza Seyedi
 // 
 // Create Date:  2025-08-09
