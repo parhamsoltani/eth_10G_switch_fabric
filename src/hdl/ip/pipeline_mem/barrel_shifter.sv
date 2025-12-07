@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-03 10:32:37
 // Module Name: barrel_shifter
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -30,7 +30,7 @@ module barrel_shifter #(
     output reg  [WIDTH-1:0] data_out [NUM_PORT]
 );
 
-    
+
     always @(posedge clk) begin
         for (int i=0; i<NUM_PORT; ++i) begin
             if (shift_val >= i) begin
@@ -40,10 +40,10 @@ module barrel_shifter #(
             end
         end
     end
-   
+
 
 endmodule
 
 
 
-`default_nettype wire 
+`default_nettype wire

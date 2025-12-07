@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-`default_nettype none
+// `default_nettype none
 
 
 
@@ -35,13 +35,13 @@ module fifo_array_model
 			if (count > 0) begin
 				pop_data_0 = mem[pop_id].pop_front();
 				count -=1;
-			end	
+			end
 		end
 		if (push) begin
 			mem[push_id].push_back(push_data);
 			count +=1;
 		end
-        
+
 	end
 
 	delayed_regs #(
@@ -53,7 +53,7 @@ module fifo_array_model
 		.delayed_signal (pop_data_reg)
 	);
 
-	
-endmodule 
 
-`default_nettype wire 
+endmodule
+
+`default_nettype wire

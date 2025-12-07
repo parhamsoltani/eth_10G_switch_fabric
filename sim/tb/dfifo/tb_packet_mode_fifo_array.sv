@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-`default_nettype none
+// `default_nettype none
 
 module tb_packet_mode_fifo_array;
 
@@ -47,7 +47,7 @@ module tb_packet_mode_fifo_array;
 
     reg pop;
     reg [FIFO_ID_WIDTH-1:0] pop_id;
-    
+
 
     wire full;
     wire [DATA_WIDTH-1:0] pop_data_design;
@@ -70,7 +70,7 @@ module tb_packet_mode_fifo_array;
         forever #5 clk = ~clk;
     end
 
-    
+
 
     packet_mode_dfifo_with_mem #(
         .DATA_WIDTH             (DATA_WIDTH),
@@ -101,7 +101,7 @@ module tb_packet_mode_fifo_array;
     );
 
 
-    
+
     packet_mode_fifo_array_model #(
         .WIDTH             (DATA_WIDTH),
         .NUM_FIFO          (NUM_FIFO),
@@ -159,20 +159,20 @@ module tb_packet_mode_fifo_array;
 
         repeat (20) @(posedge clk);
 
-        
+
         // for (int i=0; i<NUM_ROUNDS; ++i) begin
             push_burst(MAIN_MEM_DEPTH);
             pop_burst(MAIN_MEM_DEPTH*2);
-        
+
             push_pop_task(NUM_TEST);
             pop_burst(MAIN_MEM_DEPTH*2);
 
             // $display("%0d of %0d", i, NUM_ROUNDS);
         // end
-        
 
 
-       
+
+
 
 
 
@@ -255,7 +255,7 @@ module tb_packet_mode_fifo_array;
                     current_fifo[push_input_id] = $urandom_range(0, NUM_FIFO-1);
                 end
             end
-            
+
         end else begin
             if (dont_send_duration == 0) begin
                 push_burst_last(NUM_IN);
@@ -269,7 +269,7 @@ module tb_packet_mode_fifo_array;
     task push_last_task();
         @(posedge clk);
         #1;
- 
+
         push_data = $urandom();
         push_input_id  = push_input_id >= NUM_IN-1 ? 0 : push_input_id+1;
         push_fifo_id   = 1 << current_fifo[push_input_id];
@@ -279,7 +279,7 @@ module tb_packet_mode_fifo_array;
         push        = 1;
         #1;
         current_fifo[push_input_id] = $urandom_range(0, NUM_FIFO-1);
- 
+
     endtask
 
 
@@ -349,7 +349,7 @@ module tb_packet_mode_fifo_array;
             end
         join_none
 
-        
+
     endtask
 
 

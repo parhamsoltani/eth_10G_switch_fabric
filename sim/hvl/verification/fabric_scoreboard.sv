@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 
 module fabric_scoreboard #(
     parameter NUM_PORTS = 10,

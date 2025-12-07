@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 
 `include "fabric_params.vh"
 
@@ -111,7 +111,8 @@ module ingress_line #(
             iq_rd_valid <= 1'b0;
 
             if (iq_rd_ready && iq_fifo.size() > 0) begin
-                iq_entry_t entry = iq_fifo.pop_front();
+                automatic iq_entry_t entry;
+                entry = iq_fifo.pop_front();
                 iq_rd_data <= entry.data;
                 iq_rd_keep <= entry.keep;
                 iq_rd_last <= entry.last;

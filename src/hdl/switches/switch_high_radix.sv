@@ -1,25 +1,25 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-02 16:33:51
 // Module Name: switch_high_radix
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
 
 
 module switch_high_radix #(
-    parameter   NUM_PORT                = 10,            // number of ports     
+    parameter   NUM_PORT                = 10,            // number of ports
     parameter   S                       = 10,            // speed up
     parameter   W_MINI                  = 64,            // bus data width (mini cell data width)
     parameter   MAIN_MEM_DEPTH          = 512,           // main mem depth
@@ -58,14 +58,14 @@ module switch_high_radix #(
 );
 
 
-    
+
 
     //==============================================================================
     // local parameters and integers
     //==============================================================================
     localparam S_LOG = $clog2(S);
     localparam NUM_PORT_LOG = $clog2(NUM_PORT);
-    
+
     // localparam MAIN_MEM_READ_LATENCY        = 2;
 
     localparam META_DATA_WIDTH = S + KEEP_WIDTH + 1 + S_LOG; // valids+last minicell keep+is_bad_frame+last_minicell_index
@@ -83,7 +83,7 @@ module switch_high_radix #(
     localparam XPQ_READ_LATENCY = 2;
     localparam XPQ_EXTRA_READ_LATENCY = 1;
 
-    
+
     localparam NUM_XPQ_COL = (NUM_PORT+S-1)/S; // hint: ceil(a/b) = (a+b-1)/b
     localparam NUM_XPQ_ROW = (NUM_PORT+S-1)/S; // hint: ceil(a/b) = (a+b-1)/b
     localparam NUM_VOQ = (NUM_PORT+S-1)/S; // hint: ceil(a/b) = (a+b-1)/b
@@ -188,7 +188,7 @@ module switch_high_radix #(
     wire                       mux_pop_last_cell  [NUM_XPQ_COL];
     wire [W_MINI-1:0]          mux_pop_data       [NUM_XPQ_COL][S];
 
-    
+
     // -----------------------------------------------------------------------------
     // Replicated VOQ→XPQ signals: [row][col]
     // -----------------------------------------------------------------------------
@@ -207,18 +207,18 @@ module switch_high_radix #(
     //==============================================================================
 
 
-    
+
     //==============================================================================
     // assignments
     //==============================================================================
 
     generate
         for (genvar c = 0; c < NUM_XPQ_COL; c++) begin
-            
+
             assign cell2pkt_start_of_cell[c] = col_dest_finder_chosen_xpq_valid_D[c][COL_READ_LATENCY];
             assign cell2pkt_metadata     [c] = mux_pop_metadata[c];
             assign cell2pkt_last_cell    [c] = mux_pop_last_cell[c];
-            assign cell2pkt_barrel_sel   [c] = col_dest_finder_cell2pkt_barrel_sel[c]; 
+            assign cell2pkt_barrel_sel   [c] = col_dest_finder_cell2pkt_barrel_sel[c];
             assign cell2pkt_data         [c] = mux_pop_data[c];
 
 
@@ -227,12 +227,12 @@ module switch_high_radix #(
 
 
 
-    
+
 
             for (genvar r = 0; r < NUM_XPQ_ROW; r++) begin
                 assign col_dest_finder_none_mepty_ports[c][r] = xpq_none_mepty_fifos[r][c];
             end
-            for (genvar j = 0; j < S; j++) begin 
+            for (genvar j = 0; j < S; j++) begin
                 if (c*S+j >= NUM_PORT) begin
                     assign col_dest_finder_block_ports[c][j] = 0;
                 end else begin
@@ -247,7 +247,7 @@ module switch_high_radix #(
 
     generate
         for (genvar r = 0; r < NUM_XPQ_ROW; r++) begin
-            
+
             assign row_dest_finder_none_mepty_ports[r]       = voq_none_mepty_fifos[r];
 
                 for (genvar c = 0; c < NUM_XPQ_COL; c++) begin
@@ -293,7 +293,7 @@ module switch_high_radix #(
             end
 
 
-            assign voq_pop_index [r]           = row_dest_finder_dest_o[r]; 
+            assign voq_pop_index [r]           = row_dest_finder_dest_o[r];
             assign voq_pop [r]                 = row_dest_finder_dest_valid[r];
 
 
@@ -348,13 +348,13 @@ module switch_high_radix #(
 
 
                 assign xpq_pop             [r][c]   = col_dest_finder_chosen_xpq[c][r];
-                assign xpq_pop_id          [r][c]   = col_dest_finder_xpq_pop_id[c];  
+                assign xpq_pop_id          [r][c]   = col_dest_finder_xpq_pop_id[c];
             end
         end
     endgenerate
 
 
-    
+
 
 
     //==========================
@@ -370,7 +370,7 @@ module switch_high_radix #(
                     assign valid_tx       [c*S + i] = cell2pkt_valid_tx     [c][i];
                     assign is_bad_frame_tx[c*S + i] = cell2pkt_is_bad_frame_tx[c][i];
                     assign last_tx        [c*S + i] = cell2pkt_last_tx      [c][i];
-                end 
+                end
             end
         end
     endgenerate
@@ -380,7 +380,7 @@ module switch_high_radix #(
             for (genvar i = 0; i < S; i++) begin : g_rd_en_flatten_lane
                 if ( r*S + i < NUM_PORT) begin
                     assign rd_en_rx[ r*S + i] = voq_rd_en_rx[r][i];
-                end 
+                end
             end
         end
     endgenerate
@@ -406,9 +406,9 @@ module switch_high_radix #(
     // Main Controls
     //==============================================================================
 
-    
 
-    
+
+
     //==============================================================================
     // Instantiated Modules
     //==============================================================================
@@ -427,9 +427,9 @@ module switch_high_radix #(
                 .XPQ_EXTRA_READ_LATENCY(XPQ_EXTRA_READ_LATENCY)
             ) col_dest_finder_inst (
                 .clk                      (clk),
-                .none_mepty_ports         (col_dest_finder_none_mepty_ports[c]), 
+                .none_mepty_ports         (col_dest_finder_none_mepty_ports[c]),
                 .block_ports              (col_dest_finder_block_ports[c]),
-                .dfifo_last               (col_dest_finder_last[c]),    
+                .dfifo_last               (col_dest_finder_last[c]),
                 .chosen_xpq_valid_o       (col_dest_finder_chosen_xpq_valid[c]),
                 .chosen_xpq_o             (col_dest_finder_chosen_xpq[c]),
                 .cell2pkt_barrel_sel      (col_dest_finder_cell2pkt_barrel_sel[c]),
@@ -459,7 +459,7 @@ module switch_high_radix #(
     endgenerate
 
 
-    
+
     // One cell_to_packet per XPQ column
     generate
         for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : g_cell2pkt_col
@@ -487,7 +487,7 @@ module switch_high_radix #(
 
 
 
-    
+
 
     // --- one VOQ per row ---
     generate
@@ -522,8 +522,8 @@ module switch_high_radix #(
                 .dest_mask_valid_rx     (voq_dest_mask_valid_rx[r]),
                 .rd_en_rx               (voq_rd_en_rx[r]),
 
-                .pop_index_i            (voq_pop_index[r]),        
-                .pop_i                  (voq_pop[r]),              
+                .pop_index_i            (voq_pop_index[r]),
+                .pop_i                  (voq_pop[r]),
                 .cell_valid_o           (voq_cell_valid[r]),
                 .cell_metadata_o        (voq_cell_metadata[r]),
                 .last_cell_o            (voq_last_cell[r]),
@@ -538,7 +538,7 @@ module switch_high_radix #(
         end
     endgenerate
 
- 
+
     // -----------------------------------------------------------------------------
     // Build the replication trees (fanout-limited) for each VOQ row
     // -----------------------------------------------------------------------------
@@ -655,7 +655,7 @@ module switch_high_radix #(
     endgenerate
 
 
-    
+
 
     generate
         for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : g_col_valid_delay
@@ -694,8 +694,8 @@ module switch_high_radix #(
         end
         return l;
     endfunction
-    
+
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

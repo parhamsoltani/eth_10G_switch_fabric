@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-07-30 13:32:03
 // Module Name: packet_mode_dfifo_with_mem
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -23,8 +23,8 @@ module packet_mode_dfifo_with_mem #(
     parameter MAIN_MEM_DEPTH                = 512,
     parameter NUM_FIFO                      = 140,
     parameter NUM_IN                        = 10,
-    parameter ADDRESS_COPY_RATE             = 2,            
-    parameter META_DATA_WIDTH               = 8,      
+    parameter ADDRESS_COPY_RATE             = 2,
+    parameter META_DATA_WIDTH               = 8,
     parameter READY_THRESHOLD               = 10,
     parameter MAIN_MEM_READ_LATENCY         = 2,
     // DO NOT CHANGE!
@@ -52,9 +52,9 @@ module packet_mode_dfifo_with_mem #(
 );
 
     localparam MAIN_MEM_DEPTH_LOG            = $clog2(MAIN_MEM_DEPTH);
-    localparam MAIN_MEM_MEMORY_PRIMITIVE   = MAIN_MEM_DEPTH < 64 ? "distributed" : 
+    localparam MAIN_MEM_MEMORY_PRIMITIVE   = MAIN_MEM_DEPTH < 64 ? "distributed" :
                                              MAIN_MEM_DEPTH < 4000 ? "block" : "ultra";
-    
+
     // Inputs
     wire                                mem_cntr_push_i;
     wire                                mem_cntr_push_last_i;
@@ -102,13 +102,13 @@ module packet_mode_dfifo_with_mem #(
     assign main_mem_rd_en   = pop_D[4];
     assign main_mem_rd_addr = mem_cntr_pop_rd_addr_o;
 
-    assign pop_data         = main_mem_rd_data;        
-    assign pop_metadata     = mem_cntr_pop_meta_data_o;            
-    assign pop_last         = mem_cntr_pop_last_o;        
-    assign full             = !mem_cntr_ready;    
-    assign none_mepty_fifos = mem_cntr_none_mepty_fifos;                
+    assign pop_data         = main_mem_rd_data;
+    assign pop_metadata     = mem_cntr_pop_meta_data_o;
+    assign pop_last         = mem_cntr_pop_last_o;
+    assign full             = !mem_cntr_ready;
+    assign none_mepty_fifos = mem_cntr_none_mepty_fifos;
 
-        
+
 
     packet_mode_fifo_array #(
         .MAIN_MEM_DEPTH      (MAIN_MEM_DEPTH),
@@ -167,4 +167,4 @@ module packet_mode_dfifo_with_mem #(
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

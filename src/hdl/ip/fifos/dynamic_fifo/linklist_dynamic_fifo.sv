@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-07-27 17:58:20
 // Module Name: linklist_dynamic_fifo
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 // 3 clk between 2 pop of same queue
 // user should be careful don't push if the whole mem is full
@@ -34,7 +34,7 @@ module linklist_dynamic_fifo #(
     parameter MAIN_MEM_DEPTH                = 1024,
     parameter NUM_FIFO                      = 10,
     parameter MAIN_MEM_MEMORY_PRIMITIVE     = "block",      // "auto", "block", "distributed", "ultra"
-    parameter NP_MEMORY_PRIMITIVE           = "block",   
+    parameter NP_MEMORY_PRIMITIVE           = "block",
     parameter HP_TP_MEMORY_PRIMITIVE        = "block",
     parameter FREE_FIFO_MEMORY_PRIMITIVE    = "block",
     parameter MAIN_MEM_READ_LATENCY         = 1,
@@ -54,8 +54,8 @@ module linklist_dynamic_fifo #(
     output  wire [DATA_WIDTH-1:0]           pop_data,
     // output  wire                            pop_error,
     // output  wire                            pop_empty,
-    output  wire                            full , 
-    output  wire [FREE_FIFO_DEPTH_LOG:0]    num_free, 
+    output  wire                            full ,
+    output  wire [FREE_FIFO_DEPTH_LOG:0]    num_free,
     output  wire [NUM_FIFO-1:0]             none_mepty_fifos
 );
 
@@ -127,7 +127,7 @@ module linklist_dynamic_fifo #(
     reg [NUM_FIFO-1:0] none_mepty_fifos_reg = 0;
 
 
-    
+
     // assigning intermediate wiring
     // tp_1 inputs
     assign tp_1_wr_data = faf_pop_data;
@@ -209,7 +209,7 @@ module linklist_dynamic_fifo #(
     end
 
 
-    
+
 
     delayed_regs #(
         .WIDTH      (DATA_WIDTH),
@@ -373,8 +373,8 @@ module linklist_dynamic_fifo #(
 
 
 
-    
+
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

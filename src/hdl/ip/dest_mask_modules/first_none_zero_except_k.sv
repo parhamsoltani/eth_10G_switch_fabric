@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-13 17:19:23
 // Module Name: first_none_zero_except_k
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -65,15 +65,15 @@ module first_none_zero_except_k #(
                 none_zero_reg <= comb_idx;
                 prev_index_reg <= comb_idx;
 
-                
-                
+
+
             end else begin
                 valid_o_reg <= 0;
             end
-        end 
+        end
     end
 
 endmodule
 
 
-`default_nettype wire 
+`default_nettype wire

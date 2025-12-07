@@ -1,8 +1,8 @@
 # 📊 Implementation Status
 
-**Last Updated**: 2025-11-26  
-**Project**: QoS-Aware Ethernet Switch Fabric  
-**Version**: 1.0  
+**Last Updated**: 2025-11-26
+**Project**: QoS-Aware Ethernet Switch Fabric
+**Version**: 1.0
 
 ---
 
@@ -20,7 +20,7 @@
 
 ---
 
-## ⚠️ **PARTIALLY COMPLETE**
+## ️ **PARTIALLY COMPLETE**
 
 | Component | Status | Missing Pieces | ETA |
 |-----------|--------|----------------|-----|
@@ -104,7 +104,7 @@
 
 **Overall Completion**: 🟢 **92%**
 
-**Production Readiness**: ⚠️ **Suitable for FPGA prototyping** (pending verification completion)
+**Production Readiness**: ️ **Suitable for FPGA prototyping** (pending verification completion)
 
 ---
 
@@ -112,4 +112,4 @@
 
 For questions about implementation status:
 - Email: alireza.abbasian@parman.com
-- Project Lead: Alireza Abbasian
+- Project Lead: Parham Soltani

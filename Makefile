@@ -60,7 +60,7 @@ qos-timing:
 
 # Full QoS validation flow
 qos-validate: qos-sweep qos-build qos-stress qos-timing qos-analyze
-	@echo "✓ Full QoS validation complete!"
+	@echo " Full QoS validation complete!"
 
 # Clean all QoS artifacts
 qos-clean-all: qos-clean

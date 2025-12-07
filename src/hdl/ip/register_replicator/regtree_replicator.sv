@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Morteza Seyedi
-// 
+//
 // Create Date:  2025-08-10
 // Module Name: register_replicator
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -100,7 +100,7 @@ module reg_tree_replicator #(
                     if (COUNT == 0) $error("regtree_auto: zero fanout at stage %0d parent %0d", s, n);
                     if (COUNT > MAX_FANOUT) $error("regtree_auto: fanout %0d exceeds MAX_FANOUT %0d at stage %0d parent %0d", COUNT, MAX_FANOUT, s, n);
                 end
-		
+
 
                 // replicate for this parent
                 register_replicator #(
@@ -122,4 +122,4 @@ module reg_tree_replicator #(
 endmodule
 
 
-`default_nettype wire 
+`default_nettype wire

@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
-`default_nettype none
+`include "qos_defines.vh"  // ← ADDED THIS LINE
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani

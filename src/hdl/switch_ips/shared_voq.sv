@@ -1,25 +1,25 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-02 16:33:51
 // Module Name: shared_voq
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
 
 
 module shared_voq #(
-    parameter   NUM_PORT                = 10,            // number of ports     
+    parameter   NUM_PORT                = 10,            // number of ports
     parameter   S                       = 10,            // speed up
     parameter   W_MINI                  = 64,            // bus data width (mini cell data width)
     parameter   MAIN_MEM_DEPTH          = 512,           // main mem depth
@@ -60,23 +60,23 @@ module shared_voq #(
     output  wire [S_LOG-1:0]                    dest_s_index_o,
     output  wire [W_MINI-1:0]                   main_mem_rd_data_o   [S],
     output  wire [NUM_PORT-1:0]                 none_mepty_fifos_o,
-    
+
 
     output  wire [$clog2(MULTICAST_RATE * MAIN_MEM_DEPTH):0] addr_fifos_num_free_o,
     output  wire [MAIN_MEM_DEPTH_LOG:0]         free_fifo_count_o
 );
 
 
-    
+
 
     //==============================================================================
     // local parameters and integers
     //==============================================================================
-    
-    
+
+
     localparam MAIN_MEM_READ_LATENCY        = 2;
 
-    
+
     localparam DFIFO_READY_THRESHOLD = 2*S+20;
 
 
@@ -97,7 +97,7 @@ module shared_voq #(
 
     wire                        main_mem_rd_en_i;
     wire [MAIN_MEM_DEPTH_LOG-1:0] main_mem_rd_addr_i;
-    
+
 
     // === dfifo wires ===
     wire                        dfifo_push_i;
@@ -143,15 +143,15 @@ module shared_voq #(
     wire                      p2c_last_cell_o      [S];
     wire [DFIFO_META_DATA_WIDTH- 1:0] p2c_metadata_o [S];
 
-    
 
-    
-    
-    
-    
-    
 
-    
+
+
+
+
+
+
+
 
 
 
@@ -169,7 +169,7 @@ module shared_voq #(
 
     reg [S_LOG-1:0]                     rr_counter [S];
     reg                                 rr_sel [S];
- 
+
 
     initial begin
         for (int i = 0; i < S; i++) begin
@@ -194,7 +194,7 @@ module shared_voq #(
     reg [NUM_XPQ_LOG-1:0]              dest_q_reg;
     reg [S_LOG-1:0]                    dest_r_reg;
 
-    
+
     //==============================================================================
     // assignments
     //==============================================================================
@@ -214,16 +214,16 @@ module shared_voq #(
             assign p2c_start_time_slot[i]    = rr_sel[rr_index(i,0)];
             assign p2c_rr_counter[i]         = rr_counter[rr_index(i,0)];
             assign p2c_force_to_send[i]      = dfifo_pop_from_last_packet_o[i];
-            
+
         end
     endgenerate
 
-    
-
-    
 
 
-    
+
+
+
+
 
     generate
         for (genvar i = 0; i < S; i++) begin : gen_main_mem_inputs
@@ -256,7 +256,7 @@ module shared_voq #(
     assign none_mepty_fifos_o = dfifo_none_mepty_fifos;
 
 
-    
+
 
 
 
@@ -327,10 +327,10 @@ module shared_voq #(
     endgenerate
 
 
-    
 
 
-    
+
+
 
 
     pipeline_mem_with_in_barrel #(
@@ -411,7 +411,7 @@ module shared_voq #(
         end
     endgenerate
 
-    
+
 
 
     delayed_regs #(
@@ -465,4 +465,4 @@ module shared_voq #(
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

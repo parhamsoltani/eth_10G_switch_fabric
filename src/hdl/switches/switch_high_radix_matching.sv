@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-02 16:33:51
 // Module Name: switch_high_radix_matching
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -346,11 +346,11 @@ module switch_high_radix_matching #(
                 .ROW_RTT_DELAY(ROW_RTT_DELAY)
             ) u_row_df_match (
                 .clk(clk),
-                
+
                 // NEW: Metadata inputs
                 .metadata_1(voq_cell_metadata[2*p]),
                 .metadata_2(voq_cell_metadata[2*p+1]),
-                
+
                 .none_mepty_ports_1(row_dest_finder_none_mepty_ports_1[p]),
                 .none_mepty_ports_2(row_dest_finder_none_mepty_ports_2[p]),
                 .block_ports(row_dest_finder_block_ports[p]),
@@ -469,19 +469,19 @@ module switch_high_radix_matching #(
         for (genvar r = 0; r < NUM_VOQ; r++) begin : g_voq_rep
             delayed_regs #(.WIDTH(1), .NUM_DELAY(NUM_XPQ_COL-1))
             u_del_push_r (.clk(clk), .signal_in(voq_cell_valid[r]), .delayed_signal(rep_push[r]));
-            
+
             delayed_regs #(.WIDTH(1), .NUM_DELAY(NUM_XPQ_COL-1))
             u_del_last_cell_r (.clk(clk), .signal_in(voq_last_cell[r]), .delayed_signal(rep_last_cell[r]));
-            
+
             delayed_regs #(.WIDTH(META_DATA_WIDTH), .NUM_DELAY(NUM_XPQ_COL-1))
             u_del_metadata_r (.clk(clk), .signal_in(voq_cell_metadata[r]), .delayed_signal(rep_metadata[r]));
-            
+
             delayed_regs #(.WIDTH(S_LOG), .NUM_DELAY(NUM_XPQ_COL-1))
             u_del_push_id_r (.clk(clk), .signal_in(voq_dest_s_index[r]), .delayed_signal(rep_push_id[r]));
-            
+
             delayed_regs #(.WIDTH(NUM_XPQ_COL_LOG), .NUM_DELAY(NUM_XPQ_COL-1))
             u_del_xpq_index_r (.clk(clk), .signal_in(voq_xpq_index[r]), .delayed_signal(rep_xpq_index[r]));
-            
+
             for (genvar i = 0; i < S; i++) begin : g_rep_lane
                 delayed_regs #(.WIDTH(W_MINI), .NUM_DELAY(NUM_XPQ_COL-1))
                 u_del_data_ri (.clk(clk), .signal_in(voq_main_mem_rd_data[r][i]), .delayed_signal(rep_data[r][i]));

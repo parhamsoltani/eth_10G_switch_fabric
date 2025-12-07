@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-`default_nettype none
+// `default_nettype none
 
 module tb_fifo_array;
 
@@ -214,7 +214,7 @@ module tb_fifo_array;
             end
         join_none
 
-        
+
     endtask
 
 

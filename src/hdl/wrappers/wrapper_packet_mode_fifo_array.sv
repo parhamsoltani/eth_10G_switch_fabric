@@ -1,4 +1,4 @@
-`default_nettype none
+// `default_nettype none
 
 
 
@@ -34,7 +34,7 @@ module wrapper_packet_mode_fifo_array #(
     output  wire [META_DATA_WIDTH-1:0]      pop_meta_data_o,
     output  wire [NUM_IN_LOG-1:0]           pop_input_id_o,
     output  wire [MAIN_MEM_DEPTH_LOG-1:0]   pop_rd_addr_o,
-    output  wire                            ready, 
+    output  wire                            ready,
     output  wire [MAIN_MEM_DEPTH_LOG-1:0]   tp_input_o [NUM_IN],
     output  wire [MAIN_MEM_DEPTH_LOG-1:0]   hp_input_o [NUM_IN],
     output  wire [NUM_IN-1:0]               pop_from_last_packet_o,
@@ -120,10 +120,10 @@ module wrapper_packet_mode_fifo_array #(
         end
     endgenerate
 
-    
+
 
 endmodule
 
 
 
-`default_nettype wire 
+`default_nettype wire

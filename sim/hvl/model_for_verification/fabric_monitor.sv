@@ -1,23 +1,6 @@
 `timescale 1ns / 1ps
-`default_nettype none
-//////////////////////////////////////////////////////////////////////////////////
-// Company: IUST
-// Engineer: Parham Soltani
-//
-// Create Date:  2025-03-25 00:17:28
-// Module Name: fabric_monitor
-// Project Name:
-// Target Devices:
-// Tool Versions: Vivado 2022.2
-// Description:
-// Dependencies:
-//
-// Additional Comments:
-
-//////////////////////////////////////////////////////////////////////////////////
 
 import fabric_frame_pkg::*;
-
 
 module fabric_monitor # (
     parameter NUM_PORT = 10,
@@ -26,11 +9,10 @@ module fabric_monitor # (
     parameter   PACKET_ID_WIDTH         = 10
 ) (
     input wire clk,
-    switch_data_if.slave_mp sw_data_if,
-    switch_metadata_if.slave_mp  sw_meta_if,
-    output mailbox frame_mailbox
+    switch_data_if.monitor sw_data_if,
+    switch_metadata_if.monitor sw_meta_if,
+    ref mailbox frame_mailbox              // CHANGED: use 'ref' instead of 'output'
 );
-
 
     bit [7:0] raw_data[$];
     Fabric_frame_tr frame;
@@ -41,8 +23,6 @@ module fabric_monitor # (
     time end_time;
 
     int data_id;
-
-
 
     Fabric_frame_tr frame_queue [$];
 
@@ -55,19 +35,13 @@ module fabric_monitor # (
     bit [PACKET_ID_WIDTH-1:0]   meta_id_queue [$];
 
     initial begin
-
-
         ifg_clk = 0;
         frame_started = 0;
-
-        sw_data_if.ready = 1;
 
         forever begin
             @(posedge clk);
 
             if (sw_data_if.valid && sw_data_if.ready) begin
-
-
                 if (frame_started == 0) begin
                     start_time = $time;
                     data_id = sw_data_if.id;
@@ -79,15 +53,14 @@ module fabric_monitor # (
                         raw_data.push_back(sw_data_if.data[i * 8 +: 8]);
                 end
 
-
                 if (sw_data_if.last) begin
                     frame = Fabric_frame_tr::create_from_raw(
-                                        .raw_data       (raw_data),
-                                        .dest           (0),
-                                        .ifg_clk        (ifg_clk),
-                                        .is_bad_frame   (sw_data_if.is_bad_frame),
-                                        .id             (data_id)
-                        );
+                        .raw_data       (raw_data),
+                        .dest           (0),
+                        .ifg_clk        (ifg_clk),
+                        .is_bad_frame   (sw_data_if.is_bad_frame),
+                        .id             (data_id)
+                    );
 
                     end_time = $time;
                     frame.start_time = start_time;
@@ -106,10 +79,6 @@ module fabric_monitor # (
     end
 
     initial begin
-
-
-        sw_meta_if.ready = 1;
-
         forever begin
             @(posedge clk);
 
@@ -118,24 +87,17 @@ module fabric_monitor # (
                 qos_tag_queue.push_back(sw_meta_if.qos_tag);
                 meta_id_queue.push_back(sw_meta_if.id);
             end
-
         end
-
-
     end
 
-
     initial begin
-
-        frame_mailbox = new();
-
         forever begin
             @(posedge clk);
             if (meta_id_queue.size() != 0 &&
                 frame_queue.size() != 0 &&
                 qos_tag_queue.size() != 0 &&
                 dest_queue.size() != 0
-                ) begin
+            ) begin
                 frame_with_dest = frame_queue.pop_front();
                 dest    = dest_queue.pop_front();
                 qos_tag = qos_tag_queue.pop_front();
@@ -147,13 +109,8 @@ module fabric_monitor # (
                 end
             end
         end
-
     end
 
-
 endmodule
-
-
-
 
 `default_nettype wire

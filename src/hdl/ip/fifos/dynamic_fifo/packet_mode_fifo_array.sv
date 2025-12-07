@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-07-27 17:58:20
 // Module Name: packet_mode_fifo_array
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 // pop is only ollow for non empty fifos
 // the user should know if the reg become empty, the fifo is still nonempty untill the last cell poped
 // pop_rd_addr_o is valid 4 clk after pop
@@ -26,8 +26,8 @@ module packet_mode_fifo_array #(
     parameter MAIN_MEM_DEPTH                = 1024,
     parameter NUM_FIFO                      = 10,
     parameter NUM_IN                        = 10,
-    parameter ADDRESS_COPY_RATE             = 2,            
-    parameter META_DATA_WIDTH               = 8,      
+    parameter ADDRESS_COPY_RATE             = 2,
+    parameter META_DATA_WIDTH               = 8,
     parameter READY_THRESHOLD               = 10,
     // DO NOT CHANGE!
     parameter MAIN_MEM_DEPTH_LOG            = $clog2(MAIN_MEM_DEPTH),
@@ -46,7 +46,7 @@ module packet_mode_fifo_array #(
     output  wire [META_DATA_WIDTH-1:0]      pop_meta_data_o,
     output  wire [NUM_IN_LOG-1:0]           pop_input_id_o,
     output  wire [MAIN_MEM_DEPTH_LOG-1:0]   pop_rd_addr_o,
-    output  wire                            ready, 
+    output  wire                            ready,
     output  wire [MAIN_MEM_DEPTH_LOG-1:0]   tp_input_o [NUM_IN],
     output  wire [MAIN_MEM_DEPTH_LOG-1:0]   hp_input_o [NUM_IN],
     output  wire [NUM_IN-1:0]               pop_from_last_packet_o ,
@@ -112,7 +112,7 @@ module packet_mode_fifo_array #(
     wire [NUM_FIFO_LOG-1:0]             out_addr_mem_rd_addr;
     wire [OUT_MEM_WIDTH-1:0]            out_addr_mem_rd_data;
 
-    
+
     wire [MAIN_MEM_DEPTH_LOG-1:0]       prev_rd_addr;
     wire                                prev_last;
     wire [NUM_FIFO_LOG-1:0]             first_none_zero_index;
@@ -142,7 +142,7 @@ module packet_mode_fifo_array #(
     reg [MAIN_MEM_DEPTH_LOG-1:0]    rd_addr_out_reg;
     reg                             pop_from_last_packet_reg [NUM_IN];
     reg [MAIN_MEM_DEPTH_LOG-1:0]    pop_hp = MAIN_MEM_DEPTH-1;
-    
+
 
 
     initial begin
@@ -355,7 +355,7 @@ module packet_mode_fifo_array #(
         .delayed_signal (push_last_D)
     );
 
-    
+
     delayed_regs #(
         .WIDTH      (META_DATA_WIDTH),
         .NUM_DELAY  (1)
@@ -443,7 +443,7 @@ module packet_mode_fifo_array #(
         .INLCUDE_PROTECTION (0)
     ) free_fifo (
         .clk        (clk),
-        .rst        (1'b0),  
+        .rst        (1'b0),
         .push       (free_fifo_push),
         .push_data  (free_fifo_push_data),
         .pop        (free_fifo_pop),
@@ -497,8 +497,8 @@ module packet_mode_fifo_array #(
         .data_o             (first_none_zero_index)
     );
 
-    
+
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

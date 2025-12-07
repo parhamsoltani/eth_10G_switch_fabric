@@ -1,25 +1,25 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-04 18:41:14
 // Module Name: dest_finder_row
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
 // TODO: this version imagine always last come and the packets are 1 cell
 
-module dest_finder_row #(   
-    parameter   NUM_PORT                = 10,   
+module dest_finder_row #(
+    parameter   NUM_PORT                = 10,
     parameter   S                       = 10,
     parameter   ROW_RTT_DELAY           = 6,
     // DO NOT CHANGE
@@ -31,16 +31,16 @@ module dest_finder_row #(
     input  wire [NUM_PORT-1:0]      block_ports,
     input  wire                     dfifo_last, // come after 5 clk
 
-    output wire                     dest_valid_o,         
+    output wire                     dest_valid_o,
     output wire [NUM_PORT_LOG-1:0]  dest_o
 );
 
 
 
-    
+
 
     reg [S_LOG-1:0]                     rr_counter [S];
- 
+
 
     initial begin
         for (int i = 0; i < S; i++) begin
@@ -68,7 +68,7 @@ module dest_finder_row #(
     reg [NUM_PORT-1:0]      possible_dests = 0;
     reg [NUM_PORT-1:0]      recent_dests = 0;
 
-    wire [NUM_PORT_LOG-1:0]  dest_candidate; 
+    wire [NUM_PORT_LOG-1:0]  dest_candidate;
     wire                     dest_candidate_valid;
 
     reg [NUM_PORT_LOG-1:0]  current_dests [S] = '{default:'0};
@@ -82,12 +82,12 @@ module dest_finder_row #(
     assign dest_o = dest_reg;
 
     always @(posedge clk) begin
-        possible_dests <= (~recent_dests) & none_mepty_ports & (~block_ports); 
+        possible_dests <= (~recent_dests) & none_mepty_ports & (~block_ports);
 
         if (dest_candidate_valid) begin
             possible_dests[dest_candidate] <= 0;
         end
-        
+
     end
 
 
@@ -99,7 +99,7 @@ module dest_finder_row #(
     always @(posedge clk) begin
         // if (dfifo_last) begin
         //     current_dests_valid[last_counter] <= 0; // updated after 6D
-        // end 
+        // end
 
         // if (prev_dest_valid) begin
         //     dest_reg <= prev_dest;
@@ -108,7 +108,7 @@ module dest_finder_row #(
 
 
         if (dest_candidate_valid) begin
-            
+
             dest_valid_reg <= 1;
             dest_reg <= dest_candidate; // 7D
 
@@ -132,9 +132,9 @@ module dest_finder_row #(
         end
     end
 
-    
 
-    
+
+
 
     first_none_zero_except_k #(
         .N(NUM_PORT)
@@ -156,7 +156,7 @@ module dest_finder_row #(
     function automatic int rr_index(input int port_index, input int delay_val);
         return (port_index + delay_val + 10*S) % S;
     endfunction
-    
+
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

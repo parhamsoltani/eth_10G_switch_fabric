@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 
 `include "fabric_params.vh"
 
@@ -15,9 +15,9 @@ module switch_fabric #(
     input  logic rst_n,
 
     // External interfaces
-    switch_data_if.slave        rx_data_if [NUM_PORTS],
-    switch_metadata_if.slave    rx_meta_if [NUM_PORTS],
-    switch_data_if.master       tx_data_if [NUM_PORTS],
+    switch_data_if              rx_data_if [NUM_PORTS],
+    switch_metadata_if          rx_meta_if [NUM_PORTS],
+    switch_data_if              tx_data_if [NUM_PORTS],
 
     // AXI4-Lite microprocessor interface (NEW)
     input  wire [15:0]          uif_awaddr,
@@ -124,7 +124,7 @@ module switch_fabric #(
 
     generate
         for (genvar i = 0; i < NUM_PORTS; i++) begin : gen_ingress_port
-            
+
             ingress_line_wrapper #(
                 .DATA_WIDTH(DATA_WIDTH),
                 .NUM_PORTS(NUM_PORTS),
@@ -304,7 +304,7 @@ module switch_fabric #(
     ) u_micro_if (
         .clk(clk),
         .rst_n(rst_n),
-        
+
         // AXI4-Lite
         .s_axi_awaddr(uif_awaddr),
         .s_axi_awvalid(uif_awvalid),

@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-07-27 17:58:20
 // Module Name: shared_xpq
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 // 3 clk between 2 pop of same queue
 // user should be careful don't push if the whole mem is full
@@ -45,9 +45,9 @@ module shared_xpq #(
 )(
     input   wire                            clk,
     input   wire                            push,
-    input   wire                            push_last_cell, 
+    input   wire                            push_last_cell,
     input   wire [W_MINI-1:0]               push_data [S],  // the push data should have one delay corresponding to push
-    input   wire [META_DATA_WIDTH-1:0]      push_metadata,  
+    input   wire [META_DATA_WIDTH-1:0]      push_metadata,
     input   wire [S_LOG-1:0]                push_id,
     input   wire                            pop,
     input   wire [S_LOG-1:0]                pop_id,
@@ -55,13 +55,13 @@ module shared_xpq #(
     output  wire [W_MINI-1:0]               pop_data [S], // come after 2+ extra delay
     output  wire [META_DATA_WIDTH-1:0]      pop_metadata, // come after 2 delay
 
-    output  wire [FREE_FIFO_DEPTH_LOG:0]    num_free, 
+    output  wire [FREE_FIFO_DEPTH_LOG:0]    num_free,
     output  reg [S-1:0]                    none_mepty_fifos,
     output  reg [S-1:0]                    blocked_ports  // TODO for now block ports are just based on num free and no consider output selection
 );
 
     localparam MAIN_MEM_MEMORY_PRIMITIVE     = "distributed";      // "auto", "block", "distributed", "ultra"
-    localparam NP_MEMORY_PRIMITIVE           = "distributed";   
+    localparam NP_MEMORY_PRIMITIVE           = "distributed";
     localparam HP_TP_MEMORY_PRIMITIVE        = "distributed";
     localparam FREE_FIFO_MEMORY_PRIMITIVE    = "distributed";
 
@@ -140,7 +140,7 @@ module shared_xpq #(
     reg [S-1:0] blocked_ports_reg = 0;
 
 
-    
+
     // assigning intermediate wiring
     // tp_1 inputs
     assign tp_1_wr_data = faf_pop_data;
@@ -199,7 +199,7 @@ module shared_xpq #(
 
 
     always @(posedge clk) begin
-        
+
         none_mepty_fifos <= none_mepty_fifos_reg;
         blocked_ports    <= blocked_ports_reg;
     end
@@ -237,9 +237,9 @@ module shared_xpq #(
         end
     end
 
-    
 
-    
+
+
     // push_D: 1-cycle delay of push
     delayed_regs #(
         .WIDTH      (1),
@@ -300,7 +300,7 @@ module shared_xpq #(
 
 
 
-    
+
 
     // np: Stores next pointers
     sdpram_xpm #(
@@ -415,8 +415,8 @@ module shared_xpq #(
         .delayed_signal (push_last_cell_D)
     );
 
-    
+
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

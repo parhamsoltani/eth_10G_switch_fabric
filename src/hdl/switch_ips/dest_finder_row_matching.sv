@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-04 18:41:14
 // Module Name: dest_finder_row_matching
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -95,7 +95,7 @@ module dest_finder_row_matching #(
         end
     end
 
-    
+
 
     always @(posedge clk) begin
         if (current_dests_valid_1[free_recent_counter]) begin
@@ -106,7 +106,7 @@ module dest_finder_row_matching #(
         end
     end
 
-    
+
 
     //==========================================================================
     // Channel 2 state
@@ -136,7 +136,7 @@ module dest_finder_row_matching #(
         end
     end
 
-    
+
 
     always @(posedge clk) begin
         if (current_dests_valid_2[free_recent_counter]) begin
@@ -167,7 +167,7 @@ module dest_finder_row_matching #(
 
 
 
-    
+
     always @(posedge clk) begin
         // defaults each cycle
         dest_valid_reg_1 <= 1'b0;
@@ -242,7 +242,7 @@ module dest_finder_row_matching #(
             current_dests_valid_2[final_stage_counter] <= 1'b1;
 
             if (buf_val2) begin
-                
+
                 dest_reg_2 <= buf_data2;
                 current_dests_2[final_stage_counter] <= buf_data2;
                 buf_val2  <= 1'b0;
@@ -262,7 +262,7 @@ module dest_finder_row_matching #(
 
                 end
             end else begin
-                
+
                 dest_reg_2 <= new_data2;
                 current_dests_2[final_stage_counter] <= new_data2;
 
@@ -298,20 +298,20 @@ module dest_finder_row_matching #(
 
                 if (buf_data1 != buf_data2) begin
                     // ch1: buffer; ch2: buffer
-                    
+
 
                     dest_reg_2 <= buf_data2;
                     current_dests_2[final_stage_counter] <= buf_data2;
 
                     // ch1 buffer consumed; rotate ch2 buffer
-                    
+
                     buf_data2 <= new_data2; buf_val2 <= 1'b1;
 
                 end else begin
-      
+
                     dest_reg_2 <= new_data2;
                     current_dests_2[final_stage_counter] <= new_data2;
-                    
+
                 end
             end else begin
 
@@ -328,7 +328,7 @@ module dest_finder_row_matching #(
                     buf_data2 <= new_data2; buf_val2 <= 1'b1;
 
                 end else begin
-                    
+
                     dest_reg_2 <= new_data2;
                     current_dests_2[final_stage_counter] <= new_data2;
 
@@ -430,9 +430,9 @@ module dest_finder_row_matching #(
                 end
             end
 
-        
+
         end else begin
-            
+
             dest_ready_1 <= 1'b1;
             dest_ready_2 <= 1'b1;
             buf_val1     <= 1'b0;  // clear by default; re-assert only if we purposely (re)buffer
@@ -528,4 +528,4 @@ module dest_finder_row_matching #(
 endmodule
 
 
-`default_nettype wire 
+`default_nettype wire

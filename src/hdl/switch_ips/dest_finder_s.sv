@@ -1,24 +1,24 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-04 18:41:14
 // Module Name: dest_finder_s
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
 
 
-module dest_finder_s #(      
+module dest_finder_s #(
     parameter   S                       = 10,
     // DO NOT CHANGE
     parameter   S_LOG                   = $clog2(S)
@@ -30,7 +30,7 @@ module dest_finder_s #(
     input  wire                     dfifo_last,
     input  wire [S_LOG-1:0]         dfifo_last_port_index,
 
-    output wire                     dest_valid_o         
+    output wire                     dest_valid_o
 );
 
     reg dest_valid_reg = 0;
@@ -63,4 +63,4 @@ module dest_finder_s #(
     end
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

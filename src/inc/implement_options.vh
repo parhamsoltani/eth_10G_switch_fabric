@@ -1,87 +1,64 @@
-//////////////////////////////////////////////////////////////////////////////////
-// Implementation Options - QoS-Enabled Configuration
-// Generated for 10x10G switch with QoS support
-//////////////////////////////////////////////////////////////////////////////////
-
 `ifndef IMPLEMENT_OPTIONS_VH
 `define IMPLEMENT_OPTIONS_VH
 
-//=============================================================================
-// Basic Switch Configuration
-//=============================================================================
-`define LINE_RATE 10                // Gbps per port
-`define N 10                        // Number of ports
-`define NUM_PORT 10                 // Same as N (for compatibility)
-`define D 16384                     // Main memory depth
-`define S 10                        // Number of cells per packet
-`define X 64                        // XPQ depth
-`define U 1                         // Unicast/multicast mode
-`define W 64                        // Cell width (bits)
-`define OUTPUT_QUEUE_DEPTH 64       // Output queue depth
-`define MULTICAST_SUPPORT 1         // Enable multicast
+`timescale 1ns / 1ps
 
-//=============================================================================
-// QoS Configuration (*** ADDED ***)
-//=============================================================================
-`define ENABLE_QoS 1                // Enable QoS features
-`define QOS_TAG_WIDTH 3             // 3 bits = 8 priority levels
-`define PRIORITY_LEVELS 8           // Number of QoS levels
-`define VOQ_PER_PRIORITY 1          // Separate VOQ per priority
-`define DEFICIT_COUNTER_WIDTH 16    // For weighted fair queuing
+//═══════════════════════════════════════════════════════════════════════════
+// Switch Configuration
+//═══════════════════════════════════════════════════════════════════════════
+`define LINE_RATE 10
+`define N 10
+`define S 10
+`define W 64
+`define D 16384
+`define X 64
+`define U 1
 
-//=============================================================================
-// QoS Priority Definitions
-//=============================================================================
-`define PRIORITY_NETWORK_CONTROL 3'd7  // Highest (routing protocols)
-`define PRIORITY_VOICE          3'd6  // VoIP
-`define PRIORITY_VIDEO          3'd5  // Streaming
-`define PRIORITY_CRITICAL       3'd4  // Critical apps
-`define PRIORITY_EXCELLENT      3'd3  // Premium
-`define PRIORITY_STANDARD       3'd2  // Default
-`define PRIORITY_BULK           3'd1  // Background
-`define PRIORITY_BACKGROUND     3'd0  // Lowest
+//═══════════════════════════════════════════════════════════════════════════
+// Derived Parameters (BOTH forms for compatibility)
+//═══════════════════════════════════════════════════════════════════════════
+`define NUM_PORT 10
+`define NUM_PORTS 10
+`define DATA_WIDTH 64
+`define MAIN_MEM_DEPTH 16384
+`define XPQ_DEPTH 64
+`define OUTPUT_QUEUE_DEPTH 64
+`define MULTICAST_SUPPORT 1
+`define PACKET_BUFFER_DEPTH 256
+`define CREDIT_COUNT_WIDTH 4
+`define ENABLE_QOS 1
+`define PRIORITY_LEVELS 8
 
-// Aliases for testbenches
-`define PRIORITY_HIGH    `PRIORITY_NETWORK_CONTROL
-`define PRIORITY_MEDIUM  `PRIORITY_STANDARD
-`define PRIORITY_LOW     `PRIORITY_BACKGROUND
+//═══════════════════════════════════════════════════════════════════════════
+// QoS Configuration
+//═══════════════════════════════════════════════════════════════════════════
+`define QOS_TAG_WIDTH 3
+`define QOS_LEVELS 8
+`define PACKET_ID_WIDTH 10
+`define META_DATA_WIDTH 32
+`define META_QOS_OFFSET 0
 
-//=============================================================================
-// Packet Configuration
-//=============================================================================
-`define PACKET_ID_WIDTH 8           // Packet identifier width
-`define PORT_MASK_WIDTH `NUM_PORT   // For multicast
+//═══════════════════════════════════════════════════════════════════════════
+// Priority Level Definitions
+//═══════════════════════════════════════════════════════════════════════════
+`define PRIORITY_BACKGROUND         3'd0
+`define PRIORITY_BEST_EFFORT        3'd1
+`define PRIORITY_STANDARD           3'd2
+`define PRIORITY_EXCELLENT          3'd3
+`define PRIORITY_CRITICAL           3'd4
+`define PRIORITY_VIDEO              3'd5
+`define PRIORITY_VOICE              3'd6
+`define PRIORITY_NETWORK_CONTROL    3'd7
 
-//=============================================================================
-// Memory Configuration
-//=============================================================================
-`define ADDR_WIDTH $clog2(`D)       // Address width for main memory
-`define XPQ_ADDR_WIDTH $clog2(`X)   // XPQ address width
+// Aliases
+`define PRIORITY_LOW     3'd0
+`define PRIORITY_MEDIUM  3'd2
+`define PRIORITY_HIGH    3'd7
 
-//=============================================================================
-// Timing Parameters (ns)
-//=============================================================================
-`define SYS_CLK_PERIOD 2.899        // 345 MHz for 10G
-`define LINE_CLK_PERIOD 6.4         // 156.25 MHz for 10GBASE-R
-
-//=============================================================================
-// Simulation Options
-//=============================================================================
-`ifdef SIMULATION
-    `define INITIAL_RESET_CYCLES 100
-    `define POST_RESET_DELAY 10
-    `define DEFAULT_SIM_TIME 500  // microseconds
-`endif
-
-//=============================================================================
-// Synthesis Options
-//=============================================================================
-`ifndef SIMULATION
-    `define FPGA_VENDOR "xilinx"
-    `define FPGA_FAMILY "kintexu"
-    // Use XPM macros for portability
-    `define USE_XPM_MEMORY 1
-    `define USE_XPM_FIFO 1
-`endif
+//═══════════════════════════════════════════════════════════════════════════
+// Scheduler Configuration
+//═══════════════════════════════════════════════════════════════════════════
+`define SCHEDULER_ENABLE_AGING 1
+`define SCHEDULER_AGING_THRESHOLD 1000
 
 `endif // IMPLEMENT_OPTIONS_VH

@@ -1,11 +1,11 @@
-`default_nettype none
+// `default_nettype none
 
 
 
 module simple_fifo
 #(
 	parameter	DATA_WIDTH		    = 136,
-    parameter   FIFO_DEPTH          = 16,       // must be power of two 
+    parameter   FIFO_DEPTH          = 16,       // must be power of two
 	parameter	XPM_READ_LATENCY    = 1,    // 0 is fwft
     parameter   PROG_FULL_THRESH = 10,
    // DO NOT CHANGE!
@@ -56,36 +56,36 @@ module simple_fifo
         .WRITE_DATA_WIDTH(DATA_WIDTH),            // DECIMAL
         .WR_DATA_COUNT_WIDTH(DATA_COUNT_WIDTH)    // DECIMAL
     ) xpm_fifo_sync_inst (
-        .almost_empty(),   
-        .almost_full(),     
-        .data_valid(),      
-        .dbiterr(),         
-        .din(push_data_i),  
-        .dout(pop_data_o), 
-        .empty(empty_o),         
-        .full(full_o),          
-        .overflow(),      
-        .prog_empty(),    
-        .prog_full(prog_full_o),     
-        .rd_data_count(),                    
-        .rd_rst_busy(),                               
-        .sbiterr(),                                
-        .underflow(),                                                          
-        .wr_ack(),                                      
-        .wr_data_count(),                          
-        .wr_rst_busy(),                             
-        .injectdbiterr(), 
-        .injectsbiterr(), 
+        .almost_empty(),
+        .almost_full(),
+        .data_valid(),
+        .dbiterr(),
+        .din(push_data_i),
+        .dout(pop_data_o),
+        .empty(empty_o),
+        .full(full_o),
+        .overflow(),
+        .prog_empty(),
+        .prog_full(prog_full_o),
+        .rd_data_count(),
+        .rd_rst_busy(),
+        .sbiterr(),
+        .underflow(),
+        .wr_ack(),
+        .wr_data_count(),
+        .wr_rst_busy(),
+        .injectdbiterr(),
+        .injectsbiterr(),
         .rd_en(pop_i),
-        .rst(reset_i),                  
-        .sleep(),            
-        .wr_clk(clk_i),      
-        .wr_en(push_i)    
+        .rst(reset_i),
+        .sleep(),
+        .wr_clk(clk_i),
+        .wr_en(push_i)
     );
 
-		
 
-endmodule 
+
+endmodule
 
 
 
@@ -401,8 +401,6 @@ endmodule
    // xpm_fifo_sync: Synchronous FIFO
    // Xilinx Parameterized Macro, version 2022.2
 
-   
+
 
    // End of xpm_fifo_sync_inst instantiation
-				
-			

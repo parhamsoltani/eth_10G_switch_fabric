@@ -1,17 +1,17 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-04-04 11:51:34
 // interface Name: micro_if
-// Project Name: 
+// Project Name:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -39,7 +39,7 @@ interface micro_if  #(
     );
 
     modport slave_mp (
-        input   clk, cs, wr, addr, idata, 
+        input   clk, cs, wr, addr, idata,
         output  odata
     );
 
@@ -51,4 +51,4 @@ endinterface
 
 `endif // MICRO_IF_SV
 
-`default_nettype wire 
+`default_nettype wire

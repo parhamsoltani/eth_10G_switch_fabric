@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Automated QoS configuration sweep testbench
 // Reads test vectors from JSON and validates all configs
@@ -11,6 +11,8 @@ import fabric_frame_pkg::*;
 `include "implement_options.vh"
 `include "qos_defines.vh"
 
+`include "../../hvl/verification/qos_latency_tracker.sv"
+
 module tb_fabric_qos_sweep;
 
     parameter NUM_PORT = `NUM_PORT;
@@ -19,12 +21,11 @@ module tb_fabric_qos_sweep;
     parameter MAIN_MEM_DEPTH = `D;
     parameter XPQ_DEPTH = `X;
     parameter QOS_TAG_WIDTH = `QOS_TAG_WIDTH;
-    parameter ENABLE_QOS = `ENABLE_QOS;
+    parameter ENABLE_QOS = 1;  // FIXED: Hardcoded for QoS testbench
 
     parameter SYS_PERIOD = 1.499;
     localparam TB = "tb_fabric_qos_sweep";
 
-    // Test configuration from JSON
     string test_vector_file = "../../sim/tb/fabric/test_vectors_qos.json";
     int test_iterations;
 
@@ -91,10 +92,11 @@ module tb_fabric_qos_sweep;
     mailbox frame_mailbox_out[NUM_PORT];
     event frame_sent[NUM_PORT];
 
-    qos_latency_tracker #(
-        .NUM_PORTS(NUM_PORT),
-        .QOS_LEVELS(`PRIORITY_LEVELS)
-    ) latency_tracker();
+    qos_latency_tracker latency_tracker;
+
+    initial begin
+        latency_tracker = new();
+    end
 
     //==========================================================================
     // Test Execution
@@ -108,11 +110,9 @@ module tb_fabric_qos_sweep;
         wait (!sys_reset);
         repeat (100) @(posedge sys_clk);
 
-        // Load test vectors (if file exists)
         if ($fopen(test_vector_file, "r")) begin
             load_test_vectors();
         end else begin
-            // Default test patterns
             run_default_tests();
         end
 
@@ -129,16 +129,9 @@ module tb_fabric_qos_sweep;
     task run_default_tests();
         $display("\n[QoS SWEEP] Running default test patterns");
 
-        // Pattern 1: All high priority
         test_uniform_priority(`PRIORITY_HIGH, 100);
-
-        // Pattern 2: Mixed priority (50% high, 50% low)
         test_mixed_priority(100);
-
-        // Pattern 3: Priority inversion stress
         test_priority_inversion(50);
-
-        // Pattern 4: Burst of critical packets
         test_critical_burst(20);
     endtask
 
@@ -178,7 +171,6 @@ module tb_fabric_qos_sweep;
     task test_priority_inversion(input int num_packets);
         $display("[TEST] Priority inversion: %0d packets", num_packets);
 
-        // Send low-priority first, then high-priority to same dest
         fork
             begin
                 for (int i = 0; i < num_packets; i++) begin
@@ -186,7 +178,7 @@ module tb_fabric_qos_sweep;
                 end
             end
             begin
-                #(SYS_PERIOD*200);  // Delay high-priority traffic
+                #(SYS_PERIOD*200);
                 for (int i = 0; i < num_packets/2; i++) begin
                     send_packet_qos(2, 1, 256, `PRIORITY_HIGH, 10);
                 end
@@ -213,36 +205,44 @@ module tb_fabric_qos_sweep;
         input logic [2:0] qos,
         input int ifg
     );
-        // Use your existing Fabric_frame_tr infrastructure
         automatic bit [NUM_PORT-1:0] dst_mask = (1 << dst);
+        automatic bit [7:0] raw_data[] = new[size];
         automatic Fabric_frame_tr frame;
 
+        for (int i = 0; i < size; i++) begin
+            raw_data[i] = $urandom();
+        end
+
         frame = Fabric_frame_tr::create_from_raw(
-            .raw_data(new[size]),
+            .raw_data(raw_data),
             .dest(dst_mask),
             .ifg_clk(ifg),
             .is_bad_frame(1'b0),
             .id($urandom())
         );
 
-        latency_tracker.record_tx($urandom(), src, dst, qos);
+        latency_tracker.record_tx(frame.id, src, dst, qos);
         frame_mailbox_in[src].put(frame.do_copy());
         @frame_sent[src];
     endtask
 
     task load_test_vectors();
-        // Parse JSON test vectors (placeholder)
         $display("[SWEEP] Loading test vectors from %s", test_vector_file);
     endtask
 
     //==========================================================================
-    // Monitors/Drivers (reuse your existing infrastructure)
+    // Monitors/Drivers
     //==========================================================================
     generate
         for (genvar i = 0; i < NUM_PORT; i++) begin : gen_monitors
-            mailbox temp_mailbox = new();
+            mailbox temp_in, temp_out;
 
-            initial frame_mailbox_in[i] = temp_mailbox;
+            initial begin
+                temp_in = new();
+                temp_out = new();
+                frame_mailbox_in[i] = temp_in;
+                frame_mailbox_out[i] = temp_out;
+            end
 
             fabric_monitor #(
                 .NUM_PORT(NUM_PORT),
@@ -253,34 +253,19 @@ module tb_fabric_qos_sweep;
                 .clk(sys_clk),
                 .sw_data_if(rx_data_if[i]),
                 .sw_meta_if(rx_meta_if[i]),
-                .frame_mailbox(temp_mailbox)
+                .frame_mailbox(temp_in)
             );
-        end
-    endgenerate
-
-    generate
-        for (genvar g = 0; g < NUM_PORT; g++) begin : gen_drivers
-            mailbox temp_mailbox = new();
-
-            initial frame_mailbox_out[g] = temp_mailbox;
 
             fabric_driver #(
                 .NUM_PORT(NUM_PORT),
                 .DATA_WIDTH(W_MINI)
             ) u_driver (
                 .clk(sys_clk),
-                .sw_data_if(tx_data_if[g]),
-                .frame_mailbox(temp_mailbox),
-                .frame_sent(frame_sent[g])
+                .sw_data_if(tx_data_if[i]),
+                .frame_mailbox(temp_out),
+                .frame_sent(frame_sent[i])
             );
-        end
-    endgenerate
 
-    //==========================================================================
-    // RX Monitors with Latency Tracking
-    //==========================================================================
-    generate
-        for (genvar i = 0; i < NUM_PORT; i++) begin : gen_rx_mon
             initial begin
                 tx_data_if[i].ready = 1'b1;
 

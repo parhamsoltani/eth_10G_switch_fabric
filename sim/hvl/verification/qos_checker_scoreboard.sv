@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // QoS-Aware Scoreboard with Priority Checking
 // Validates:
@@ -280,9 +280,9 @@ module qos_checker_scoreboard #(
 
         // Pass/Fail
         if (total_errors == 0 && priority_violations == 0 && starvation_events == 0) begin
-            $display("\n  ✓✓✓ QoS VALIDATION PASSED ✓✓✓");
+            $display("\n   QoS VALIDATION PASSED ");
         end else begin
-            $display("\n  ✗✗✗ QoS VALIDATION FAILED ✗✗✗");
+            $display("\n   QoS VALIDATION FAILED ");
         end
 
         $display("\n");

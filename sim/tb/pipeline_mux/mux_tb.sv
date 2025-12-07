@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-`default_nettype none
+// `default_nettype none
 
 module tb_pipeline_mux;
     // ---- Params you might tweak ----
@@ -75,7 +75,7 @@ module tb_pipeline_mux;
             if (cycle != 0) begin
                 for (int i = 0; i < N; i++)
                     in[i] = $urandom();
-            
+
                 // Push expected output for this cycle; it will be checked after DLY cycles
                 exp_q.push_back( in[sel_d] );
 

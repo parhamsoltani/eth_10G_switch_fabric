@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// // `default_nettype none
 
 `ifndef FABRIC_PARAMS_VH
 `define FABRIC_PARAMS_VH
@@ -18,6 +18,10 @@
 
 `ifndef PACKET_ID_WIDTH
     `define PACKET_ID_WIDTH 10
+`endif
+
+`ifndef OUTPUT_QUEUE_DEPTH
+    `define OUTPUT_QUEUE_DEPTH 128
 `endif
 
 //═══════════════════════════════════════════════════════════════════════════

@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-03 10:32:42
 // Module Name: pipeline_mem_with_in_barrel
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -61,7 +61,7 @@ module pipeline_mem_with_in_barrel
     wire [DEPTH_LOG-1:0]         raw_mem_rd_addr_i;
     wire [WIDTH-1:0]             raw_mem_rd_data_o [NUM_MEM];
 
-    
+
     //=========================
     // Assign Connections
     //=========================
@@ -131,10 +131,10 @@ module pipeline_mem_with_in_barrel
         .rd_data_o  (raw_mem_rd_data_o)
     );
 
-    
-		
-
-endmodule 
 
 
-`default_nettype wire 
+
+endmodule
+
+
+`default_nettype wire

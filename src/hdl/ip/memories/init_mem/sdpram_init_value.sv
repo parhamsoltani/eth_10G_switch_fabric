@@ -1,7 +1,7 @@
 // ========================================================
-// Description   :  
+// Description   :
 // Start project : 2024-09-15
-// Author        : Parham Soltani 
+// Author        : Parham Soltani
 // ========================================================
 
 
@@ -9,7 +9,7 @@
 
 
 `timescale 1ns / 1ns
-`default_nettype none
+// `default_nettype none
 
 
 module sdpram_init_value
@@ -20,7 +20,7 @@ module sdpram_init_value
     parameter   INIT_FILE_NAME      = "none",
 	parameter	MEMORY_PRIMITIVE	= "distributed",			// "auto", "block", "distributed", "ultra"
 	parameter	WRITE_MODE_B        = "READ_FIRST",		        // WRITE_FIRST | READ_FIRST | NO_CHANGE
-	parameter	XPM_READ_LATENCY    = 1,		    // 
+	parameter	XPM_READ_LATENCY    = 1,		    //
 	// DO NOT change following parameters
 	parameter	DEPTH_LOG		    = $clog2(DEPTH)
 )
@@ -75,22 +75,22 @@ module sdpram_init_value
         .dina			(wr_data_i),
         .injectsbiterra	(1'b0),
         .injectdbiterra	(1'b0),
-        
+
         // Port B module ports
         .clkb			(clk),
         .rstb			(1'b0),
         .enb			(rd_en_i),		// rd_en for READ_LATENCY_B == 1
-        .regceb			(1'b1),		
+        .regceb			(1'b1),
         .addrb			(rd_addr_i),
         .doutb			(rd_data_o),
         .sbiterrb		(),
         .dbiterrb		()
     );
-			
-		
-
-endmodule 
 
 
 
-`default_nettype wire 
+endmodule
+
+
+
+`default_nettype wire

@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-15 11:15:04
 // Module Name: col_pipeline_mux
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -47,7 +47,7 @@ module col_pipeline_mux #(
 
     reg [NUM_XPQ_ROW_LOG-1:0] sel_mux_r;
 
-    
+
 
     always @(posedge clk) begin
         for (int i = 0; i < NUM_XPQ_ROW; ++i) begin
@@ -62,7 +62,7 @@ module col_pipeline_mux #(
     // -------------------------------------------------------------------------
     pipeline_mux #(
         .N (NUM_XPQ_ROW),
-        .K (MUX_MAX_SIZE), 
+        .K (MUX_MAX_SIZE),
         .W (META_DATA_WIDTH)
     ) u_meta_mux (
         .clk (clk),
@@ -127,4 +127,4 @@ endmodule
 
 
 
-`default_nettype wire 
+`default_nettype wire

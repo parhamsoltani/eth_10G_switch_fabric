@@ -1,18 +1,18 @@
 // `timescale 1ns / 1ps
-// `default_nettype none
+// // `default_nettype none
 // //////////////////////////////////////////////////////////////////////////////////
 // // Company: IUST
 // // Engineer: Parham Soltani
-// // 
+// //
 // // Create Date:  2025-07-26 10:18:21
 // // Module Name: pipeline_mem
-// // Project Name: 
-// // Target Devices: 
+// // Project Name:
+// // Target Devices:
 // // Tool Versions: Vivado 2022.2
-// // Description: 
-// // Dependencies: 
-// // 
-// // Additional Comments: 
+// // Description:
+// // Dependencies:
+// //
+// // Additional Comments:
 
 // //////////////////////////////////////////////////////////////////////////////////
 
@@ -45,10 +45,10 @@
 // );
 
 
-//     reg                 wr_en_reg     [NUM_MEM];    
-//     reg [DEPTH_LOG-1:0] rd_addr_reg   [NUM_MEM]; 
-//     reg [WIDTH-1:0]     wr_data_reg   [NUM_MEM]; 
-//     reg [DEPTH_LOG-1:0] wr_addr_reg   [NUM_MEM];  
+//     reg                 wr_en_reg     [NUM_MEM];
+//     reg [DEPTH_LOG-1:0] rd_addr_reg   [NUM_MEM];
+//     reg [WIDTH-1:0]     wr_data_reg   [NUM_MEM];
+//     reg [DEPTH_LOG-1:0] wr_addr_reg   [NUM_MEM];
 
 
 //     generate
@@ -59,9 +59,9 @@
 
 //     always @(posedge clk) begin
 //         for (int i=1; i<NUM_MEM; ++i) begin
-//             wr_en_reg[i]   <= wr_en_reg[i-1];  
+//             wr_en_reg[i]   <= wr_en_reg[i-1];
 //             wr_addr_reg[i] <= wr_addr_reg[i-1];
-//             rd_en_reg[i]   <= rd_en_reg[i-1];  
+//             rd_en_reg[i]   <= rd_en_reg[i-1];
 //             rd_addr_reg[i] <= rd_addr_reg[i-1];
 //         end
 //     end
@@ -70,11 +70,11 @@
 //     generate
 //         for (genvar i = 0; i < NUM_MEM; i = i + 1) begin : gen_mem
 //             sdpram_xpm #(
-//                 .WIDTH              (WIDTH),    
-//                 .DEPTH              (DEPTH), 
+//                 .WIDTH              (WIDTH),
+//                 .DEPTH              (DEPTH),
 //                 .MEMORY_PRIMITIVE   (MEMORY_PRIMITIVE),
-//                 .WRITE_MODE_B       ("READ_FIRST"),     
-//                 .XPM_READ_LATENCY   (XPM_READ_LATENCY)     
+//                 .WRITE_MODE_B       ("READ_FIRST"),
+//                 .XPM_READ_LATENCY   (XPM_READ_LATENCY)
 //             ) mini_cell_mem (
 //                 .clk            (clk),
 //                 .wr_en_i        (wr_en_reg[i]),
@@ -86,9 +86,9 @@
 //             );
 //         end
 //     endgenerate
-			
-		
 
-// endmodule 
 
-// `default_nettype wire 
+
+// endmodule
+
+// `default_nettype wire

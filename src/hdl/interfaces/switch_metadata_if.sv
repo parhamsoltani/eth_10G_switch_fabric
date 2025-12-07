@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps
-`default_nettype none
 
 `ifndef SWITCH_METADATA_IF_SV
 `define SWITCH_METADATA_IF_SV
@@ -12,9 +11,9 @@ interface switch_metadata_if #(
     parameter QOS_TAG_WIDTH   = `QOS_TAG_WIDTH
 );
     // Routing information
-    logic [PORT_MASK_WIDTH-1:0]  dest_port_mask;  // Multicast/unicast
-    logic [ID_WIDTH-1:0]         id;              // Packet ID
-    logic [QOS_TAG_WIDTH-1:0]    qos_tag;         // Priority level
+    logic [PORT_MASK_WIDTH-1:0]  dest_port_mask;
+    logic [ID_WIDTH-1:0]         id;
+    logic [QOS_TAG_WIDTH-1:0]    qos_tag;
 
     // Handshake
     logic                        valid;
@@ -31,6 +30,18 @@ interface switch_metadata_if #(
 
     // Slave modport
     modport slave (
+        input  dest_port_mask, id, qos_tag, vlan_id, valid,
+        output ready
+    );
+
+    // ADDED: Master modport with _mp suffix (for consistency with switch_data_if)
+    modport master_mp (
+        input  ready,
+        output dest_port_mask, id, qos_tag, vlan_id, valid
+    );
+
+    // ADDED: Slave modport with _mp suffix (for consistency with switch_data_if)
+    modport slave_mp (
         input  dest_port_mask, id, qos_tag, vlan_id, valid,
         output ready
     );

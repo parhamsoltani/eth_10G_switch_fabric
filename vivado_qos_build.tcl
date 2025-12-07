@@ -108,10 +108,10 @@ report_high_fanout_nets -file $OUT_PATH/high_fanout.rpt
 # Check for QoS modules
 set qos_cells [get_cells -hier -filter {REF_NAME =~ *qos*}]
 if {[llength $qos_cells] > 0} {
-    puts "\n✓ QoS modules found: [llength $qos_cells] instances"
+    puts "\n QoS modules found: [llength $qos_cells] instances"
     puts [get_cells -hier -filter {REF_NAME =~ *qos*}]
 } else {
-    puts "\n⚠ WARNING: No QoS modules found in design!"
+    puts "\n WARNING: No QoS modules found in design!"
 }
 
 puts "\n════════════════════════════════════════════════════════════"

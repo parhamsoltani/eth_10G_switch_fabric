@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Morteza Seyedi
-// 
+//
 // Create Date:  2025-08-09
 // Module Name: pipeline_mux
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -36,9 +36,9 @@ module pipeline_mux #(
 
     function automatic int layers_needed (input int n, input int k);
         int l = 0, x = n;
-        while (x > 1) begin 
+        while (x > 1) begin
             x = ceil_div(x, k);
-            l++; 
+            l++;
         end
         return l;
     endfunction
@@ -77,7 +77,7 @@ module pipeline_mux #(
                 reg [SB-1:0] pipe [lvl];
                 always @(posedge clk) begin
                     pipe[0] <= sel_internal[lvl*SB +: SB];
-                    for (integer s = 1; s < lvl; s++) 
+                    for (integer s = 1; s < lvl; s++)
                         pipe[s] <= pipe[s-1];
                 end
                 register_replicator #(
@@ -127,4 +127,4 @@ module pipeline_mux #(
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

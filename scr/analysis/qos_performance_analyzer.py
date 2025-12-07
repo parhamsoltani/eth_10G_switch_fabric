@@ -105,7 +105,7 @@ def compare_qos_impact():
     for r in results:
         print(f"{r['config']:<20} {r['qos_overhead_lut']:>8.1f}% "
               f"{r['qos_overhead_bram']:>8.1f}% {r['timing_degradation_ns']:>13.3f} "
-              f"{'✓' if r['qos_timing_met'] else '✗':<5}")
+              f"{'' if r['qos_timing_met'] else '':<5}")
 
     print("="*80 + "\n")
 

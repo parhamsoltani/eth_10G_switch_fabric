@@ -1,4 +1,4 @@
-`default_nettype none
+// `default_nettype none
 
 
 
@@ -23,8 +23,8 @@ module wrapper_fifo_array #(
     input   wire                            pop,
     input   wire [FIFO_ID_WIDTH-1:0]        pop_id,
     output  wire [DATA_WIDTH-1:0]           pop_data,
-    output  wire                            full , 
-    output  wire [FREE_FIFO_DEPTH_LOG:0]    num_free, 
+    output  wire                            full ,
+    output  wire [FREE_FIFO_DEPTH_LOG:0]    num_free,
     output  wire [NUM_FIFO-1:0]             none_mepty_fifos
 );
 
@@ -77,4 +77,4 @@ endmodule
 
 
 
-`default_nettype wire 
+`default_nettype wire

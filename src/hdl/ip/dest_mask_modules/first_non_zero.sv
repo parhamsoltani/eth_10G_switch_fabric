@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-07-31 23:39:11
 // Module Name: first_non_zero
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -28,7 +28,7 @@ module first_non_zero #(
 	input	wire	[N-1:0] 			data_i,
 	output	reg 	[LOGN-1:0]			data_o
 );
-	
+
 	reg [LOGN-1:0] comb_out;
 
 	always @( * ) begin
@@ -42,10 +42,10 @@ module first_non_zero #(
 
 
 	always @(posedge clk) begin
-		data_o 				<= comb_out;	
+		data_o 				<= comb_out;
 	end
-	
+
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

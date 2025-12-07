@@ -6,7 +6,7 @@
 [[QoS](https://img.shields.io/badge/QoS-IEEE%20802.1p-green.svg)](https://en.wikipedia.org/wiki/IEEE_P802.1p)
 [[Status](https://img.shields.io/badge/status-FPGA%20Ready-brightgreen.svg)]()
 
-> **High-performance, parametric Ethernet switching fabric with 8-level quality-of-service support**  
+> **High-performance, parametric Ethernet switching fabric with 8-level quality-of-service support**
 > Designed for data center, embedded networking, and telecommunications applications
 
 ---
@@ -49,7 +49,7 @@ This project implements a **fully parametric, QoS-aware Ethernet switch fabric**
 
 ### **🔧 Architecture**
 - ✅ **Parametric design**: Configure port count, bandwidth, buffer depth at compile-time
-- ✅ **Three topology options**: 
+- ✅ **Three topology options**:
   - Single-stage crossbar (≤16 ports)
   - Two-stage Clos (17-64 ports)
   - High-radix matching (65-128 ports)
@@ -430,10 +430,10 @@ vsim -do "set TB tb_fabric_qos_sweep; do sim_qos.tcl"
   Started: 2025-11-26 14:30:00
 ════════════════════════════════════════════════════════════
 
-✓ PASSED: tb_fabric_basic
-✓ PASSED: tb_fabric_qos_sweep
-✓ PASSED: tb_qos_classifier_unit
-✓ PASSED: tb_qos_scheduler_unit
+ PASSED: tb_fabric_basic
+ PASSED: tb_fabric_qos_sweep
+ PASSED: tb_qos_classifier_unit
+ PASSED: tb_qos_scheduler_unit
 ...
 
 ════════════════════════════════════════════════════════════
@@ -445,7 +445,7 @@ vsim -do "set TB tb_fabric_qos_sweep; do sim_qos.tcl"
   Results: regression_results_20251126_143000/
 ════════════════════════════════════════════════════════════
 
-✓✓✓ ALL TESTS PASSED ✓✓✓
+ ALL TESTS PASSED
 ```
 
 ### **Waveform Analysis**
@@ -622,7 +622,7 @@ For licensing inquiries: **alireza.abbasian@parman.com**
 
 ## 🙏 Acknowledgments
 
-- **Design Lead**: Alireza Abbasian
+- **Design Lead**: Parham Soltani
 - **Architecture**: Based on Clos-network theory (Charles Clos, 1953)
 - **QoS Standards**: IEEE 802.1p, RFC 2474 (IETF)
 - **Verification**: Inspired by UVM methodology (Accellera)

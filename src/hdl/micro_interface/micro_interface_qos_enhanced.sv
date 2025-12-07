@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
@@ -50,7 +50,7 @@ module micro_interface_qos_enhanced #(
     output reg                          use_ip_dscp,
     output reg                          use_port_classify,
     output reg  [15:0]                  aging_threshold,
-    
+
     // Statistics Inputs (from fabric)
     input  wire [31:0]                  rx_pkt_count [NUM_PORTS],
     input  wire [31:0]                  tx_pkt_count [NUM_PORTS],
@@ -116,7 +116,7 @@ module micro_interface_qos_enhanced #(
             s_axi_wready <= 1'b0;
             s_axi_bvalid <= 1'b0;
             s_axi_bresp <= 2'b00;
-            
+
             qos_enable <= 1'b1;  // Default: QoS enabled
             use_vlan_pcp <= 1'b1;
             use_ip_dscp <= 1'b1;

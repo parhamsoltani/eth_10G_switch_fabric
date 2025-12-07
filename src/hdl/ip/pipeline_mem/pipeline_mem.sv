@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-03 10:32:42
 // Module Name: pipeline_mem
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -38,9 +38,9 @@ module pipeline_mem
 	output	wire	[WIDTH-1:0]	        rd_data_o [NUM_MEM]
 );
 
-    localparam MEMORY_PRIMITIVE   = DEPTH <= 64 ? "distributed" : 
+    localparam MEMORY_PRIMITIVE   = DEPTH <= 64 ? "distributed" :
                                     DEPTH < 4000 ? "block" : "ultra";
-    
+
 
     wire                     rd_en_D     [0:NUM_MEM-1];
     wire [DEPTH_LOG-1:0]     wr_addr_D   [0:NUM_MEM-1];
@@ -50,11 +50,11 @@ module pipeline_mem
     generate
         for (genvar i = 0; i < NUM_MEM; i = i + 1) begin : gen_mem
             sdpram_xpm #(
-                .WIDTH              (WIDTH),    
-                .DEPTH              (DEPTH), 
+                .WIDTH              (WIDTH),
+                .DEPTH              (DEPTH),
                 .MEMORY_PRIMITIVE   (MEMORY_PRIMITIVE),
-                .WRITE_MODE_B       ("READ_FIRST"),     
-                .XPM_READ_LATENCY   (XPM_READ_LATENCY)     
+                .WRITE_MODE_B       ("READ_FIRST"),
+                .XPM_READ_LATENCY   (XPM_READ_LATENCY)
             ) uut (
                 .clk            (clk),
                 .wr_en_i        (wr_en_i[i]),
@@ -69,7 +69,7 @@ module pipeline_mem
 
 
 
-    
+
     // ------------------------------------------------------------
     // delayed_regs Instantiations
     // ------------------------------------------------------------
@@ -103,10 +103,10 @@ module pipeline_mem
         .signal_in      (rd_addr_i),
         .delayed_signal (rd_addr_D)
     );
-			
-		
-
-endmodule 
 
 
-`default_nettype wire 
+
+endmodule
+
+
+`default_nettype wire

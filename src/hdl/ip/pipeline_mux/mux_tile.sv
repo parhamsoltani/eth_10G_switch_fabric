@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Morteza Seyedi
-// 
+//
 // Create Date:  2025-08-09
 // Module Name: mux_tile
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 module mux_tile #(
@@ -23,7 +23,7 @@ module mux_tile #(
 	input  wire        		clk,
 	input  wire [ W-1:0]	in 		[K],
 	input  wire [SB-1:0]	sel,
-	output reg  [ W-1:0]	out 
+	output reg  [ W-1:0]	out
 );
 
 	always @(posedge clk) begin
@@ -32,4 +32,4 @@ module mux_tile #(
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-`default_nettype none
+// `default_nettype none
 
 module packet_mode_fifo_array_model #(
     parameter WIDTH             = 13,

@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-02 16:01:45
 // Module Name: packet_to_cell
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -44,7 +44,7 @@ module packet_to_cell #(
 
     input   wire                                force_to_send,
     input   wire                                dfifo_ready,
-    
+
     output  wire [NUM_PORT-1:0]                 dest_mask_o,
     output  wire                                pop_iq_o,
     output  wire                                wr_en_o,      // to pipeline mem and IQ pop
@@ -73,37 +73,37 @@ module packet_to_cell #(
     //==============================================================================
     // wires, regs and memories
     //==============================================================================
-    
+
     wire [W_MINI-1:0] data_i_D [0:2];
     wire wr_en_reg_D [0:1];
 
-    
 
 
-    reg [S_LOG-1:0]             last_minicell_index_reg = '0;   
+
+    reg [S_LOG-1:0]             last_minicell_index_reg = '0;
     reg                         wr_en_reg = '0;
     reg                         is_bad_frame_reg = '0;
     reg                         make_cell_reg = '0;
     reg                         last_cell_reg = '0;
     reg [S-1:0]                 keep_minicell_reg = '0;
-    reg [KEEP_WIDTH-1:0]        keep_last_reg = '0;   
-    reg [NUM_PORT-1:0]          dest_mask_reg = '0;   
-    reg                         first_mini_cell = 1;  
-    reg [$clog2(START_NUM_CELL_FORCED):0]                   num_send_cell_reg   = 0;            
+    reg [KEEP_WIDTH-1:0]        keep_last_reg = '0;
+    reg [NUM_PORT-1:0]          dest_mask_reg = '0;
+    reg                         first_mini_cell = 1;
+    reg [$clog2(START_NUM_CELL_FORCED):0]                   num_send_cell_reg   = 0;
 
 
-    reg [S_LOG-1:0]             last_minicell_index_next; 
+    reg [S_LOG-1:0]             last_minicell_index_next;
     reg                         wr_en_next;
     reg                         is_bad_frame_next;
     reg                         make_cell_next;
     reg                         last_cell_next;
     reg [S-1:0]                 keep_minicell_next;
-    reg [KEEP_WIDTH-1:0]        keep_last_next;  
-    reg [NUM_PORT-1:0]          dest_mask_next;           
-    reg                         first_mini_cell_next;   
-    reg [$clog2(START_NUM_CELL_FORCED):0]                   num_send_cell_next;    
+    reg [KEEP_WIDTH-1:0]        keep_last_next;
+    reg [NUM_PORT-1:0]          dest_mask_next;
+    reg                         first_mini_cell_next;
+    reg [$clog2(START_NUM_CELL_FORCED):0]                   num_send_cell_next;
 
-    reg [$clog2(FULL_WAIT_DURATION)-1:0] dont_send_duration = 0;         
+    reg [$clog2(FULL_WAIT_DURATION)-1:0] dont_send_duration = 0;
 
     reg force_to_send_reg;
     reg force_to_send_next;
@@ -127,7 +127,7 @@ module packet_to_cell #(
 
 
     always @(posedge clk) begin
-        
+
         if (dfifo_ready) begin
             if (dont_send_duration>0) begin
                 dont_send_duration <= dont_send_duration-1;
@@ -138,7 +138,7 @@ module packet_to_cell #(
             dont_send_duration <= FULL_WAIT_DURATION-1;
         end
     end
-    
+
 
     always @(*) begin
         last_minicell_index_next = last_minicell_index_reg;
@@ -154,7 +154,7 @@ module packet_to_cell #(
         make_cell_next = '0;
         last_cell_next = '0;
         dest_mask_next = dest_mask_rx;
-        
+
         if (force_to_send) begin
             force_to_send_next = 1;
         end else begin
@@ -164,7 +164,7 @@ module packet_to_cell #(
         if (first_mini_cell && start_time_slot) begin
             keep_minicell_next = 0;
             first_mini_cell_next = 0;
-        end 
+        end
 
 
         case (p2c_state)
@@ -215,7 +215,7 @@ module packet_to_cell #(
                         end else begin
                             if (num_send_cell_reg<START_NUM_CELL_FORCED || force_to_send_reg) begin
                                 p2c_state_next = FORCE_SEND;
-                            end else begin 
+                            end else begin
                                 p2c_state_next = IDLE_REMAIN;
                             end
                         end
@@ -246,7 +246,7 @@ module packet_to_cell #(
                             end else begin
                                 if (num_send_cell_reg<START_NUM_CELL_FORCED || force_to_send_reg) begin
                                     p2c_state_next = FORCE_SEND;
-                                end else begin 
+                                end else begin
                                     p2c_state_next = IDLE_REMAIN;
                                 end
                             end
@@ -263,13 +263,13 @@ module packet_to_cell #(
                         drive_cell();
                         if (num_send_cell_reg<START_NUM_CELL_FORCED || force_to_send_reg) begin
                             p2c_state_next = FORCE_SEND;
-                        end else begin 
+                        end else begin
                             p2c_state_next = IDLE_REMAIN;
                         end
                     end
                 end
             end
-            
+
             REWRITE: begin
                 if (!dfifo_ready) begin
                     p2c_state_next = FULL_FINISH_CELL;
@@ -303,24 +303,24 @@ module packet_to_cell #(
         endcase
     end
 
-    
+
 
 
 
     always @(posedge clk) begin
-        wr_en_reg           <= wr_en_next;   
-        is_bad_frame_reg    <= is_bad_frame_next;           
-        make_cell_reg       <= make_cell_next;       
-        last_cell_reg       <= last_cell_next;       
-        keep_minicell_reg   <= keep_minicell_next;           
-        keep_last_reg       <= keep_last_next;    
-        last_minicell_index_reg <= last_minicell_index_next;   
+        wr_en_reg           <= wr_en_next;
+        is_bad_frame_reg    <= is_bad_frame_next;
+        make_cell_reg       <= make_cell_next;
+        last_cell_reg       <= last_cell_next;
+        keep_minicell_reg   <= keep_minicell_next;
+        keep_last_reg       <= keep_last_next;
+        last_minicell_index_reg <= last_minicell_index_next;
         p2c_state <= p2c_state_next;
         dest_mask_reg <= dest_mask_next;
         first_mini_cell <= first_mini_cell_next;
         force_to_send_reg <= force_to_send_next;
     end
-    
+
 
 
 
@@ -362,7 +362,7 @@ module packet_to_cell #(
 
     task write_minicell();
         wr_en_next = 1;
-        
+
         keep_last_next = keep_rx;
         is_bad_frame_next = is_bad_frame_rx;
 
@@ -380,4 +380,4 @@ module packet_to_cell #(
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

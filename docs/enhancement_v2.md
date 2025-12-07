@@ -40,14 +40,14 @@ The remaining **strategic gap** to reach Q1 publication quality centers on three
 | **Multicast Address Replication** | ✅ **FULLY IMPLEMENTED** | None | Validate memory savings measurements |
 | **Matching Arbiter (QoS-Aware)** | ✅ **FULLY IMPLEMENTED** | None | Add formal correctness proof |
 | **Dynamic Memory Allocation** | ✅ **FULLY IMPLEMENTED** (linklist_dynamic_fifo) | None | Document utilization vs. fixed allocation |
-| **Adaptive QoS Scheduler** | ⚠️ **PARTIALLY IMPLEMENTED** | Aging mechanism exists, but no dynamic quantum adjustment | **Add feedback-driven weight controller** (2-3 weeks) |
+| **Adaptive QoS Scheduler** | ️ **PARTIALLY IMPLEMENTED** | Aging mechanism exists, but no dynamic quantum adjustment | **Add feedback-driven weight controller** (2-3 weeks) |
 | **Predictive Arbitration (Kalman)** | ❌ **NOT IMPLEMENTED** | Urgency-based arbiter exists, but no prediction | **Add Kalman predictor module** (3-4 weeks) |
-| **Dynamic XPQ Buffer Pooling** | ⚠️ **PARTIALLY IMPLEMENTED** | Shared memory exists, but no global pool manager | **Add pool manager with priority reservations** (2-3 weeks) |
+| **Dynamic XPQ Buffer Pooling** | ️ **PARTIALLY IMPLEMENTED** | Shared memory exists, but no global pool manager | **Add pool manager with priority reservations** (2-3 weeks) |
 | **Elastic Crosspoint Scheduling (ECS)** | ❌ **NOT IMPLEMENTED** | Fundamental architecture gap | **FLAGSHIP CONTRIBUTION** (6-8 weeks) |
 | **TSN Integration (802.1Qbv)** | ❌ **NOT IMPLEMENTED** | No time-gated scheduling | **Optional differentiation** (2-3 weeks) |
 | **In-Network ML Classification** | ❌ **NOT IMPLEMENTED** | Classification exists but not ML-based | **Optional intelligence layer** (3-4 weeks) |
-| **Formal Verification (TLA+/SPIN)** | ⚠️ **PARTIALLY IMPLEMENTED** | Verification framework exists, no formal proofs | **Add TLA+ specs + model checking** (2-3 weeks) |
-| **FPGA Testbed Validation** | ⚠️ **INFRASTRUCTURE EXISTS** | Build scripts present, no hardware deployment | **Deploy on VCU118 + measure** (3-4 weeks) |
+| **Formal Verification (TLA+/SPIN)** | ️ **PARTIALLY IMPLEMENTED** | Verification framework exists, no formal proofs | **Add TLA+ specs + model checking** (2-3 weeks) |
+| **FPGA Testbed Validation** | ️ **INFRASTRUCTURE EXISTS** | Build scripts present, no hardware deployment | **Deploy on VCU118 + measure** (3-4 weeks) |
 
 ### 1.2 Key Insight: Leverage Existing Implementation Strengths
 
@@ -1860,8 +1860,8 @@ Combined (synergistic):      +680%
 | **"Implement cell switching"** | ✅ Already done | **Validate:** Show latency-throughput tradeoff curves for S=1,10,20 |
 | **"Add multicast support"** | ✅ Already done | **Quantify:** Measure actual memory savings under realistic multicast workloads |
 | **"Parametric port count"** | ✅ Already done | **Expand:** Test more configurations (N=8, 16, 24, 40, 64), document scalability limits |
-| **"Dynamic buffer pooling"** | ⚠️ Partial (linklist exists) | **Enhance:** Add global pool manager with priority reservations (2-3 weeks) |
-| **"Adaptive QoS"** | ⚠️ Partial (aging exists) | **Complete:** Add feedback-driven quantum adjustment (1.5 weeks) |
+| **"Dynamic buffer pooling"** | ️ Partial (linklist exists) | **Enhance:** Add global pool manager with priority reservations (2-3 weeks) |
+| **"Adaptive QoS"** | ️ Partial (aging exists) | **Complete:** Add feedback-driven quantum adjustment (1.5 weeks) |
 | **"Predictive arbitration"** | ❌ Not done | **Implement:** Kalman predictor module (3 weeks) |
 | **"Elastic crosspoint"** | ❌ Not done | **FLAGSHIP:** ECS manager + multi-path (6-8 weeks) |
 

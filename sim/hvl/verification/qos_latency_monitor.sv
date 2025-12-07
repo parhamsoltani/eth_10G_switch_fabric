@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // QoS Latency Tracking Monitor
 // Measures end-to-end latency per QoS class with statistical analysis
@@ -211,11 +211,11 @@ class qos_latency_tracker;
         // Priority ordering validation
         if (packet_count[`PRIORITY_CRITICAL] > 0 && packet_count[`PRIORITY_LOW] > 0) begin
             if (avg_latency[`PRIORITY_CRITICAL] < avg_latency[`PRIORITY_LOW]) begin
-                $display("\n  ✓ Priority enforcement verified:");
+                $display("\n   Priority enforcement verified:");
                 $display("    CRITICAL avg: %.2f ns  <  LOW avg: %.2f ns",
                     avg_latency[`PRIORITY_CRITICAL], avg_latency[`PRIORITY_LOW]);
             end else begin
-                $display("\n  ✗ PRIORITY VIOLATION DETECTED:");
+                $display("\n   PRIORITY VIOLATION DETECTED:");
                 $display("    CRITICAL avg: %.2f ns  >=  LOW avg: %.2f ns",
                     avg_latency[`PRIORITY_CRITICAL], avg_latency[`PRIORITY_LOW]);
             end

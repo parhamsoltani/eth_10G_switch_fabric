@@ -44,7 +44,7 @@ vivado -mode batch -source scr/build_hw/build_switches_main.tcl \
 
 # 4. Check for errors
 if grep -q "ERROR:" "${OUTPUT_DIR}/vivado.log"; then
-    echo "✗ BUILD FAILED - Check ${OUTPUT_DIR}/vivado.log"
+    echo " BUILD FAILED - Check ${OUTPUT_DIR}/vivado.log"
     exit 1
 fi
 

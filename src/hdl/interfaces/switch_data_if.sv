@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 
 `ifndef SWITCH_DATA_IF_SV
 `define SWITCH_DATA_IF_SV

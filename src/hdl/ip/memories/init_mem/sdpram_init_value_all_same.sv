@@ -1,7 +1,7 @@
 // ========================================================
-// Description   :  
+// Description   :
 // Start project : 2024-09-15
-// Author        : Parham Soltani 
+// Author        : Parham Soltani
 // ========================================================
 
 
@@ -9,7 +9,7 @@
 
 
 `timescale 1ns / 1ns
-`default_nettype none
+// `default_nettype none
 
 
 module sdpram_init_value_all_same
@@ -19,7 +19,7 @@ module sdpram_init_value_all_same
     parameter   DEPTH               = 512,
     parameter   MEM_VALUE           = 2,
 	parameter	MEMORY_PRIMITIVE	= "distributed",			// "auto", "block", "distributed", "ultra"
-	parameter	XPM_READ_LATENCY    = 1,		    // 
+	parameter	XPM_READ_LATENCY    = 1,		    //
 	// DO NOT change following parameters
 	parameter	DEPTH_LOG		    = $clog2(DEPTH)
 )
@@ -34,7 +34,7 @@ module sdpram_init_value_all_same
 	input	wire	[DEPTH_LOG-1:0]	    rd_addr_i,
 	output	wire	[WIDTH-1:0]	        rd_data_o
 );
-    
+
     `ifdef SIM
         localparam string INIT_FILE_NAME    = $sformatf("../src/inc/mem_init/mem_init_all_%0d_depth_%0d.mem", MEM_VALUE, DEPTH);
     `else
@@ -60,10 +60,10 @@ module sdpram_init_value_all_same
         .rd_data_o  (rd_data_o)
     );
 
-    
-		
-
-endmodule 
 
 
-`default_nettype wire 
+
+endmodule
+
+
+`default_nettype wire

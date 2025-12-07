@@ -1,5 +1,5 @@
 `timescale 1ns / 1ns
-`default_nettype none
+// `default_nettype none
 
 
 
@@ -28,7 +28,7 @@ module sync_fifo_init_value #(
 
     localparam INIT_LOW = FWFT_MODE ? N1 + 1 : N1;
 
-    
+
     localparam XPM_READ_LATENCY      = 1;
     localparam MEM_DEPTH          = 2**DEPTH_LOG;
 
@@ -50,16 +50,16 @@ module sync_fifo_init_value #(
     assign empty    = empty_reg;
     assign count    = count_reg;
 
-    generate 
+    generate
         if(FWFT_MODE) begin
 
             // RAM output and prefetch register
-            
+
             reg  [WIDTH-1:0] data_out_r = N1;
 
             assign pop_data = data_out_r;
 
-            
+
             // Pointer & counter update
             always @(posedge clk) begin
                 // pack enables into a two-bit vector
@@ -72,9 +72,9 @@ module sync_fifo_init_value #(
                             wr_ptr <= wr_ptr + 1;
                         end
                         count_reg  <= count_reg + 1;
-                        if (count_reg == MEM_DEPTH) 
+                        if (count_reg == MEM_DEPTH)
                             full_reg    <= 1;
-                        
+
                         empty_reg   <= 0;
                     end
                     2'b01: begin
@@ -84,7 +84,7 @@ module sync_fifo_init_value #(
                         data_out_r <= mem_rd_data;
 
                         full_reg    <= 0;
-                        
+
                         if (count_reg == 1)
                             empty_reg   <= 1;
                     end
@@ -103,7 +103,7 @@ module sync_fifo_init_value #(
         end else if (!FWFT_MODE ) begin
 
             assign pop_data = mem_rd_data;
-            
+
 
             // Pointer & counter update
             always @(posedge clk) begin
@@ -113,9 +113,9 @@ module sync_fifo_init_value #(
                         // write only
                         wr_ptr <= wr_ptr + 1;
                         count_reg  <= count_reg + 1;
-                        if (count_reg == MEM_DEPTH - 1) 
+                        if (count_reg == MEM_DEPTH - 1)
                             full_reg    <= 1;
-                        
+
                         empty_reg   <= 0;
                     end
                     2'b01: begin
@@ -124,7 +124,7 @@ module sync_fifo_init_value #(
                         count_reg  <= count_reg - 1;
 
                         full_reg    <= 0;
-                        
+
                         if (count_reg == 1)
                             empty_reg   <= 1;
                     end
@@ -135,7 +135,7 @@ module sync_fifo_init_value #(
                     end
                 endcase
             end
-        end 
+        end
     endgenerate
 
 

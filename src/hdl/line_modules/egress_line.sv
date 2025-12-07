@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 
 `include "fabric_params.vh"
 
@@ -71,7 +71,8 @@ module egress_line #(
             oq_rd_valid <= 1'b0;
 
             if (external_tx.ready && oq_fifo.size() > 0) begin
-                oq_entry_t entry = oq_fifo.pop_front();
+                automatic oq_entry_t entry;
+                entry = oq_fifo.pop_front();
                 external_tx.data <= entry.data;
                 external_tx.keep <= entry.keep;
                 external_tx.last <= entry.last;

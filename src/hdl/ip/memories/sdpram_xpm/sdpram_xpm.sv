@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-07-26 10:20:00
 // Module Name: sdpram_xpm
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -25,7 +25,7 @@ module sdpram_xpm
     parameter   DEPTH               = 32,
 	parameter	MEMORY_PRIMITIVE	= "distributed",			// "auto", "block", "distributed", "ultra"
 	parameter	WRITE_MODE_B        = "READ_FIRST",		        // WRITE_FIRST | READ_FIRST | NO_CHANGE
-	parameter	XPM_READ_LATENCY    = 1,		    // 
+	parameter	XPM_READ_LATENCY    = 1,		    //
 	// DO NOT change following parameters
 	parameter	DEPTH_LOG		    = $clog2(DEPTH)
 )
@@ -80,20 +80,20 @@ module sdpram_xpm
         .dina			(wr_data_i),
         .injectsbiterra	(1'b0),
         .injectdbiterra	(1'b0),
-        
+
         // Port B module ports
         .clkb			(clk),
         .rstb			(1'b0),
         .enb			(rd_en_i),		// rd_en for READ_LATENCY_B == 1
-        .regceb			(1'b1),		
+        .regceb			(1'b1),
         .addrb			(rd_addr_i),
         .doutb			(rd_data_o),
         .sbiterrb		(),
         .dbiterrb		()
     );
-			
-		
 
-endmodule 
 
-`default_nettype wire 
+
+endmodule
+
+`default_nettype wire

@@ -1,116 +1,40 @@
-#===============================================================================
-# Compilation Script for tb_fabric_qos_sweep
-#===============================================================================
-puts "════════════════════════════════════════════════════════════"
-puts "  Compiling: tb_fabric_qos_sweep"
-puts "════════════════════════════════════════════════════════════"
+# QoS Sweep Test Compilation Script
+# Fixed to handle dual include paths
 
-set INCLUDE_OPTS "+incdir+../../src/inc +incdir+../inc +define+SIMULATION +define+ENABLE_QOS"
+set sim_include_path "inc"
+set src_include_path "../src/inc"
 
-onerror {quit -code 1}
+# Common compilation flags
+set vlog_flags "-vopt -sv +acc -incr -source +define+SIM"
+set include_flags "+incdir+$sim_include_path +incdir+$src_include_path"
 
-#===============================================================================
-# Step 1: Packages & Interfaces
-#===============================================================================
-puts "\n[1/6] Compiling packages..."
-vlog -sv $INCLUDE_OPTS ../hvl/model_for_verification/classes/fabric_frame_pkg.sv
+# Compile packages first
+vlog {*}$vlog_flags {*}$include_flags "hvl/model_for_verification/classes/fabric_frame_pkg.sv"
 
-puts "[2/6] Compiling interfaces..."
-vlog -sv $INCLUDE_OPTS ../../src/hdl/interfaces/switch_data_if.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/interfaces/switch_metadata_if.sv
+# Compile verification infrastructure
+vlog {*}$vlog_flags {*}$include_flags "hvl/verification/*.sv"
+vlog {*}$vlog_flags {*}$include_flags "hvl/model_for_verification/*.sv"
 
-#===============================================================================
-# Step 2: IP Components (in dependency order)
-#===============================================================================
-puts "\n[3/6] Compiling IP components..."
+# Compile HVL components
+vlog {*}$vlog_flags {*}$include_flags "ip/submodule/ethernet_switch_hvl/*.sv"
 
-# Basic components
-vlog -sv $INCLUDE_OPTS ../../src/hdl/ip/dest_mask_modules/first_non_zero.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/ip/dest_mask_modules/first_non_zero_no_delay.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/ip/dest_mask_modules/one_hot_none_zero.sv
+# Compile HDL components
+vlog {*}$vlog_flags {*}$include_flags "ip/submodule/ethernet_switch_hdl/*.sv"
+vlog {*}$vlog_flags {*}$include_flags "ip/submodule/ethernet_switch_hdl/*/*.sv"
+vlog {*}$vlog_flags {*}$include_flags "ip/submodule/ethernet_switch_hdl/*/*/*.sv"
 
-# QoS-specific components
-vlog -sv $INCLUDE_OPTS ../../src/hdl/ip/combinational_components/first_none_zero_except_k_qos.sv
+# Compile Xilinx IPs
+vlog {*}$vlog_flags {*}$include_flags "ip/xilinx_ips_sim/*.sv"
 
-# Memory components
-vlog -sv $INCLUDE_OPTS ../../src/hdl/ip/memories/sdpram_xpm/sdpram_xpm.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/ip/memories/init_mem/sdpram_init_value.sv
+# Compile testbench
+vlog {*}$vlog_flags {*}$include_flags "tb/fabric/tb_fabric_qos_sweep.sv"
 
-# FIFOs
-vlog -sv $INCLUDE_OPTS ../../src/hdl/ip/fifos/simple_fifo/simple_fifo.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/ip/fifos/dynamic_fifo/linklist_dynamic_fifo.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/ip/fifos/dynamic_fifo/packet_mode_fifo_array.sv
-
-#===============================================================================
-# Step 3: Core QoS Modules
-#===============================================================================
-puts "\n[4/6] Compiling QoS core modules..."
-
-# Arbiter (needed by scheduler)
-vlog -sv $INCLUDE_OPTS ../../src/hdl/core/round_robin_arbiter.sv
-
-# QoS processing
-vlog -sv $INCLUDE_OPTS ../../src/hdl/core/qos_classifier.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/core/qos_scheduler.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/core/qos_shaper.sv
-
-# Credit management
-vlog -sv $INCLUDE_OPTS ../../src/hdl/core/credit_manager.sv
-
-#===============================================================================
-# Step 4: Switch Components
-#===============================================================================
-puts "\n[5/6] Compiling switch components..."
-
-# Buffer modules
-vlog -sv $INCLUDE_OPTS ../../src/hdl/buffers/voq_buffer.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/buffers/xpq_buffer.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/buffers/packet_buffer.sv
-
-# Switch IPs
-vlog -sv $INCLUDE_OPTS ../../src/hdl/switch_ips/dest_finder_row_matching_qos.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/switch_ips/shared_voq.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/switch_ips/shared_xpq.sv
-
-# Line modules
-vlog -sv $INCLUDE_OPTS ../../src/hdl/line_modules/ingress_line_qos.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/line_modules/egress_line.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/line_modules/ingress_line_wrapper.sv
-
-# Fabric components
-vlog -sv $INCLUDE_OPTS ../../src/hdl/fabric/fabric_ingress.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/fabric/fabric_crosspoint.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/fabric/fabric_egress.sv
-
-# Switch topologies (compile all, instantiation selects)
-vlog -sv $INCLUDE_OPTS ../../src/hdl/switches/switch_s.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/switches/switch_2s.sv
-vlog -sv $INCLUDE_OPTS ../../src/hdl/switches/switch_high_radix_matching.sv
-
-# Top-level fabric
-vlog -sv $INCLUDE_OPTS ../../src/hdl/switch_fabric.sv
-
-#===============================================================================
-# Step 5: Verification Infrastructure
-#===============================================================================
-puts "\n[6/6] Compiling verification components..."
-
-# QoS monitors
-vlog -sv $INCLUDE_OPTS ../hvl/verification/qos_latency_monitor.sv
-vlog -sv $INCLUDE_OPTS ../hvl/verification/qos_checker_enhanced.sv
-vlog -sv $INCLUDE_OPTS ../hvl/verification/qos_checker_scoreboard.sv
-
-# Traffic generators/monitors
-vlog -sv $INCLUDE_OPTS ../hvl/model_for_verification/fabric_driver.sv
-vlog -sv $INCLUDE_OPTS ../hvl/model_for_verification/fabric_monitor.sv
-vlog -sv $INCLUDE_OPTS ../hvl/model_for_verification/switch_fabric_model_qos.sv
-
-#===============================================================================
-# Step 6: Testbench
-#===============================================================================
-puts "\nCompiling testbench..."
-vlog -sv $INCLUDE_OPTS ../tb/fabric/tb_fabric_qos_sweep.sv
-
-puts "════════════════════════════════════════════════════════════"
-puts "  ✓ Compilation complete for tb_fabric_qos_sweep"
-puts "════════════════════════════════════════════════════════════"
+# Compile DUT
+vlog {*}$vlog_flags +incdir+$src_include_path "$project_path/src/hdl/interfaces/*.sv"
+vlog {*}$vlog_flags +incdir+$src_include_path "$project_path/src/hdl/ip/*/*.sv"
+vlog {*}$vlog_flags +incdir+$src_include_path "$project_path/src/hdl/ip/*/*/*.sv"
+vlog {*}$vlog_flags +incdir+$src_include_path "$project_path/src/hdl/ip/*/*/*/*.sv"
+vlog {*}$vlog_flags +incdir+$src_include_path "$project_path/src/hdl/core/*.sv"
+vlog {*}$vlog_flags +incdir+$src_include_path "$project_path/src/hdl/line_modules/*.sv"
+vlog {*}$vlog_flags +incdir+$src_include_path "$project_path/src/hdl/switch_ips/*.sv"
+vlog {*}$vlog_flags +incdir+$src_include_path "$project_path/src/hdl/*.sv"

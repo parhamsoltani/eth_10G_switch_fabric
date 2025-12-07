@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-08 12:26:30
 // Module Name: multicast_mask_to_index
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -61,7 +61,7 @@ module multicast_mask_to_index #(
     wire none_empty_fifo = !fifo_empty_o;
 
     wire [N-1:0]                fifo_mask_out = fifo_pop_data_o[FIFO_WIDTH-1 : DATA_WIDTH];
-    reg [N-1:0]                 fifo_mask_out_reg = 0;   
+    reg [N-1:0]                 fifo_mask_out_reg = 0;
 
     wire [DATA_WIDTH-1:0]       fifo_data_out = fifo_pop_data_o[DATA_WIDTH-1:0];
     reg	[DATA_WIDTH-1:0] 		fifo_data_out_reg = 0;
@@ -79,7 +79,7 @@ module multicast_mask_to_index #(
 
 
 
-   
+
 
 
     //==============================================================================
@@ -102,7 +102,7 @@ module multicast_mask_to_index #(
     always @(posedge clk) begin
         if (fifo_pop_i) begin
             fifo_mask_out_reg <= fifo_mask_out;
-            fifo_data_out_reg <= fifo_data_out; 
+            fifo_data_out_reg <= fifo_data_out;
         end else begin
             fifo_mask_out_reg[first_non_zero_mask] <= 0;
         end
@@ -142,7 +142,7 @@ module multicast_mask_to_index #(
                 push_o_reg <= 0;
             end
         end
-		
+
     end
 
 
@@ -150,12 +150,12 @@ module multicast_mask_to_index #(
     always @( * ) begin
 
 
-        
-        
+
+
 
 	end
 
- 
+
     //==============================================================================
     // Instantiated Modules
     //==============================================================================
@@ -178,7 +178,7 @@ module multicast_mask_to_index #(
     );
 
 
-    
+
 
 
     num_non_zero_no_delay #(
@@ -188,7 +188,7 @@ module multicast_mask_to_index #(
         .data_o (num_non_zero_mask)
     );
 
-    
+
 
     first_non_zero_no_delay #(
         .N      (N)
@@ -202,4 +202,4 @@ module multicast_mask_to_index #(
 endmodule
 
 
-`default_nettype wire 
+`default_nettype wire

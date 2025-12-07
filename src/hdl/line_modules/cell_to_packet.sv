@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-02 16:02:05
 // Module Name: cell_to_packet
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -58,9 +58,9 @@ module cell_to_packet #(
     // reg inputs
     reg                     last_cell_reg;
     reg [S-1:0]             keep_minicell_reg;
-    reg [KEEP_WIDTH-1:0]    keep_last_reg; 
+    reg [KEEP_WIDTH-1:0]    keep_last_reg;
     reg                     is_bad_frame_reg;
-    reg [S_LOG-1:0]         last_minicell_index_reg = '0;   
+    reg [S_LOG-1:0]         last_minicell_index_reg = '0;
 
     // temp aux variables
 
@@ -71,7 +71,7 @@ module cell_to_packet #(
     assign data_tx = data_i;
     assign keep_tx          = keep_reg_o;
     assign valid_tx         = valid_reg_o;
-    assign is_bad_frame_tx  = is_bad_frame_reg_o ;       
+    assign is_bad_frame_tx  = is_bad_frame_reg_o ;
     assign last_tx          = last_reg_o;
 
 
@@ -106,7 +106,7 @@ module cell_to_packet #(
                 is_bad_frame_reg_o <= 0;
                 keep_reg_o <= W_MINI/8;
             end
-        end else begin  
+        end else begin
             keep_reg_o <= 0;
             valid_reg_o <= 0;
             is_bad_frame_reg_o <= 0;
@@ -127,4 +127,4 @@ module cell_to_packet #(
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

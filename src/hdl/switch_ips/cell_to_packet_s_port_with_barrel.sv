@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-11 18:43:08
 // Module Name: cell_to_packet_s_port_with_barrel
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -82,14 +82,14 @@ module cell_to_packet_s_port_with_barrel #(
     generate
         for (genvar i = 0; i < S; i++) begin : gen_assign_p2c
 
-            
+
             assign c2p_start_of_cell_i[i]    = start_of_cell_i && rr_sel[rr_index(i,START_OF_CELL_DELAY)];
             assign c2p_data_i[i]             = barrel_rd_data_data_out[i];
             assign c2p_metadata_i[i]         = metadata_i;
             assign c2p_last_cell_i[i]        = last_cell_i;
 
 
-            
+
         end
     endgenerate
 
@@ -99,7 +99,7 @@ module cell_to_packet_s_port_with_barrel #(
             assign data_tx [i]          = c2p_data_tx[i];
             assign keep_tx [i]          = c2p_keep_tx[i];
             assign valid_tx [i]         = c2p_valid_tx[i];
-            assign is_bad_frame_tx [i]  = c2p_is_bad_frame_tx[i];        
+            assign is_bad_frame_tx [i]  = c2p_is_bad_frame_tx[i];
             assign last_tx [i]          = c2p_last_tx[i];
         end
     endgenerate
@@ -160,4 +160,4 @@ module cell_to_packet_s_port_with_barrel #(
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

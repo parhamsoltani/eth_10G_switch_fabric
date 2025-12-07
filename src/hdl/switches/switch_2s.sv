@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 
 `include "fabric_params.vh"
 `include "qos_defines.vh"
@@ -7,16 +7,16 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-16 19:16:16
 // Module Name: switch_2s
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 //////////////////////////////////////////////////////////////////////////////////
 
 module switch_2s #(
@@ -62,7 +62,7 @@ module switch_2s #(
     //==============================================================================
     localparam S_LOG = $clog2(S);
     localparam NUM_PORT_LOG = $clog2(NUM_PORT);
-    
+
     // CHANGED: Added QoS tag to metadata
     localparam META_DATA_WIDTH = S + KEEP_WIDTH + 1 + S_LOG + QOS_TAG_WIDTH; // valids+keep+is_bad+last_idx+qos_tag
     localparam DFIFO_READY_THRESHOLD = 2*S+20;
@@ -74,7 +74,7 @@ module switch_2s #(
     localparam ROW_DEST_FINDER_LATENCY = 1;
     localparam XPQ_READ_LATENCY = 2;
     localparam XPQ_EXTRA_READ_LATENCY = 1;
-    
+
     localparam NUM_XPQ_COL = (NUM_PORT+S-1)/S;
     localparam NUM_XPQ_ROW = (NUM_PORT+(2*S)-1)/(2*S);
     localparam NUM_VOQ = (NUM_PORT+S-1)/S;
@@ -200,17 +200,17 @@ module switch_2s #(
 
     generate
         for (genvar c = 0; c < NUM_XPQ_COL; c++) begin
-            
+
             assign cell2pkt_start_of_cell[c] = col_dest_finder_chosen_xpq_valid_D[c][COL_READ_LATENCY];
             assign cell2pkt_metadata     [c] = mux_pop_metadata[c];
             assign cell2pkt_last_cell    [c] = mux_pop_last_cell[c];
-            assign cell2pkt_barrel_sel   [c] = col_dest_finder_cell2pkt_barrel_sel[c]; 
+            assign cell2pkt_barrel_sel   [c] = col_dest_finder_cell2pkt_barrel_sel[c];
             assign cell2pkt_data         [c] = mux_pop_data[c];
 
             for (genvar r = 0; r < NUM_XPQ_ROW; r++) begin
                 assign col_dest_finder_none_mepty_ports[c][r] = xpq_none_mepty_fifos[r][c];
             end
-            for (genvar j = 0; j < S; j++) begin 
+            for (genvar j = 0; j < S; j++) begin
                 if (c*S+j >= NUM_PORT) begin
                     assign col_dest_finder_block_ports[c][j] = 0;
                 end else begin
@@ -314,7 +314,7 @@ module switch_2s #(
                 end
 
                 assign xpq_pop             [r][c]   = col_dest_finder_chosen_xpq[c][r];
-                assign xpq_pop_id          [r][c]   = col_dest_finder_xpq_pop_id[c];  
+                assign xpq_pop_id          [r][c]   = col_dest_finder_xpq_pop_id[c];
             end
         end
     endgenerate
@@ -332,7 +332,7 @@ module switch_2s #(
                     assign valid_tx       [c*S + i] = cell2pkt_valid_tx     [c][i];
                     assign is_bad_frame_tx[c*S + i] = cell2pkt_is_bad_frame_tx[c][i];
                     assign last_tx        [c*S + i] = cell2pkt_last_tx      [c][i];
-                end 
+                end
             end
         end
     endgenerate
@@ -342,7 +342,7 @@ module switch_2s #(
             for (genvar i = 0; i < S; i++) begin : g_rd_en_flatten_lane
                 if ( r*S + i < NUM_PORT) begin
                     assign rd_en_rx[ r*S + i] = voq_rd_en_rx[r][i];
-                end 
+                end
             end
         end
     endgenerate
@@ -362,9 +362,9 @@ module switch_2s #(
                 .XPQ_EXTRA_READ_LATENCY(XPQ_EXTRA_READ_LATENCY)
             ) col_dest_finder_inst (
                 .clk                      (clk),
-                .none_mepty_ports         (col_dest_finder_none_mepty_ports[c]), 
+                .none_mepty_ports         (col_dest_finder_none_mepty_ports[c]),
                 .block_ports              (col_dest_finder_block_ports[c]),
-                .dfifo_last               (col_dest_finder_last[c]),    
+                .dfifo_last               (col_dest_finder_last[c]),
                 .chosen_xpq_valid_o       (col_dest_finder_chosen_xpq_valid[c]),
                 .chosen_xpq_o             (col_dest_finder_chosen_xpq[c]),
                 .cell2pkt_barrel_sel      (col_dest_finder_cell2pkt_barrel_sel[c]),
@@ -390,11 +390,11 @@ module switch_2s #(
                 .ROW_RTT_DELAY  (ROW_RTT_DELAY)
             ) u_row_df_match (
                 .clk                   (clk),
-                
+
                 // NEW: Input metadata (was missing!)
                 .metadata_1            (voq_cell_metadata[2*p]),
                 .metadata_2            (voq_cell_metadata[2*p+1]),
-                
+
                 .none_mepty_ports_1    (row_dest_finder_none_mepty_ports_1[p]),
                 .none_mepty_ports_2    (row_dest_finder_none_mepty_ports_2[p]),
                 .block_ports           (row_dest_finder_block_ports[p]),
@@ -507,8 +507,8 @@ module switch_2s #(
                 .dest_mask_valid_rx     (voq_dest_mask_valid_rx[r]),
                 .rd_en_rx               (voq_rd_en_rx[r]),
 
-                .pop_index_i            (voq_pop_index[r]),        
-                .pop_i                  (voq_pop[r]),              
+                .pop_index_i            (voq_pop_index[r]),
+                .pop_i                  (voq_pop[r]),
                 .cell_valid_o           (voq_cell_valid[r]),
                 .cell_metadata_o        (voq_cell_metadata[r]),
                 .last_cell_o            (voq_last_cell[r]),
@@ -720,7 +720,7 @@ module switch_2s #(
     function automatic int ceil_div(input int a, input int b);
         return (a + b - 1) / b;
     endfunction
-    
+
     function automatic int layers_needed(input int n, input int k);
         int l = 0, x = n;
         while (x > 1) begin

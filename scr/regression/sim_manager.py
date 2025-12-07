@@ -233,21 +233,21 @@ class SimRunner:
                     result.runtime = time.time() - start_time
 
                     if process.returncode == 0:
-                        print(f"  ✓ Completed in {result.runtime:.1f}s")
+                        print(f"   Completed in {result.runtime:.1f}s")
                     else:
-                        print(f"  ✗ Failed with return code {process.returncode}")
+                        print(f"   Failed with return code {process.returncode}")
                         result.status = 'FAIL'
 
                 except subprocess.TimeoutExpired:
                     process.kill()
                     result.runtime = timeout
                     result.status = 'TIMEOUT'
-                    print(f"  ✗ TIMEOUT after {timeout}s")
+                    print(f"   TIMEOUT after {timeout}s")
 
         except Exception as e:
             result.status = 'ERROR'
             result.errors.append(str(e))
-            print(f"  ✗ ERROR: {e}")
+            print(f"   ERROR: {e}")
 
         finally:
             os.chdir(original_dir)
@@ -264,8 +264,8 @@ class SimRunner:
     def _print_result_summary(self, result: SimResult):
         """Print quick result summary"""
         status_icon = {
-            'PASS': '✓✓✓',
-            'FAIL': '✗✗✗',
+            'PASS': '',
+            'FAIL': '',
             'TIMEOUT': '⏱⏱⏱',
             'ERROR': '❌❌❌',
             'UNKNOWN': '???'
@@ -315,8 +315,8 @@ class SimRunner:
             f.write(f"║  Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}" + " "*43 + "║\n")
             f.write(f"║  Total Tests: {total:3d}" + " "*61 + "║\n")
             f.write("╠" + "═"*78 + "╣\n")
-            f.write(f"║  ✓ PASSED:  {passed:3d}" + " "*61 + "║\n")
-            f.write(f"║  ✗ FAILED:  {failed:3d}" + " "*61 + "║\n")
+            f.write(f"║   PASSED:  {passed:3d}" + " "*61 + "║\n")
+            f.write(f"║   FAILED:  {failed:3d}" + " "*61 + "║\n")
             f.write(f"║  ⏱ TIMEOUT: {timeout:3d}" + " "*61 + "║\n")
             f.write(f"║  ❌ ERROR:   {error:3d}" + " "*61 + "║\n")
             f.write("╚" + "═"*78 + "╝\n\n")
@@ -344,7 +344,7 @@ class SimRunner:
 
                 f.write(f"  Log: {result.log_file}\n")
 
-        print(f"\n✓ Report saved: {output_file}")
+        print(f"\n Report saved: {output_file}")
 
         # Also save JSON version
         json_file = output_file.with_suffix('.json')
@@ -361,7 +361,7 @@ class SimRunner:
                 'results': [r.to_dict() for r in self.results]
             }, f, indent=2)
 
-        print(f"✓ JSON report saved: {json_file}")
+        print(f" JSON report saved: {json_file}")
 
         return output_file
 
@@ -434,10 +434,10 @@ Examples:
     print(f"  Total: {total}  |  Passed: {passed}  |  Failed: {total - passed}")
 
     if passed == total:
-        print("\n  ✓✓✓ ALL TESTS PASSED ✓✓✓\n")
+        print("\n   ALL TESTS PASSED \n")
         return 0
     else:
-        print("\n  ✗✗✗ SOME TESTS FAILED ✗✗✗\n")
+        print("\n   SOME TESTS FAILED \n")
         return 1
 
 if __name__ == '__main__':

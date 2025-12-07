@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 
 `include "fabric_params.vh"
 
@@ -244,4 +244,4 @@ module packet_buffer #(
 
 endmodule
 
-`default_nettype wire
+// `default_nettype wire

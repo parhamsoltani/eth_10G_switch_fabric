@@ -1,25 +1,25 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-08-02 16:01:13
 // Module Name: egress_switch
-// Project Name: 
-// Target Devices: 
+// Project Name:
+// Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
 
 
 module egress_switch #(
-    parameter   NUM_PORT                = 10,            // number of ports     
+    parameter   NUM_PORT                = 10,            // number of ports
     parameter   W_MINI                  = 64,            // bus data width (mini cell data width)
     parameter   KEEP_WIDTH              = 10,
     parameter   OUTPUT_QUEUE_DEPTH      = 16,
@@ -98,7 +98,7 @@ module egress_switch #(
     assign output_queue_wr_tlast  = last_tx;
 
     assign oq_wr_prog_full = output_queue_wr_prog_full;
-    
+
 
     // Connect output_queue read signals to tx_data_if
     assign tx_data_if.data         = output_queue_rd_tdata;
@@ -145,4 +145,4 @@ module egress_switch #(
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire

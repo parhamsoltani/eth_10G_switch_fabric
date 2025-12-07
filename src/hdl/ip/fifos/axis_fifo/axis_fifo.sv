@@ -1,19 +1,19 @@
 
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-// 
+//
 // Create Date:  2025-03-19 10:09:15
 // Module Name: xpm_fifo_axis_wrapper
 // Project Name: switch 10*10g
 // Target Devices: ku3p
 // Tool Versions: Vivado 2022.2
-// Description: 
-// Dependencies: 
-// 
-// Additional Comments: 
+// Description:
+// Dependencies:
+//
+// Additional Comments:
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -30,30 +30,30 @@ module axis_fifo #(
                                FIFO_DEPTH_INT-PROG_FULL_THRESH : 10
 ) (
 
-   input 	wire					            async_rst, 		// active high	
-   input 	wire 					            clk, 			
+   input 	wire					            async_rst, 		// active high
+   input 	wire 					            clk,
 
-   input 	wire	[TDATA_WIDTH-1:0]       wr_tdata, 			
-   input 	wire	[TUSER_WIDTH-1:0]       wr_tuser, 			
+   input 	wire	[TDATA_WIDTH-1:0]       wr_tdata,
+   input 	wire	[TUSER_WIDTH-1:0]       wr_tuser,
    input	   wire					            wr_tvalid,
    input	   wire					            wr_tlast,
    output	wire					            wr_tready,
    output	wire		                     wr_prog_full,
-      
-   output 	wire	[TDATA_WIDTH-1:0]       rd_tdata, 			
-   output 	wire	[TUSER_WIDTH-1:0]       rd_tuser, 	 			
+
+   output 	wire	[TDATA_WIDTH-1:0]       rd_tdata,
+   output 	wire	[TUSER_WIDTH-1:0]       rd_tuser,
    output   wire					            rd_tvalid,
    output   wire					            rd_tlast,
    input 	wire					            rd_tready,
    output 	wire		                     rd_almost_empty
-      
-	
+
+
 );
 
    localparam  FIFO_MEMORY_TYPE   = FIFO_DEPTH_INT    > 64 ? "block" : "distributed";
    localparam  CASCADE_HEIGHT          = FIFO_MEMORY_TYPE == "ultra" ? FIFO_DEPTH_INT/4000: 0;
    localparam  DATA_COUNT_WIDTH        = $clog2(FIFO_DEPTH_INT) + 1;
-    
+
 
 
    xpm_fifo_axis #(
@@ -213,10 +213,10 @@ module axis_fifo #(
 
 endmodule
 
-`default_nettype wire 
+`default_nettype wire
 
 
-   
+
 
     // XPM_FIFO instantiation template for AXI Stream FIFO configurations
 // Refer to the targeted device family architecture libraries guide for XPM_FIFO documentation
@@ -510,7 +510,3 @@ endmodule
 // |---------------------------------------------------------------------------------------------------------------------|
 // | Write Data Count: This bus indicates the number of words written into the FIFO.                                     |
 // +---------------------------------------------------------------------------------------------------------------------+
-
-
-				
-				

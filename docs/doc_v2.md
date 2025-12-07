@@ -7,7 +7,7 @@
 
 **Version:** 2.0
 **Date:** November 26, 2025
-**Authors:** IUST 
+**Authors:** IUST
 **Status:** Production Release
 **Classification:** Technical Reference
 
@@ -1850,8 +1850,8 @@ Expected:
   Priority 0 gets 25 Mbps (bandwidth limited by quantum)
 
 Measured (from tb_qos_scheduler.sv):
-  Priority 7: 598 Mbps ✓
-  Priority 0: 24.8 Mbps ✓
+  Priority 7: 598 Mbps
+  Priority 0: 24.8 Mbps
 
 Maximum starvation: 4000 cycles (16 µs @ 250 MHz)
 ```
@@ -5750,10 +5750,10 @@ for cfg in "${CONFIGS[@]}"; do
 
         # Check results
         if grep -q "TEST PASSED" $RESULTS_DIR/${cfg}_${test}.log; then
-            echo "✓ PASS"
+            echo " PASS"
             ((PASS_COUNT++))
         else
-            echo "✗ FAIL"
+            echo " FAIL"
             ((FAIL_COUNT++))
             # Extract error messages
             grep "ERROR\|FAIL" $RESULTS_DIR/${cfg}_${test}.log \

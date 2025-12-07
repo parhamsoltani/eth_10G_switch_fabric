@@ -2,7 +2,7 @@
 
 #═══════════════════════════════════════════════════════════════════════════
 # QoS Switch Fabric Regression Test Suite
-# Author: Alireza Abbasian
+# Author: Parham Soltani
 # Date: 2025-11-26
 #═══════════════════════════════════════════════════════════════════════════
 
@@ -48,22 +48,22 @@ for TEST in "${TESTS[@]}"; do
     echo "────────────────────────────────────────────────────────"
     echo "  Running: ${TEST}"
     echo "────────────────────────────────────────────────────────"
-    
+
     TEST_LOG="${RESULTS_DIR}/${TEST}.log"
-    
+
     # Run simulation
     if vsim -c -do "set TB ${TEST}; set env(SIM_MODE) batch; do sim_qos.tcl" > "${TEST_LOG}" 2>&1; then
-        
+
         # Check for errors in log
         if grep -q "Error" "${TEST_LOG}" || grep -q "FAILED" "${TEST_LOG}"; then
-            echo -e "${RED}✗ FAILED${NC}: ${TEST}" | tee -a "${LOG_FILE}"
+            echo -e "${RED} FAILED${NC}: ${TEST}" | tee -a "${LOG_FILE}"
             FAIL_COUNT=$((FAIL_COUNT + 1))
         else
-            echo -e "${GREEN}✓ PASSED${NC}: ${TEST}" | tee -a "${LOG_FILE}"
+            echo -e "${GREEN} PASSED${NC}: ${TEST}" | tee -a "${LOG_FILE}"
             PASS_COUNT=$((PASS_COUNT + 1))
         fi
     else
-        echo -e "${RED}✗ ERROR${NC}: ${TEST} (compilation/runtime error)" | tee -a "${LOG_FILE}"
+        echo -e "${RED} ERROR${NC}: ${TEST} (compilation/runtime error)" | tee -a "${LOG_FILE}"
         FAIL_COUNT=$((FAIL_COUNT + 1))
     fi
 done
@@ -80,9 +80,9 @@ echo "  Results: ${RESULTS_DIR}"
 echo "════════════════════════════════════════════════════════════"
 
 if [ ${FAIL_COUNT} -eq 0 ]; then
-    echo -e "\n${GREEN}✓✓✓ ALL TESTS PASSED ✓✓✓${NC}\n"
+    echo -e "\n${GREEN} ALL TESTS PASSED ${NC}\n"
     exit 0
 else
-    echo -e "\n${RED}✗✗✗ SOME TESTS FAILED ✗✗✗${NC}\n"
+    echo -e "\n${RED} SOME TESTS FAILED ${NC}\n"
     exit 1
 fi

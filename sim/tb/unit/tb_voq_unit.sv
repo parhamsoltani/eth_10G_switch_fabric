@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+// `default_nettype none
 
 module tb_voq_unit;
     parameter DATA_WIDTH = 64;
@@ -71,7 +71,7 @@ module tb_voq_unit;
 
         // Test 1: Write to different QoS levels
         $display("[%0t] TEST 1: Multi-QoS Write/Read", $time);
-        
+
         // Write high priority
         @(posedge clk);
         wr_en = 1;
@@ -127,14 +127,14 @@ module tb_voq_unit;
         rd_en = 1;
 
         repeat(4) @(posedge clk);
-        
+
         if (rd_data != 64'h2222) begin
             $error("Priority violation: expected high-pri data 0x2222, got %h", rd_data);
         end
 
         rd_en = 0;
 
-        $display("\n✓✓✓ VOQ UNIT TEST PASSED ✓✓✓");
+        $display("\n VOQ UNIT TEST PASSED ");
         $finish;
     end
 
