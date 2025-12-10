@@ -40,11 +40,15 @@ puts ""
 # ===========================================================================
 
 puts "Compiling Xilinx XPM libraries..."
-
-vlog -work work C:/Xilinx/Vivado/2022.2/data/verilog/src/glbl.v
-vlog -work work C:/Xilinx/Vivado/2022.2/data/ip/xpm/xpm_fifo/hdl/xpm_fifo.sv
-vlog -work work C:/Xilinx/Vivado/2022.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv
-vlog -work work C:/Xilinx/Vivado/2022.2/data/ip/xpm/xpm_memory/hdl/xpm_memory.sv
+if {[info exists ::env(XILINX_VIVADO)]} {
+    vlog -work work $::env(XILINX_VIVADO)/data/verilog/src/glbl.v
+    vlog -work work $::env(XILINX_VIVADO)/data/ip/xpm/xpm_fifo/hdl/xpm_fifo.sv
+    vlog -work work $::env(XILINX_VIVADO)/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv
+    vlog -work work $::env(XILINX_VIVADO)/data/ip/xpm/xpm_memory/hdl/xpm_memory.sv
+} else {
+    puts "ERROR: XILINX_VIVADO not set. Set it to your Vivado install path."
+    quit -code 1
+}
 
 # ===========================================================================
 # Compile packages and interfaces

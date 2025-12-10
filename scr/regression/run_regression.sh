@@ -86,3 +86,20 @@ else
     echo -e "\n${RED} SOME TESTS FAILED ${NC}\n"
     exit 1
 fi
+
+
+
+# **[MODIFIED]** Add port sweep
+ports=(8 16 32 64 128)
+for p in "${ports[@]}"; do
+    echo "Running for NUM_PORT=$p"
+    vsim -c -do "set NUM_PORT $p; do compile_all.tcl; run -all; quit"
+    python ../analysis/qos_performance_analyzer.py results_port_$p.log  # Analyze
+done
+
+# QoS stress: Vary tags
+for qos in {0..7}; do
+    # ... inject QoS-specific sequences in UVMF
+done
+
+echo "Regression complete."

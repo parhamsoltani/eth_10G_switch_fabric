@@ -95,13 +95,13 @@ if {$compile_error == 0} {
     radix -hexadecimal -showbase
 
     # Check if wave.tcl exists before sourcing it
-    if {[file exists scr/$TB/wave.tcl]} {
-        do scr/$TB/wave.tcl
-    } else {
-        puts "WARNING: Wave configuration file scr/$TB/wave.tcl not found"
-        puts "Adding default signals to waveform..."
-        add wave -r sim:/$TB/*
-    }
+#    if {[file exists scr/$TB/wave.tcl]} {
+#        do scr/$TB/wave.tcl
+#    } else {
+#        puts "WARNING: Wave configuration file scr/$TB/wave.tcl not found"
+#        puts "Adding default signals to waveform..."
+#        add wave -r sim:/$TB/*
+#    }
 
     #############################################
 

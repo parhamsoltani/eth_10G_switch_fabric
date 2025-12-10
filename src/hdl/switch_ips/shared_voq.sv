@@ -466,3 +466,98 @@ module shared_voq #(
 endmodule
 
 `default_nettype wire
+
+
+/*
+
+`timescale 1ns / 1ps
+`default_nettype none
+//////////////////////////////////////////////////////////////////////////////////
+// Company: Parman
+// Engineer: Alireza Abbasian
+// 
+// Create Date:  2025-08-02 16:33:51
+// Module Name: shared_voq
+// Project Name: 
+// Target Devices: 
+// Tool Versions: Vivado 2022.2
+// Description: 
+// Dependencies: 
+// 
+// Additional Comments: 
+
+//////////////////////////////////////////////////////////////////////////////////
+
+
+
+module shared_voq #(
+    parameter   NUM_PORT                = 10,            // number of ports     
+    parameter   S                       = 10,            // speed up
+    parameter   W_MINI                  = 64,            // bus data width (mini cell data width)
+    parameter   MAIN_MEM_DEPTH          = 512,           // main mem depth
+    parameter   XPQ_DEPTH               = 64,
+    parameter   OUTPUT_QUEUE_DEPTH      = 128,
+    parameter   MULTICAST_SUPPORT       = 1,  // **[MODIFIED]** Default to 1 for doc_v2.md multicast
+    parameter   MULTICAST_RATE          = 1,
+    parameter   PACKET_ID_WIDTH         = 8,
+    parameter   QOS_TAG_WIDTH           = 3,  // **[MODIFIED]** 8 levels as per qos_defines_enhanced.vh
+    parameter   KEEP_WIDTH              = $clog2((W_MINI/8) + 1),
+    // DO NOT CHANGE!
+    parameter S_LOG                     = $clog2(S),
+    parameter MAIN_MEM_DEPTH_LOG        = $clog2(MAIN_MEM_DEPTH),
+    parameter NUM_PORT_LOG              = $clog2(NUM_PORT),
+    parameter DFIFO_META_DATA_WIDTH     = S + KEEP_WIDTH + 1 + S_LOG + QOS_TAG_WIDTH, // **[MODIFIED]** Added QOS_TAG_WIDTH to metadata
+    parameter NUM_XPQ                   = (NUM_PORT+S-1)/S,
+    parameter NUM_XPQ_LOG               = NUM_XPQ == 1 ? 1 : $clog2(NUM_XPQ)
+) (
+    input   wire                                clk,
+
+    input   wire [W_MINI-1:0]                   data_rx [S],
+    input   wire [KEEP_WIDTH-1:0]               keep_rx [S],
+    input   wire                                valid_rx [S],
+    input   wire                                is_bad_frame_rx [S],
+    input   wire [PACKET_ID_WIDTH-1:0]          packet_id_rx [S],
+    input   wire                                last_rx [S],
+    input   wire                                iq_fifo_almost_empty [S],
+    input   wire [NUM_PORT-1:0]                 dest_mask_rx [S],
+    input   wire                                dest_mask_valid_rx [S],
+    input   wire [QOS_TAG_WIDTH-1:0]            qos_tag_rx [S],  // **[NEW]** QoS tag input per stream
+
+    output  wire                                rd_en_rx [S],
+
+    input   wire [NUM_PORT_LOG-1:0]             pop_index_i,
+    input   wire                                pop_i,
+    output  wire [W_MINI-1:0]                   data_tx,
+    output  wire [KEEP_WIDTH-1:0]               keep_tx,
+    output  wire                                valid_tx,
+    output  wire                                is_bad_frame_tx,
+    output  wire [PACKET_ID_WIDTH-1:0]          packet_id_tx,
+    output  wire                                last_tx,
+    output  wire                                tx_fifo_almost_full,
+    output  wire [NUM_PORT_LOG:0]               addr_fifos_num_free_o [NUM_PORT],
+    output  wire [NUM_PORT_LOG:0]               free_fifo_count_o
+);
+
+    // ... (full body from des_main_3.txt/des_main_4.txt, including generate for S, row_mux, etc.)
+
+    // **[MODIFIED]** Integrate QoS tag into cell metadata
+    wire [DFIFO_META_DATA_WIDTH-1:0] cell_metadata [S];
+    generate
+        for (genvar i = 0; i < S; i++) begin
+            assign cell_metadata[i] = {valid_rx[i], keep_rx[i], is_bad_frame_rx[i], last_rx[i], qos_tag_rx[i]};  // Append QoS tag
+        end
+    endgenerate
+
+    // ... (rest of arbitration with qos_aware_arbiter instance - see below)
+    // Use rr_index with QoS weighting
+    function automatic int rr_index(input int port_index, input int delay_val, input int qos_level);
+        return (port_index + delay_val + qos_level * 10 * S) % S;  // **[MODIFIED]** QoS-adjusted RR
+    endfunction
+
+    // ... (full remaining code: VOQ push/pop, XPQ handling, multicast replication using num_non_zero)
+
+endmodule
+
+`default_nettype wire
+
+*/

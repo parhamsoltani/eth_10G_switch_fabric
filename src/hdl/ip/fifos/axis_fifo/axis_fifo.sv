@@ -57,7 +57,7 @@ module axis_fifo #(
 
 
    xpm_fifo_axis #(
-      .CASCADE_HEIGHT(CASCADE_HEIGHT),             // DECIMAL
+      // .CASCADE_HEIGHT(CASCADE_HEIGHT),             // DECIMAL
       // .CDC_SYNC_STAGES(2),            // DECIMAL
       .CLOCKING_MODE("common_clock"), // String
       .ECC_MODE("no_ecc"),            // String

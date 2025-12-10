@@ -21,6 +21,15 @@
 	# -src_dir_list ../../src 
 	-src_list_file ../files_list.tcl
 
+	### **[MODIFIED]** Added port sweep for parametric builds (from des_simple.txt and UG894)
+	set port_sweep {8 16 32 64 128}
+	foreach ports $port_sweep {
+	    set_property generic NUM_PORT=$ports [current_fileset]
+	    # ... run synth/impl for each (loop as in UG894 examples)
+	    launch_runs synth_1 -jobs 8
+	    wait_on_run synth_1
+	}
+
 	### use <-report> to create history from out reports and exit before run
 	# -report
 

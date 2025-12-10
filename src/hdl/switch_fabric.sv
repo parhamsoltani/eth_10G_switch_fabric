@@ -305,3 +305,66 @@ endmodule
 
 
 `default_nettype wire
+
+
+
+
+
+/*
+
+`timescale 1ns / 1ps
+`default_nettype none
+
+module switch_fabric #(
+    parameter NUM_PORT              = 10,
+    parameter S                     = 10,
+    parameter W_MINI                = 64,
+    parameter MAIN_MEM_DEPTH        = 16384,
+    parameter XPQ_DEPTH             = 64,
+    parameter OUTPUT_QUEUE_DEPTH    = 64,
+    parameter MULTICAST_SUPPORT     = 1,
+    parameter MULTICAST_RATE        = 1,
+    parameter PACKET_ID_WIDTH       = 8,
+    parameter QOS_TAG_WIDTH         = 3,  // **[MODIFIED]** 8 levels
+    parameter CELL_MODE             = 1   // **[NEW]** 1=cell, 0=packet hybrid toggle
+) (
+    input wire clk,
+    input wire reset,
+    switch_data_if.rx rx_data_if [NUM_PORT],
+    switch_metadata_if.rx rx_meta_if [NUM_PORT],
+    switch_data_if.tx tx_data_if [NUM_PORT],
+    output wire [NUM_PORT_LOG:0] addr_fifos_num_free_o [NUM_PORT],
+    output wire [NUM_PORT_LOG:0] free_fifo_count_o
+);
+
+    // ... (full instantiation from des_ethernet_switch.txt)
+
+    // **[MODIFIED]** Hybrid mode logic
+    generate
+        if (CELL_MODE) begin
+            // Cell mode: Use converters
+            packet_to_cell_converter u_ingress_conv [NUM_PORT] (/ ... connect to rx_data_if /);
+            // ... VOQ/XPQ as is
+            cell_to_packet_s_port_with_barrel u_egress_conv [NUM_PORT] (/ ... connect to tx_data_if /);
+        end else begin
+            // Packet mode: Bypass converters, direct packet handling
+            // Simplified: Assign direct, but add buffering for variable size
+        end
+    endgenerate
+
+    // Instance qos_aware_arbiter
+    qos_aware_arbiter u_arb (
+        .clk(clk),
+        .rst_n(~reset),
+        .req_i(/ from VOQ /),
+        .qos_tag_i(/ from meta /),
+        .grant_o(/ to XPQ /)
+    );
+
+    // ... (rest: generate for ports, shared_voq instance, etc.)
+
+endmodule
+
+`default_nettype wire
+
+*/
