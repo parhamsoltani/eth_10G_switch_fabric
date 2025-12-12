@@ -741,12 +741,6 @@ Contact us for ASIC migration support.
    - *"High Performance Switches and Routers"* by H. Jonathan Chao
    - *"The Switch Book"* by Rich Seifert
 
-### **Video Tutorials**
-
-- Internal training: `http://training.parman.com/qos-fabric/`
-- Vivado synthesis walkthrough: `training/synthesis_tutorial.mp4`
-
----
 
 <div align="center">
 
