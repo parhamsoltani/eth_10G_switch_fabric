@@ -1,3 +1,5 @@
+
+
 # === Config paths ===
 set cfg_file "inc/implement_options.vh"
 set mem_dir  "../src/inc/mem_init"

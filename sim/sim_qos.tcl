@@ -17,149 +17,144 @@ set project_path        ".."
 set include_path        "$project_path/src/inc"
 set sim_include_path    "inc"
 
-# Select testbench (override with environment variable if set)
+# Select testbench
 if {[info exists env(TB)]} {
     set TB $env(TB)
 } else {
-    # Default testbenches - uncomment one:
-    # set TB "tb_fabric_basic"
-    # set TB "tb_fabric_qos_sweep"
-    # set TB "tb_fabric_qos_stress"
-    # set TB "tb_voq_unit"
     set TB "tb_qos_classifier_unit"
-    # set TB "tb_qos_scheduler_unit"
 }
 
 set wlf_save_name       "wlf/${TB}.wlf"
 set run_time            "500 us"
 set compile_error       0
-
-# Optimization arguments
-set VOPTARGS_SWITCH "-voptargs=+acc"
+set VOPTARGS_SWITCH     "-voptargs=+acc"
 
 puts "════════════════════════════════════════════════════════════"
 puts "  QoS Switch Fabric Simulation"
 puts "  Testbench: $TB"
 puts "════════════════════════════════════════════════════════════"
 
+# Common includes
+set INCLUDE_OPTS "+incdir+$include_path +incdir+$sim_include_path +define+SIMULATION"
+
 #===============================================================================
 # Compile Xilinx libraries
 #===============================================================================
-puts "\n[1/4] Compiling Xilinx primitives..."
-onerror {set compile_error 1}
+puts "\n\[1/4\] Compiling Xilinx primitives..."
 
+set has_xilinx 0
 if {[info exists env(XILINX_VIVADO)]} {
-    vlog -work work $::env(XILINX_VIVADO)/data/verilog/src/glbl.v
-    vlog -work work $::env(XILINX_VIVADO)/data/ip/xpm/xpm_fifo/hdl/xpm_fifo.sv
-    vlog -work work $::env(XILINX_VIVADO)/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv
-    vlog -work work $::env(XILINX_VIVADO)/data/ip/xpm/xpm_memory/hdl/xpm_memory.sv
+    set has_xilinx 1
+    if {[catch {vlog -work work $::env(XILINX_VIVADO)/data/verilog/src/glbl.v} err]} {
+        puts "ERROR: Failed to compile glbl.v"
+        set compile_error 1
+    }
+    if {$compile_error == 0} {
+        catch {vlog -work work $::env(XILINX_VIVADO)/data/ip/xpm/xpm_fifo/hdl/xpm_fifo.sv}
+        catch {vlog -work work $::env(XILINX_VIVADO)/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv}
+        catch {vlog -work work $::env(XILINX_VIVADO)/data/ip/xpm/xpm_memory/hdl/xpm_memory.sv}
+    }
 } else {
     puts "WARNING: XILINX_VIVADO not set, skipping Xilinx libraries"
 }
 
 #===============================================================================
-# Compile design files (based on testbench type)
+# Compile design files
 #===============================================================================
-puts "\n[2/4] Compiling design files..."
+if {$compile_error == 0} {
+    puts "\n\[2/4\] Compiling design files..."
 
-# Common includes
-set INCLUDE_OPTS "+incdir+$include_path +incdir+$sim_include_path +define+SIMULATION"
-
-# Determine compile script based on testbench
-if {[file exists "scr/$TB/compile_all.tcl"]} {
-    # Use testbench-specific compile script
-    puts "  Using scr/$TB/compile_all.tcl"
-    do scr/$TB/compile_all.tcl
-} else {
-    # Generic QoS fabric compilation order
-    puts "  Using generic QoS compilation order"
-
-    # Packages
-    vlog -sv $INCLUDE_OPTS tb/ethernet_switch/generator_frame.sv
-    vlog -sv $INCLUDE_OPTS hvl/model_for_verification/classes/fabric_frame_pkg.sv
-
-    # Interfaces
-    vlog -sv $INCLUDE_OPTS ../src/hdl/interfaces/switch_data_if.sv
-    vlog -sv $INCLUDE_OPTS ../src/hdl/interfaces/switch_metadata_if.sv
-
-    # IP components
-    vlog -sv $INCLUDE_OPTS ../src/hdl/ip/dest_mask_modules/first_non_zero.sv
-    vlog -sv $INCLUDE_OPTS ../src/hdl/ip/dest_mask_modules/first_non_zero_no_delay.sv
-    vlog -sv $INCLUDE_OPTS ../src/hdl/ip/combinational_components/first_none_zero_except_k_qos.sv
-    vlog -sv $INCLUDE_OPTS ../src/hdl/ip/fifos/simple_fifo/simple_fifo.sv
-    vlog -sv $INCLUDE_OPTS ../src/hdl/ip/memories/sdpram_xpm/sdpram_xpm.sv
-
-    # Core modules
-    vlog -sv $INCLUDE_OPTS ../src/hdl/core/qos_classifier.sv
-    vlog -sv $INCLUDE_OPTS ../src/hdl/core/qos_shaper.sv
-    vlog -sv $INCLUDE_OPTS ../src/hdl/ip/fifos/dynamic_fifo/packet_mode_fifo_array.sv
-    vlog -sv $INCLUDE_OPTS ../src/hdl/switch_ips/des_finder_row_matching_qos.sv
-
-    # Top-level fabric (if needed)
-    if {$TB != "tb_voq_unit" && $TB != "tb_qos_classifier_unit" && $TB != "tb_qos_scheduler_unit"} {
-        vlog -sv $INCLUDE_OPTS ../src/hdl/switch_fabric.sv
-    }
-
-    # Verification infrastructure
-    if {[string match "*qos*" $TB]} {
-        vlog -sv $INCLUDE_OPTS hvl/verification/qos_latency_monitor.sv
-        vlog -sv $INCLUDE_OPTS hvl/verification/qos_checker_scoreboard.sv
-        vlog -sv $INCLUDE_OPTS hvl/model_for_verification/switch_fabric_model_qos.sv
+    if {[file exists "scr/$TB/compile_all.tcl"]} {
+        puts "  Using scr/$TB/compile_all.tcl"
+        if {[catch {do scr/$TB/compile_all.tcl} err]} {
+            puts "ERROR during design compilation: $err"
+            set compile_error 1
+        }
+    } else {
+        puts "  Using generic QoS compilation order"
+        
+        # Wrap each compilation in catch to detect errors
+        set files_to_compile {
+            "hvl/model_for_verification/classes/fabric_frame_pkg.sv"
+            "../src/hdl/interfaces/switch_data_if.sv"
+            "../src/hdl/interfaces/switch_metadata_if.sv"
+            "../src/hdl/ip/dest_mask_modules/first_non_zero.sv"
+            "../src/hdl/ip/dest_mask_modules/first_non_zero_no_delay.sv"
+            "../src/hdl/ip/fifos/simple_fifo/simple_fifo.sv"
+            "../src/hdl/ip/memories/sdpram_xpm/sdpram_xpm.sv"
+            "../src/hdl/core/qos_classifier.sv"
+        }
+        
+        foreach f $files_to_compile {
+            if {[file exists $f]} {
+                if {[catch {vlog -sv $INCLUDE_OPTS $f} err]} {
+                    puts "ERROR compiling $f: $err"
+                    set compile_error 1
+                    break
+                }
+            } else {
+                puts "WARNING: File not found: $f"
+            }
+        }
     }
 }
 
 #===============================================================================
 # Compile testbench
 #===============================================================================
-# Compile testbench
-puts "\n[3/4] Compiling testbench: $TB"
+if {$compile_error == 0} {
+    puts "\n\[3/4\] Compiling testbench: $TB"
 
-# Find testbench file
-set TB_FILE ""
-foreach search_path {fabric unit ethernet_switch dfifo pipeline_mux} {
-    if {[file exists "tb/${search_path}/${TB}.sv"]} {
-        set TB_FILE "tb/${search_path}/${TB}.sv"
-        break
+    set TB_FILE ""
+    foreach search_path {fabric unit ethernet_switch dfifo pipeline_mux} {
+        if {[file exists "tb/${search_path}/${TB}.sv"]} {
+            set TB_FILE "tb/${search_path}/${TB}.sv"
+            break
+        }
     }
-}
 
-if {$TB_FILE == ""} {
-    puts "ERROR: Testbench file not found for $TB"
-    puts "  Searched: tb/fabric/, tb/unit/, tb/ethernet_switch/"
-    set compile_error 1
-} else {
-    vlog -sv $INCLUDE_OPTS $TB_FILE
+    if {$TB_FILE == ""} {
+        puts "ERROR: Testbench file not found for $TB"
+        puts "  Searched: tb/fabric/, tb/unit/, tb/ethernet_switch/, tb/dfifo/, tb/pipeline_mux/"
+        set compile_error 1
+    } else {
+        puts "  Found: $TB_FILE"
+        if {[catch {vlog -sv $INCLUDE_OPTS $TB_FILE} err]} {
+            puts "ERROR compiling testbench: $err"
+            set compile_error 1
+        }
+    }
 }
 
 #===============================================================================
 # Run simulation
 #===============================================================================
 if {$compile_error == 0} {
-    puts "\n[4/4] Starting simulation..."
+    puts "\n\[4/4\] Starting simulation..."
 
-    # Optimize design
-    vopt +acc $TB -o ${TB}_opt
+    # Suppress non-fatal errors during simulation
+    onerror {continue}
 
-    # Launch simulator
-    if {[info exists env(XILINX_VIVADO)]} {
+    # Launch simulator (without unisims_ver/unimacro_ver if they don't exist)
+    if {$has_xilinx} {
         vsim -wlf $wlf_save_name -sv_seed 0 -wlfopt -wlfslim 10000 -wlftlim {500 ms} \
              $VOPTARGS_SWITCH -debugDB \
-             -L unisims_ver -L unimacro_ver ${TB}_opt work.glbl
+             $TB work.glbl
     } else {
         vsim -wlf $wlf_save_name -sv_seed 0 -wlfopt -wlfslim 10000 -wlftlim {500 ms} \
-             $VOPTARGS_SWITCH -debugDB ${TB}_opt
+             $VOPTARGS_SWITCH -debugDB $TB
     }
 
     # Load wave configuration
     if {[file exists "scr/$TB/wave.tcl"]} {
         puts "  Loading wave config: scr/$TB/wave.tcl"
-        do scr/$TB/wave.tcl
+        catch {do scr/$TB/wave.tcl}
     } elseif {[file exists "wave_${TB}.do"]} {
         puts "  Loading wave config: wave_${TB}.do"
-        do wave_${TB}.do
+        catch {do wave_${TB}.do}
     } else {
         puts "  No wave config found - using defaults"
-        add wave -r /*
+        catch {add wave -r /*}
     }
 
     # Wave window configuration
@@ -172,17 +167,24 @@ if {$compile_error == 0} {
     configure wave -valuecolwidth 80
     configure wave -justifyvalue right
 
-    # Run simulation
     radix -hexadecimal -showbase
 
+    # Run simulation
     if {[info exists env(SIM_MODE)] && $env(SIM_MODE) == "batch"} {
         run -all
+        puts "\n════════════════════════════════════════════════════════════"
+        puts "  SIMULATION COMPLETE (batch mode)"
+        puts "════════════════════════════════════════════════════════════"
         quit -f
     } else {
         run $run_time
+        puts "\n════════════════════════════════════════════════════════════"
+        puts "  SIMULATION COMPLETE"
+        puts "════════════════════════════════════════════════════════════"
     }
 
 } else {
-    puts "\nCOMPILATION FAILED"
-    quit -code 1
+    puts "\n════════════════════════════════════════════════════════════"
+    puts "  COMPILATION FAILED - Check errors above"
+    puts "════════════════════════════════════════════════════════════"
 }

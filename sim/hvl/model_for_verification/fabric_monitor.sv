@@ -11,7 +11,7 @@ module fabric_monitor # (
     input wire clk,
     switch_data_if.monitor sw_data_if,
     switch_metadata_if.monitor sw_meta_if,
-    ref mailbox frame_mailbox              // CHANGED: use 'ref' instead of 'output'
+    ref mailbox #(Fabric_frame_tr) frame_mailbox
 );
 
     bit [7:0] raw_data[$];
@@ -24,7 +24,7 @@ module fabric_monitor # (
 
     int data_id;
 
-    Fabric_frame_tr frame_queue [$];
+    Fabric_frame_tr temp_frame_queue [$];
 
     bit [NUM_PORT-1:0]          dest;
     bit [QOS_TAG_WIDTH-1:0]     qos_tag;
@@ -66,7 +66,7 @@ module fabric_monitor # (
                     frame.start_time = start_time;
                     frame.end_time = end_time;
 
-                    frame_queue.push_back(frame);
+                    temp_frame_queue.push_back(frame);
 
                     raw_data = {}; // Clear the buffer for next frame
                     ifg_clk = 0;
@@ -94,18 +94,20 @@ module fabric_monitor # (
         forever begin
             @(posedge clk);
             if (meta_id_queue.size() != 0 &&
-                frame_queue.size() != 0 &&
+                temp_frame_queue.size() != 0 &&
                 qos_tag_queue.size() != 0 &&
                 dest_queue.size() != 0
             ) begin
-                frame_with_dest = frame_queue.pop_front();
+                frame_with_dest = temp_frame_queue.pop_front();
                 dest    = dest_queue.pop_front();
                 qos_tag = qos_tag_queue.pop_front();
                 meta_id = meta_id_queue.pop_front();
 
                 if (meta_id == frame_with_dest.id) begin
                     frame_with_dest.dest = dest;
-                    frame_mailbox.put(frame_with_dest.do_copy());
+                    // Assuming Fabric_frame_tr has a qos_tag field
+                    // frame_with_dest.qos_tag = qos_tag;
+                    frame_mailbox.put(frame_with_dest);
                 end
             end
         end

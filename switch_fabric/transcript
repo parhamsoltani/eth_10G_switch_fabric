@@ -1,0 +1,125 @@
+# Reading pref.tcl
+# //  Questa Sim-64
+# //  Version 2021.1 win64 Jan 19 2021
+# //
+# //  Copyright 1991-2021 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  QuestaSim and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+do mem_gen.tcl
+# inc/implement_options.vh
+# ../src/inc/mem_init
+# file1b4d3ff0
+# 
+# 
+# 	// switch 10*10G + multicast
+# 	`define LINE_RATE 10
+# 	`define N 10
+# 	`define D 16384
+# 	`define S 10
+# 	`define X 64
+# 	`define U 1
+# 	`define W 64
+# 	`define OUTPUT_QUEUE_DEPTH 64
+# 	`define MULTICAST_SUPPORT 1
+# 
+# 10
+# 16384
+# 10
+# 64
+# 1
+# INFO: N = 10, D = 16384, S = 10, X = 64, U = %U
+# N 10 D 16384 S 10 X 64 U 1
+# 
+#     {" 0 "          " N - 1 "}
+#     {" N + 1 "      " U * D - 1 "}
+#     {" N  "         " U * D - 1 "}
+#     {" S + 1 "      " D - 1 "}
+#     {" S "          " D - 1 "}
+#     {" 0 "          " S - 1 "}
+#     {" S + 1 "      " X - 1 "}
+#     {" S "          " X - 1 "}
+# 
+# 
+#     {" N " " 1 "}
+#     {" D " " 0 "}
+# 
+# Evaluated Result: 0
+# -----------------------------------------
+# 
+# Evaluated Result: 9
+# -----------------------------------------
+# 
+# INFO: mem[0] = " 0 " - " N - 1 "  => (0 - 9)
+# Evaluated Result: 11
+# -----------------------------------------
+# 
+# Evaluated Result: 16383
+# -----------------------------------------
+# 
+# INFO: mem[1] = " N + 1 " - " U * D - 1 "  => (11 - 16383)
+# Evaluated Result: 10
+# -----------------------------------------
+# 
+# Evaluated Result: 16383
+# -----------------------------------------
+# 
+# INFO: mem[2] = " N  " - " U * D - 1 "  => (10 - 16383)
+# Evaluated Result: 11
+# -----------------------------------------
+# 
+# Evaluated Result: 16383
+# -----------------------------------------
+# 
+# INFO: mem[3] = " S + 1 " - " D - 1 "  => (11 - 16383)
+# Evaluated Result: 10
+# -----------------------------------------
+# 
+# Evaluated Result: 16383
+# -----------------------------------------
+# 
+# INFO: mem[4] = " S " - " D - 1 "  => (10 - 16383)
+# Evaluated Result: 0
+# -----------------------------------------
+# 
+# Evaluated Result: 9
+# -----------------------------------------
+# 
+# INFO: mem[5] = " 0 " - " S - 1 "  => (0 - 9)
+# Evaluated Result: 11
+# -----------------------------------------
+# 
+# Evaluated Result: 63
+# -----------------------------------------
+# 
+# INFO: mem[6] = " S + 1 " - " X - 1 "  => (11 - 63)
+# Evaluated Result: 10
+# -----------------------------------------
+# 
+# Evaluated Result: 63
+# -----------------------------------------
+# 
+# INFO: mem[7] = " S " - " X - 1 "  => (10 - 63)
+# Evaluated Result: 10
+# -----------------------------------------
+# 
+# Evaluated Result: 1
+# -----------------------------------------
+# 
+# INFO: all-same mem: depth=10 value=1
+# Evaluated Result: 16384
+# -----------------------------------------
+# 
+# Evaluated Result: 0
+# -----------------------------------------
+# 
+# INFO: all-same mem: depth=16384 value=0
+# INFO: All memory files created successfully.
+# PRE-SYNTH: DONE.

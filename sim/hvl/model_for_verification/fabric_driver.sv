@@ -25,8 +25,8 @@ module fabric_driver # (
 ) (
     input wire clk,
     switch_data_if.master_mp          sw_data_if,
-    input  mailbox          frame_mailbox,
-    output event            frame_sent
+    ref mailbox #(Fabric_frame_tr)    frame_mailbox,
+    output event                      frame_sent
 );
 
 

@@ -15,6 +15,8 @@ if "%~2"=="batch" (
     set SIM_MODE=gui
 )
 
+:: set SIM_MODE=batch
+
 echo ════════════════════════════════════════════════════════════
 echo   QuestaSim/ModelSim Simulation Launcher
 echo   Testbench: %TB%
