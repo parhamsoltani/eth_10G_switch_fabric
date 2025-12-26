@@ -32,8 +32,9 @@ module tb_fabric_basic;
     switch_data_if #(.DATA_WIDTH(W_MINI), .ID_WIDTH(PACKET_ID_WIDTH))
         tx_data_if [NUM_PORT] ();
 
-    // Mailbox arrays
-    mailbox #(Fabric_frame_tr) frame_tx[NUM_PORT];
+    // Mailbox arrays - Using two separate mailboxes for synchronization
+    mailbox #(Fabric_frame_tr) frame_tx_data[NUM_PORT];
+    mailbox #(Fabric_frame_tr) frame_tx_meta[NUM_PORT];
     mailbox #(Fabric_frame_tr) frame_rx[NUM_PORT];
     event frame_sent[NUM_PORT];
 
@@ -44,7 +45,8 @@ module tb_fabric_basic;
     initial begin
         mailboxes_ready = 0;
         for (int i = 0; i < NUM_PORT; i++) begin
-            frame_tx[i] = new();
+            frame_tx_data[i] = new();
+            frame_tx_meta[i] = new();
             frame_rx[i] = new();
         end
         mailboxes_ready = 1;
@@ -99,16 +101,24 @@ module tb_fabric_basic;
         $display("════════════════════════════════════════\n");
 
         // Test 1: Unicast (port 0 → port 1)
+        $display("[TEST 1] Unicast: Port 0 → Port 1");
         send_unicast(0, 1, 256);
+        repeat(100) @(posedge sys_clk);
 
         // Test 2: All-to-all (sequential)
+        $display("[TEST 2] All-to-all sequential");
         for (int src = 0; src < NUM_PORT; src++) begin
             for (int dst = 0; dst < NUM_PORT; dst++) begin
-                if (src != dst) send_unicast(src, dst, 128);
+                if (src != dst) begin
+                    $display("  Sending: Port %0d → Port %0d", src, dst);
+                    send_unicast(src, dst, 128);
+                end
             end
         end
+        repeat(500) @(posedge sys_clk);
 
         // Test 3: Concurrent traffic
+        $display("[TEST 3] Concurrent traffic");
         fork
             repeat(50) send_unicast(0, NUM_PORT-1, 512);
             repeat(50) send_unicast(NUM_PORT-1, 0, 512);
@@ -124,24 +134,24 @@ module tb_fabric_basic;
         $display("  Packets Received: %0d", packets_recv);
 
         if (packets_sent == packets_recv) begin
-            $display("\n   ✓ BASIC TEST PASSED ");
+            $display("\n    BASIC TEST PASSED ");
         end else begin
-            $error("\n   ✗ PACKET LOSS: %0d missing ", packets_sent - packets_recv);
+            $error("\n    PACKET LOSS: %0d missing ", packets_sent - packets_recv);
         end
 
         $display("════════════════════════════════════════\n");
         $finish;
     end
 
-    // Packet generation task
+    // Packet generation task - Modified to send to both mailboxes
     task send_unicast(int src, int dst, int size);
         automatic bit [NUM_PORT-1:0] dest_mask = (1 << dst);
         automatic bit [7:0] raw_data[] = new[size];
-        automatic Fabric_frame_tr frame;
+        automatic Fabric_frame_tr frame_data, frame_meta;
 
         for (int i = 0; i < size; i++) raw_data[i] = $urandom();
 
-        frame = Fabric_frame_tr::create_from_raw(
+        frame_data = Fabric_frame_tr::create_from_raw(
             .raw_data(raw_data),
             .dest(dest_mask),
             .ifg_clk(10),
@@ -149,7 +159,11 @@ module tb_fabric_basic;
             .id(packets_sent)
         );
 
-        frame_tx[src].put(frame.do_copy());
+        frame_meta = frame_data.do_copy();
+
+        // Send to both mailboxes for synchronization
+        frame_tx_data[src].put(frame_data);
+        frame_tx_meta[src].put(frame_meta);
         packets_sent++;
 
         @frame_sent[src];
@@ -177,7 +191,7 @@ module tb_fabric_basic;
                 wait(reset_done);
 
                 forever begin
-                    frame_tx[gi].get(frame);
+                    frame_tx_data[gi].get(frame);
                     frame.frame_to_raw(raw_data);
                     num_words = (raw_data.size() + (W_MINI/8) - 1) / (W_MINI/8);
 
@@ -211,7 +225,7 @@ module tb_fabric_basic;
                 end
             end
 
-            // ===== Metadata Interface Driver =====
+            // ===== Metadata Interface Driver - CORRECTED =====
             initial begin
                 automatic Fabric_frame_tr frame;
 
@@ -225,14 +239,19 @@ module tb_fabric_basic;
                 wait(reset_done);
 
                 forever begin
-                    // Wait for frame available
-                    while (frame_tx[gi].num() == 0) @(posedge sys_clk);
-                    frame_tx[gi].peek(frame);
+                    // Get frame from metadata mailbox
+                    frame_tx_meta[gi].get(frame);
 
-                    // Wait for data valid
+                    // Debug: Print what we're sending
+                    //$display("[%0t] Port %0d META: id=%0d, dest_mask=%b", 
+                    //         $time, gi, frame.id, frame.dest);
+
+                    // Wait for first data beat to be valid
                     @(posedge sys_clk);
-                    while (!(rx_data_if[gi].valid && rx_data_if[gi].ready)) @(posedge sys_clk);
+                    while (!(rx_data_if[gi].valid && rx_data_if[gi].ready)) 
+                        @(posedge sys_clk);
 
+                    // Drive metadata synchronized with data
                     rx_meta_if[gi].valid <= 1'b1;
                     rx_meta_if[gi].dest_port_mask <= frame.dest;
                     rx_meta_if[gi].id <= frame.id;

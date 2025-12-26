@@ -1,8 +1,9 @@
 Folder PATH listing
-Volume serial number is EA0C-A270
+Volume serial number is 5C72-3C7D
 C:.
 |   .gitignore
 |   .gitmodules
+|   build.bat
 |   dir_tree.txt
 |   LICENSE
 |   Makefile
@@ -11,8 +12,22 @@ C:.
 |   transcript
 |   usage.bash
 |   usage_example.bash
+|   vivado.jou
+|   vivado.log
+|   vivado_1416.backup.jou
+|   vivado_1416.backup.log
+|   vivado_16024.backup.jou
+|   vivado_16024.backup.log
+|   vivado_22404.backup.jou
+|   vivado_22404.backup.log
+|   vivado_24544.backup.jou
+|   vivado_24544.backup.log
+|   vivado_3064.backup.jou
+|   vivado_3064.backup.log
 |   vivado_qos_build.tcl
+|   vivado_qos_build_2019.tcl
 |   
++---.Xil
 +---docs
 |       doc_v2.md
 |       enhancement_v2.md
@@ -70,20 +85,32 @@ C:.
 |               config_generator_cell.py
 |               config_generator_packet.py
 |               config_generator_qos.py
+|               config_generator_scalable.py
 |               config_generator_simple.py
 |               config_sweep_qos.py
 |               
 +---sim
 |   |   mem_gen.tcl
+|   |   mem_init_0_9.mem
+|   |   mem_init_10_16383.mem
+|   |   mem_init_10_63.mem
+|   |   mem_init_11_16383.mem
+|   |   mem_init_11_63.mem
+|   |   mem_init_all_0_depth_16384.mem
+|   |   mem_init_all_1_depth_10.mem
 |   |   modelsim.ini
-|   |   modelsim.ini_new
 |   |   run_sim.bat
 |   |   setup_and_compile.tcl
 |   |   sim.tcl
 |   |   sim_qos.tcl
-|   |   transcript_18.log
-|   |   transcript_19.log
+|   |   tb_qos_classifier_unit.vcd
+|   |   transcript
+|   |   transcript_72.log
+|   |   transcript_73.log
+|   |   transcript_74.log
+|   |   transcript_qos.log
 |   |   vsim.dbg
+|   |   vsim_stacktrace.vstf
 |   |   wave_tb_fabric_qos_sweep.do
 |   |   
 |   +---hvl
@@ -118,23 +145,11 @@ C:.
 |   |           qos_latency_tracker.sv
 |   |           
 |   +---inc
-|   |   |   fabric_params.vh
-|   |   |   implement_options.vh
-|   |   |   qos_defines.vh
-|   |   |   sim_options.vh
-|   |   |   
-|   |   \---mem_init
-|   |           mem_init_0_39.mem
-|   |           mem_init_0_7.mem
-|   |           mem_init_40_511.mem
-|   |           mem_init_41_511.mem
-|   |           mem_init_8_511.mem
-|   |           mem_init_8_63.mem
-|   |           mem_init_9_511.mem
-|   |           mem_init_9_63.mem
-|   |           mem_init_all_0_depth_512.mem
-|   |           mem_init_all_1_depth_40.mem
-|   |           
+|   |       fabric_params.vh
+|   |       implement_options.vh
+|   |       qos_defines.vh
+|   |       sim_options.vh
+|   |       
 |   +---ip
 |   |   +---submodule
 |   |   |   +---ethernet_switch_hdl
@@ -143,7 +158,9 @@ C:.
 |   |           ila_ips.sv
 |   |           
 |   +---scr
+|   |   |   perf_tb_top.sv
 |   |   |   run_all_qos_tests.tcl
+|   |   |   run_all_tests_sequential.tcl
 |   |   |   
 |   |   +---tb_ethernet_switch
 |   |   |       compile_all.tcl
@@ -151,6 +168,7 @@ C:.
 |   |   |       
 |   |   +---tb_fabric_basic
 |   |   |       compile_all.tcl
+|   |   |       wave.do
 |   |   |       
 |   |   +---tb_fabric_qos
 |   |   |       compile_all.tcl
@@ -217,14 +235,17 @@ C:.
 |   |           
 |   +---wave
 |   +---wlf
+|   |       tb_fabric_basic.wlf
+|   |       tb_qos_classifier_unit.wlf
 |   |       vsim.wlf
 |   |       
 |   \---work
 |       |   _info
 |       |   _lib.qdb
-|       |   _lib1_0.qdb
-|       |   _lib1_0.qpg
-|       |   _lib1_0.qtl
+|       |   _lib1_2.qdb
+|       |   _lib1_2.qpg
+|       |   _lib1_2.qtl
+|       |   _opt__lock
 |       |   _vmake
 |       |   
 |       +---@_opt
@@ -241,170 +262,347 @@ C:.
 |       |   |   _lib4_0.qdb
 |       |   |   _lib4_0.qpg
 |       |   |   _lib4_0.qtl
+|       |   |   _lib5_0.qdb
+|       |   |   _lib5_0.qpg
+|       |   |   _lib5_0.qtl
+|       |   |   _lib6_0.qdb
+|       |   |   _lib6_0.qpg
+|       |   |   _lib6_0.qtl
 |       |   |   
 |       |   \---_data
-|       |           exempt9i7thw
-|       |           exempt9nbt5v
-|       |           exempt9zgt24
+|       |           exempti7bxxe
+|       |           exemptiesxgz
+|       |           exemptik3xeh
+|       |           
+|       +---@_opt1
+|       |   |   _lib.qdb
+|       |   |   _lib1_0.qdb
+|       |   |   _lib1_0.qpg
+|       |   |   _lib1_0.qtl
+|       |   |   _lib2_0.qdb
+|       |   |   _lib2_0.qpg
+|       |   |   _lib2_0.qtl
+|       |   |   _lib3_0.qdb
+|       |   |   _lib3_0.qpg
+|       |   |   _lib3_0.qtl
+|       |   |   _lib4_0.qdb
+|       |   |   _lib4_0.qpg
+|       |   |   _lib4_0.qtl
+|       |   |   
+|       |   \---_data
+|       |           exempt31izvy
+|       |           exempt3rezyz
+|       |           exempt3xgz7z
 |       |           
 |       +---_dbcontainer
-|       |   \---#64_opt
+|       |   +---#64_opt
+|       |   |       work_axis_fifo_fast_0.dbg
+|       |   |       work_axis_fifo_fast__1_0.dbg
+|       |   |       work_barrel_shifter_fast_0.dbg
+|       |   |       work_barrel_shifter_fast__1_0.dbg
+|       |   |       work_cell_to_packet_fast_0.dbg
+|       |   |       work_delayed_regs_fast_0.dbg
+|       |   |       work_delayed_regs_fast__10_0.dbg
+|       |   |       work_delayed_regs_fast__11_0.dbg
+|       |   |       work_delayed_regs_fast__12_0.dbg
+|       |   |       work_delayed_regs_fast__1_0.dbg
+|       |   |       work_delayed_regs_fast__2_0.dbg
+|       |   |       work_delayed_regs_fast__3_0.dbg
+|       |   |       work_delayed_regs_fast__4_0.dbg
+|       |   |       work_delayed_regs_fast__5_0.dbg
+|       |   |       work_delayed_regs_fast__6_0.dbg
+|       |   |       work_delayed_regs_fast__7_0.dbg
+|       |   |       work_delayed_regs_fast__8_0.dbg
+|       |   |       work_delayed_regs_fast__9_0.dbg
+|       |   |       work_dest_finder_s_fast_0.dbg
+|       |   |       work_egress_switch_fast_0.dbg
+|       |   |       work_first_non_zero_fast_0.dbg
+|       |   |       work_glbl_fast_0.dbg
+|       |   |       work_ingress_switch_fast_0.dbg
+|       |   |       work_linklist_dynamic_fifo_fast_0.dbg
+|       |   |       work_packet_mode_fifo_array_fast_0.dbg
+|       |   |       work_packet_to_cell_fast_0.dbg
+|       |   |       work_pipeline_mem_fast_0.dbg
+|       |   |       work_pipeline_mem_with_inout_barrel_fast_0.dbg
+|       |   |       work_sdpram_init_value_all_same_fast_0.dbg
+|       |   |       work_sdpram_init_value_fast_0.dbg
+|       |   |       work_sdpram_init_value_fast__1_0.dbg
+|       |   |       work_sdpram_init_value_fast__2_0.dbg
+|       |   |       work_sdpram_init_value_n1_n2_fast_0.dbg
+|       |   |       work_sdpram_init_value_n1_n2_fast__1_0.dbg
+|       |   |       work_sdpram_xpm_fast_0.dbg
+|       |   |       work_sdpram_xpm_fast__1_0.dbg
+|       |   |       work_sdpram_xpm_fast__2_0.dbg
+|       |   |       work_switch_data_if_fast__1_0.dbg
+|       |   |       work_switch_data_if_fast__2_0.dbg
+|       |   |       work_switch_fabric_fast_0.dbg
+|       |   |       work_switch_metadata_if_fast__1_0.dbg
+|       |   |       work_switch_s_fast_0.dbg
+|       |   |       work_sync_fifo_init_value_fast_0.dbg
+|       |   |       work_tb_fabric_basic_fast_0.dbg
+|       |   |       work_xpm_cdc_sync_rst_fast_0.dbg
+|       |   |       work_xpm_counter_updn_fast_0.dbg
+|       |   |       work_xpm_counter_updn_fast__10_0.dbg
+|       |   |       work_xpm_counter_updn_fast__1_0.dbg
+|       |   |       work_xpm_counter_updn_fast__2_0.dbg
+|       |   |       work_xpm_counter_updn_fast__3_0.dbg
+|       |   |       work_xpm_counter_updn_fast__4_0.dbg
+|       |   |       work_xpm_counter_updn_fast__5_0.dbg
+|       |   |       work_xpm_counter_updn_fast__6_0.dbg
+|       |   |       work_xpm_counter_updn_fast__7_0.dbg
+|       |   |       work_xpm_counter_updn_fast__8_0.dbg
+|       |   |       work_xpm_counter_updn_fast__9_0.dbg
+|       |   |       work_xpm_fifo_axis_fast_0.dbg
+|       |   |       work_xpm_fifo_axis_fast__1_0.dbg
+|       |   |       work_xpm_fifo_base_fast_0.dbg
+|       |   |       work_xpm_fifo_base_fast__1_0.dbg
+|       |   |       work_xpm_fifo_reg_bit_fast_0.dbg
+|       |   |       work_xpm_fifo_reg_bit_fast__1_0.dbg
+|       |   |       work_xpm_fifo_rst_fast_0.dbg
+|       |   |       work_xpm_memory_base_fast_0.dbg
+|       |   |       work_xpm_memory_base_fast__1_0.dbg
+|       |   |       work_xpm_memory_base_fast__2_0.dbg
+|       |   |       work_xpm_memory_base_fast__3_0.dbg
+|       |   |       work_xpm_memory_base_fast__4_0.dbg
+|       |   |       work_xpm_memory_base_fast__5_0.dbg
+|       |   |       work_xpm_memory_base_fast__6_0.dbg
+|       |   |       work_xpm_memory_base_fast__7_0.dbg
+|       |   |       work_xpm_memory_sdpram_fast_0.dbg
+|       |   |       work_xpm_memory_sdpram_fast__1_0.dbg
+|       |   |       work_xpm_memory_sdpram_fast__2_0.dbg
+|       |   |       work_xpm_memory_sdpram_fast__3_0.dbg
+|       |   |       work_xpm_memory_sdpram_fast__4_0.dbg
+|       |   |       work_xpm_memory_sdpram_fast__5_0.dbg
+|       |   |       __mti.dbg
+|       |   |       
+|       |   \---#64_opt1
 |       |           work_glbl_fast_0.dbg
-|       |           work_mux_tile_fast_0.dbg
-|       |           work_pipeline_mux_fast_0.dbg
-|       |           work_register_replicator_fast_0.dbg
-|       |           work_register_replicator_fast__1_0.dbg
-|       |           work_register_replicator_fast__2_0.dbg
-|       |           work_register_replicator_fast__3_0.dbg
-|       |           work_tb_pipeline_mux_fast_0.dbg
+|       |           work_qos_classifier_fast_0.dbg
+|       |           work_tb_qos_classifier_unit_fast_0.dbg
 |       |           __mti.dbg
 |       |           
 |       +---_temp
 |       \---_tempmsg
-\---src
-    +---hdl
-    |   |   switch_fabric.sv
-    |   |   switch_fabric_qos_wrapper.sv
-    |   |   
-    |   +---arbitration
-    |   |       crosspoint_arbiter.sv
-    |   |       egress_arbiter.sv
-    |   |       voq_arbiter.sv
-    |   |       
-    |   +---buffers
-    |   |       packet_buffer.sv
-    |   |       voq_buffer.sv
-    |   |       xpq_buffer.sv
-    |   |       
-    |   +---core
-    |   |       credit_manager.sv
-    |   |       packet_id_manager.sv
-    |   |       qos_classifier.sv
-    |   |       qos_scheduler.sv
-    |   |       qos_shaper.sv
-    |   |       round_robin_arbiter.sv
-    |   |       
-    |   +---fabric
-    |   |       fabric_crosspoint.sv
-    |   |       fabric_egress.sv
-    |   |       fabric_ingress.sv
-    |   |       switch_fabric.sv
-    |   |       
-    |   +---interfaces
-    |   |       axis_if.sv
-    |   |       micro_if.sv
-    |   |       switch_data_if.sv
-    |   |       switch_metadata_if.sv
-    |   |       
-    |   +---ip
-    |   |   +---combinational_components
-    |   |   |       first_none_zero_except_k_qos.sv
-    |   |   |       
-    |   |   +---delayed_regs
-    |   |   |       delayed_regs.sv
-    |   |   |       
-    |   |   +---dest_mask_modules
-    |   |   |       first_none_zero_datavalid.sv
-    |   |   |       first_none_zero_except_k.sv
-    |   |   |       first_non_zero.sv
-    |   |   |       first_non_zero_after_k.sv
-    |   |   |       first_non_zero_no_delay.sv
-    |   |   |       multicast_mask_to_index.sv
-    |   |   |       num_non_zero.sv
-    |   |   |       num_non_zero_no_delay.sv
-    |   |   |       one_hot_none_zero.sv
-    |   |   |       
-    |   |   +---fifos
-    |   |   |   +---axis_fifo
-    |   |   |   |       axis_fifo.sv
-    |   |   |   |       
-    |   |   |   +---dynamic_fifo
-    |   |   |   |       linklist_dynamic_fifo.sv
-    |   |   |   |       packet_mode_fifo_array.sv
-    |   |   |   |       packet_mode_fifo_array_multicast.sv
-    |   |   |   |       
-    |   |   |   +---init_fifo
-    |   |   |   |       sync_fifo_init_value.sv
-    |   |   |   |       
-    |   |   |   \---simple_fifo
-    |   |   |           simple_fifo.sv
-    |   |   |           
-    |   |   +---memories
-    |   |   |   +---init_mem
-    |   |   |   |       sdpram_init_value.sv
-    |   |   |   |       sdpram_init_value_all_same.sv
-    |   |   |   |       sdpram_init_value_n1_n2.sv
-    |   |   |   |       
-    |   |   |   +---pipeline_mem
-    |   |   |   |       pipeline_mem.sv
-    |   |   |   |       
-    |   |   |   \---sdpram_xpm
-    |   |   |           sdpram_xpm.sv
-    |   |   |           
-    |   |   +---pipeline_mem
-    |   |   |       barrel_shifter.sv
-    |   |   |       pipeline_mem.sv
-    |   |   |       pipeline_mem_with_inout_barrel.sv
-    |   |   |       pipeline_mem_with_in_barrel.sv
-    |   |   |       
-    |   |   +---pipeline_mux
-    |   |   |       mux_tile.sv
-    |   |   |       pipeline_mux.sv
-    |   |   |       
-    |   |   \---register_replicator
-    |   |           register_replicator.sv
-    |   |           regtree_replicator.sv
-    |   |           
-    |   +---line_modules
-    |   |       cell_to_packet.sv
-    |   |       egress_line.sv
-    |   |       egress_switch.sv
-    |   |       ingress_line.sv
-    |   |       ingress_line_qos.sv
-    |   |       ingress_line_wrapper.sv
-    |   |       ingress_switch.sv
-    |   |       packet_to_cell.sv
-    |   |       
-    |   +---micro_interface
-    |   |       micro_interface_qos_enhanced.sv
-    |   |       
-    |   +---switches
-    |   |       switch_2s.sv
-    |   |       switch_high_radix.sv
-    |   |       switch_high_radix_matching.sv
-    |   |       switch_s.sv
-    |   |       
-    |   +---switch_ips
-    |   |       cell_to_packet_s_port_with_barrel.sv
-    |   |       col_pipeline_mux.sv
-    |   |       dest_finder_col.sv
-    |   |       dest_finder_row.sv
-    |   |       dest_finder_row_matching.sv
-    |   |       dest_finder_row_matching_qos.sv
-    |   |       dest_finder_s.sv
-    |   |       row_mux.sv
-    |   |       shared_voq.sv
-    |   |       shared_xpq.sv
-    |   |       
-    |   \---wrappers
-    |           wrapper_dest_finder_row.sv
-    |           wrapper_dest_finder_row_matching.sv
-    |           wrapper_fifo_array.sv
-    |           wrapper_first_none_zero_except_k.sv
-    |           wrapper_first_non_zero_after_k.sv
-    |           wrapper_packet_mode_fifo_array.sv
-    |           wrapper_switch_fabric.sv
++---src
+|   +---hdl
+|   |   |   switch_fabric.sv
+|   |   |   switch_fabric_qos_wrapper.sv
+|   |   |   
+|   |   +---arbitration
+|   |   |       crosspoint_arbiter.sv
+|   |   |       egress_arbiter.sv
+|   |   |       qos_aware_arbiter.sv
+|   |   |       voq_arbiter.sv
+|   |   |       
+|   |   +---buffers
+|   |   |       packet_buffer.sv
+|   |   |       voq_buffer.sv
+|   |   |       xpq_buffer.sv
+|   |   |       
+|   |   +---converters
+|   |   |       cell_to_packet_s_port_with_barrel.sv
+|   |   |       packet_to_cell.sv
+|   |   |       packet_to_cell_converter.sv
+|   |   |       reg_tree_replicator.sv
+|   |   |       
+|   |   +---core
+|   |   |       credit_manager.sv
+|   |   |       packet_id_manager.sv
+|   |   |       qos_classifier.sv
+|   |   |       qos_scheduler.sv
+|   |   |       qos_shaper.sv
+|   |   |       round_robin_arbiter.sv
+|   |   |       
+|   |   +---fabric
+|   |   |       fabric_crosspoint.sv
+|   |   |       fabric_egress.sv
+|   |   |       fabric_ingress.sv
+|   |   |       switch_fabric.sv
+|   |   |       
+|   |   +---interfaces
+|   |   |       axis_if.sv
+|   |   |       micro_if.sv
+|   |   |       switch_data_if.sv
+|   |   |       switch_metadata_if.sv
+|   |   |       
+|   |   +---ip
+|   |   |   +---combinational_components
+|   |   |   |       first_none_zero_except_k_qos.sv
+|   |   |   |       
+|   |   |   +---crossbar
+|   |   |   |       crossbar_switch.sv
+|   |   |   |       
+|   |   |   +---delayed_regs
+|   |   |   |       delayed_regs.sv
+|   |   |   |       
+|   |   |   +---dest_mask_modules
+|   |   |   |       first_none_zero_datavalid.sv
+|   |   |   |       first_none_zero_except_k.sv
+|   |   |   |       first_non_zero.sv
+|   |   |   |       first_non_zero_after_k.sv
+|   |   |   |       first_non_zero_no_delay.sv
+|   |   |   |       multicast_mask_to_index.sv
+|   |   |   |       num_non_zero.sv
+|   |   |   |       num_non_zero_no_delay.sv
+|   |   |   |       one_hot_none_zero.sv
+|   |   |   |       vlan_lag_acl.sv
+|   |   |   |       
+|   |   |   +---fifos
+|   |   |   |   +---axis_fifo
+|   |   |   |   |       axis_fifo.sv
+|   |   |   |   |       
+|   |   |   |   +---dynamic_fifo
+|   |   |   |   |       linklist_dynamic_fifo.sv
+|   |   |   |   |       packet_mode_fifo_array.sv
+|   |   |   |   |       packet_mode_fifo_array_multicast.sv
+|   |   |   |   |       
+|   |   |   |   +---init_fifo
+|   |   |   |   |       sync_fifo_init_value.sv
+|   |   |   |   |       
+|   |   |   |   \---simple_fifo
+|   |   |   |           simple_fifo.sv
+|   |   |   |           
+|   |   |   +---memories
+|   |   |   |   +---init_mem
+|   |   |   |   |       sdpram_init_value.sv
+|   |   |   |   |       sdpram_init_value_all_same.sv
+|   |   |   |   |       sdpram_init_value_n1_n2.sv
+|   |   |   |   |       
+|   |   |   |   +---pipeline_mem
+|   |   |   |   |       pipeline_mem.sv
+|   |   |   |   |       
+|   |   |   |   \---sdpram_xpm
+|   |   |   |           sdpram_xpm.sv
+|   |   |   |           
+|   |   |   +---pipeline_mem
+|   |   |   |       barrel_shifter.sv
+|   |   |   |       pipeline_mem.sv
+|   |   |   |       pipeline_mem_with_inout_barrel.sv
+|   |   |   |       pipeline_mem_with_in_barrel.sv
+|   |   |   |       
+|   |   |   +---pipeline_mux
+|   |   |   |       mux_tile.sv
+|   |   |   |       pipeline_mux.sv
+|   |   |   |       
+|   |   |   \---register_replicator
+|   |   |           register_replicator.sv
+|   |   |           regtree_replicator.sv
+|   |   |           
+|   |   +---line_modules
+|   |   |       cell_to_packet.sv
+|   |   |       egress_line.sv
+|   |   |       egress_switch.sv
+|   |   |       ingress_line.sv
+|   |   |       ingress_line_qos.sv
+|   |   |       ingress_line_wrapper.sv
+|   |   |       ingress_switch.sv
+|   |   |       packet_to_cell.sv
+|   |   |       
+|   |   +---micro_interface
+|   |   |       micro_interface_qos_enhanced.sv
+|   |   |       
+|   |   +---switches
+|   |   |       switch_2s.sv
+|   |   |       switch_high_radix.sv
+|   |   |       switch_high_radix_matching.sv
+|   |   |       switch_s.sv
+|   |   |       
+|   |   +---switch_ips
+|   |   |       cell_to_packet_s_port_with_barrel.sv
+|   |   |       col_pipeline_mux.sv
+|   |   |       dest_finder_col.sv
+|   |   |       dest_finder_row.sv
+|   |   |       dest_finder_row_matching.sv
+|   |   |       dest_finder_row_matching_qos.sv
+|   |   |       dest_finder_s.sv
+|   |   |       row_mux.sv
+|   |   |       shared_voq.sv
+|   |   |       shared_xpq.sv
+|   |   |       
+|   |   \---wrappers
+|   |           wrapper_dest_finder_row.sv
+|   |           wrapper_dest_finder_row_matching.sv
+|   |           wrapper_fifo_array.sv
+|   |           wrapper_first_none_zero_except_k.sv
+|   |           wrapper_first_non_zero_after_k.sv
+|   |           wrapper_packet_mode_fifo_array.sv
+|   |           wrapper_switch_fabric.sv
+|   |           
+|   +---inc
+|   |   |   fabric_params.vh
+|   |   |   implement_options.vh
+|   |   |   qos_defines.vh
+|   |   |   qos_defines_enhanced.vh
+|   |   |   sim_options.vh
+|   |   |   
+|   |   \---mem_init
+|   |           mem_init_0_9.mem
+|   |           mem_init_10_16383.mem
+|   |           mem_init_10_63.mem
+|   |           mem_init_11_16383.mem
+|   |           mem_init_11_63.mem
+|   |           mem_init_all_0_depth_16384.mem
+|   |           mem_init_all_1_depth_10.mem
+|   |           
+|   +---ip
+|   |   +---ila
+|   |   \---submodule
+|   |       \---edge_detect
+|   \---xdc
+|           timing.xdc
+|           timing_qos.xdc
+|           
++---switch_fabric
+|   |   mem_gen.tcl
+|   |   transcript
+|   |   
+|   \---inc
+|           implement_options.vh
+|           
+\---vivado_build
+    |   qos_fabric_10x10g.xpr
+    |   
+    +---qos_fabric_10x10g.cache
+    |   \---wt
+    |           project.wpc
+    |           synthesis.wdf
+    |           synthesis_details.wdf
     |           
-    +---inc
-    |       fabric_params.vh
-    |       implement_options.vh
-    |       qos_defines.vh
+    +---qos_fabric_10x10g.hw
+    |       qos_fabric_10x10g.lpr
     |       
-    +---ip
-    |   +---ila
-    |   \---submodule
-    |       \---edge_detect
-    \---xdc
-            timing.xdc
-            timing_qos.xdc
+    +---qos_fabric_10x10g.ip_user_files
+    +---qos_fabric_10x10g.runs
+    |   +---.jobs
+    |   |       vrs_config_1.xml
+    |   |       
+    |   \---synth_1
+    |       |   .vivado.begin.rst
+    |       |   .vivado.end.rst
+    |       |   .Vivado_Synthesis.queue.rst
+    |       |   gen_run.xml
+    |       |   htr.txt
+    |       |   ISEWrap.js
+    |       |   ISEWrap.sh
+    |       |   project.wdf
+    |       |   rundef.js
+    |       |   runme.bat
+    |       |   runme.log
+    |       |   runme.sh
+    |       |   switch_fabric.dcp
+    |       |   switch_fabric.tcl
+    |       |   switch_fabric.vds
+    |       |   switch_fabric_utilization_synth.pb
+    |       |   switch_fabric_utilization_synth.rpt
+    |       |   vivado.jou
+    |       |   vivado.pb
+    |       |   __synthesis_is_complete__
+    |       |   
+    |       \---.Xil
+    |               switch_fabric_propImpl.xdc
+    |               
+    \---reports
+            high_fanout.rpt
+            timing_synth.rpt
+            utilization_synth.rpt
             

@@ -24,6 +24,15 @@
 `endif
 
 //═══════════════════════════════════════════════════════════════════════════
+// QoS Weighted Fair Queuing (ADDED)
+//═══════════════════════════════════════════════════════════════════════════
+`ifndef QOS_WEIGHTS
+    // Weights for each priority level (Level 7 = highest, Level 0 = lowest)
+    // Format: {L7, L6, L5, L4, L3, L2, L1, L0}
+    `define QOS_WEIGHTS '{8'd50, 8'd40, 8'd35, 8'd30, 8'd25, 8'd25, 8'd25, 8'd25}
+`endif
+
+//═══════════════════════════════════════════════════════════════════════════
 // Priority Levels
 //═══════════════════════════════════════════════════════════════════════════
 `ifndef PRIORITY_BACKGROUND
@@ -61,6 +70,37 @@
 `ifndef SCHEDULER_ENABLE_AGING
     `define SCHEDULER_ENABLE_AGING      1
     `define SCHEDULER_AGING_THRESHOLD   1000
+`endif
+
+//═══════════════════════════════════════════════════════════════════════════
+// Token Bucket Shaper Parameters (ADDED)
+//═══════════════════════════════════════════════════════════════════════════
+`ifndef TOKEN_WIDTH
+    `define TOKEN_WIDTH         16
+    `define BUCKET_DEPTH        65536
+    `define REFILL_RATE         1024
+`endif
+
+//═══════════════════════════════════════════════════════════════════════════
+// Credit-Based Flow Control (ADDED)
+//═══════════════════════════════════════════════════════════════════════════
+`ifndef CREDIT_COUNT_WIDTH
+    `define CREDIT_COUNT_WIDTH      12
+    `define VOQ_DEPTH_PER_QOS       2048
+`endif
+
+//═══════════════════════════════════════════════════════════════════════════
+// Packet ID Management (ADDED)
+//═══════════════════════════════════════════════════════════════════════════
+`ifndef PACKET_ID_WIDTH
+    `define PACKET_ID_WIDTH         10
+`endif
+
+//═══════════════════════════════════════════════════════════════════════════
+// Aliases for compatibility
+//═══════════════════════════════════════════════════════════════════════════
+`ifndef PRIORITY_LEVELS
+    `define PRIORITY_LEVELS `QOS_LEVELS
 `endif
 
 `endif // QOS_DEFINES_VH

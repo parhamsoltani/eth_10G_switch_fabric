@@ -2,6 +2,7 @@
 // `default_nettype none
 
 `include "fabric_params.vh"
+`include "qos_defines.vh"
 
 module credit_manager #(
     parameter MAX_CREDITS = `VOQ_DEPTH_PER_QOS,

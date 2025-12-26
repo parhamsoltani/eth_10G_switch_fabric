@@ -80,7 +80,7 @@
 
 ---
 
-## 📝 **DOCUMENTATION UPDATES NEEDED**
+##  **DOCUMENTATION UPDATES NEEDED**
 
 1. **Executive Summary**: Change default QoS from 8-level to "configurable (default 8)"
 2. **Section 14.1**: Add disclaimer about microprocessor interface implementation status

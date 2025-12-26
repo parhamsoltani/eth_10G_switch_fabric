@@ -1,7 +1,9 @@
 `timescale 1ns / 1ps
 // `default_nettype none
 
+// Include files BEFORE the module
 `include "fabric_params.vh"
+`include "qos_defines.vh"
 
 module crosspoint_arbiter #(
     parameter NUM_SOURCES = `NUM_PORTS

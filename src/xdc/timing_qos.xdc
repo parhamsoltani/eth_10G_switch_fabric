@@ -1,52 +1,49 @@
-# QoS-specific timing constraints
-# Automatically sourced when ENABLE_QOS=1
+#═══════════════════════════════════════════════════════════════
+#  TIMING CONSTRAINTS FOR SWITCH_FABRIC (156.25 MHz)
+#  Vivado 2019.1 Compatible - Zero Critical Warnings
+#═══════════════════════════════════════════════════════════════
 
-# ============================================================================
-# QoS Classification Path Constraints
-# ============================================================================
+#───────────────────────────────────────────────────────────────
+# PRIMARY CLOCK (156.25 MHz = 6.4 ns period)
+#───────────────────────────────────────────────────────────────
 
-# Relax timing on QoS tag propagation (non-critical data path)
-set_multicycle_path -setup 2 -from [get_pins -hierarchical -filter {NAME =~ */qos_classifier/qos_tag_reg*/C}] \
-                               -to [get_pins -hierarchical -filter {NAME =~ */ingress_line_qos/qos_tag_o_reg*/D}]
+create_clock -period 6.400 -name clk -waveform {0.000 3.200} [get_ports clk]
 
-set_multicycle_path -hold 1  -from [get_pins -hierarchical -filter {NAME =~ */qos_classifier/qos_tag_reg*/C}] \
-                               -to [get_pins -hierarchical -filter {NAME =~ */ingress_line_qos/qos_tag_o_reg*/D}]
+#───────────────────────────────────────────────────────────────
+# CLOCK UNCERTAINTY
+#───────────────────────────────────────────────────────────────
 
-# ============================================================================
-# QoS Priority Comparison Paths (Matching Logic)
-# ============================================================================
+set_clock_uncertainty -setup 0.100 [get_clocks clk]
+set_clock_uncertainty -hold  0.050 [get_clocks clk]
 
-# Tighten timing on priority comparison (critical for fairness)
-set_max_delay 1.0 -from [get_pins -hierarchical -filter {NAME =~ */dest_finder_row_matching_qos/buf_qos*_reg*/C}] \
-                    -to [get_pins -hierarchical -filter {NAME =~ */dest_finder_row_matching_qos/dest_reg_*_reg*/D}]
+#───────────────────────────────────────────────────────────────
+# INPUT CONSTRAINTS (All non-clock/non-reset inputs)
+#───────────────────────────────────────────────────────────────
 
-# ============================================================================
-# QoS Statistics Counters (Relaxed Timing)
-# ============================================================================
+set_input_delay -clock clk -min 0.000 [get_ports -filter {DIRECTION == IN && NAME !~ "clk" && NAME !~ "*reset*"}]
+set_input_delay -clock clk -max 3.500 [get_ports -filter {DIRECTION == IN && NAME !~ "clk" && NAME !~ "*reset*"}]
 
-# Counters can span multiple cycles (updated infrequently)
-set_multicycle_path -setup 3 -from [get_pins -hierarchical -filter {NAME =~ */micro_interface_qos/qos_*_count_reg*/C}] \
-                               -to [get_pins -hierarchical -filter {NAME =~ */micro_interface_qos/qos_*_count_reg*/D}]
+# For simulation/verification mode only - bypass I/O timing
+#set_false_path -from [get_ports -filter {DIRECTION == IN}]
+#set_false_path -to   [get_ports -filter {DIRECTION == OUT}]
 
-set_multicycle_path -hold 2  -from [get_pins -hierarchical -filter {NAME =~ */micro_interface_qos/qos_*_count_reg*/C}] \
-                               -to [get_pins -hierarchical -filter {NAME =~ */micro_interface_qos/qos_*_count_reg*/D}]
+# Match input delay to clock path (eliminates hold violations)
+#set_input_delay -clock clk -min 3.400 [get_ports -filter {DIRECTION == IN && NAME !~ "clk" && NAME !~ "*reset*"}]
+#set_input_delay -clock clk -max 3.500 [get_ports -filter {DIRECTION == IN && NAME !~ "clk" && NAME !~ "*reset*"}]
 
-# ============================================================================
-# False Paths (QoS Enable Control)
-# ============================================================================
+#───────────────────────────────────────────────────────────────
+# OUTPUT CONSTRAINTS (All outputs)
+#───────────────────────────────────────────────────────────────
 
-# QoS enable is quasi-static (set at initialization)
-set_false_path -from [get_pins -hierarchical -filter {NAME =~ */micro_interface_qos/qos_enable_reg/C}] \
-               -to [get_pins -hierarchical -filter {NAME =~ */dest_finder_row_matching_qos/qos_enable*/D}]
+set_output_delay -clock clk -min -0.500 [get_ports -filter {DIRECTION == OUT}]
+set_output_delay -clock clk -max  0.800 [get_ports -filter {DIRECTION == OUT}]
 
-set_false_path -from [get_pins -hierarchical -filter {NAME =~ */micro_interface_qos/use_*_reg/C}] \
-               -to [get_pins -hierarchical -filter {NAME =~ */qos_classifier/use_*_reg/D}]
+#───────────────────────────────────────────────────────────────
+# FALSE PATHS (Asynchronous reset)
+#───────────────────────────────────────────────────────────────
 
-# ============================================================================
-# Clock Domain Crossing (if applicable)
-# ============================================================================
+set_false_path -from [get_ports -filter {NAME =~ "*reset*"}]
 
-# If QoS stats cross to slower microprocessor clock
-# set_max_delay 10.0 -datapath_only -from [get_clocks sys_clk] -to [get_clocks micro_clk]
-
-puts "QoS-specific timing constraints applied"
+#═══════════════════════════════════════════════════════════════
+#  END OF CONSTRAINTS
+#═══════════════════════════════════════════════════════════════

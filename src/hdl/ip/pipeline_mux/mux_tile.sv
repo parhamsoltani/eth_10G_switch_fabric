@@ -2,7 +2,7 @@
 // `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
-// Engineer: Morteza Seyedi
+// Engineer: Parham Soltani
 //
 // Create Date:  2025-08-09
 // Module Name: mux_tile

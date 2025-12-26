@@ -61,7 +61,7 @@ module ingress_line_qos #(
     wire                         iq_rd_tready;
     wire                         iq_rd_almost_empty;
 
-    //========== Header Parsing ==========
+    //========== Header Parsing (32-bit Data Width) ==========
     logic [15:0] ethertype_reg;
     logic [2:0]  vlan_pcp_reg;
     logic [7:0]  ip_tos_reg;
@@ -69,19 +69,28 @@ module ingress_line_qos #(
     logic [15:0] tcp_dst_port_reg;
     logic        is_first_beat;
 
-    always_ff @(posedge clk) begin
-        if (rx_data_if.valid && rx_data_if.ready) begin
-            if (is_first_beat) begin
-                // Extract headers (simplified - assumes Ethernet + IPv4 + TCP)
-                // Adjust bit positions based on your actual packet format
-                ethertype_reg <= rx_data_if.data[111:96];  // Byte 12-13
-                vlan_pcp_reg  <= rx_data_if.data[127:125]; // VLAN tag PCP
-                ip_tos_reg    <= rx_data_if.data[71:64];   // IP TOS field
-                tcp_src_port_reg <= rx_data_if.data[47:32];
-                tcp_dst_port_reg <= rx_data_if.data[31:16];
-            end
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            ethertype_reg <= 16'h0800;  // Default to IPv4
+            vlan_pcp_reg  <= 3'b010;    // Default to MEDIUM priority
+            ip_tos_reg    <= 8'h00;
+            tcp_src_port_reg <= 16'h0000;
+            tcp_dst_port_reg <= 16'h0000;
+            is_first_beat <= 1'b1;
+        end else begin
+            if (rx_data_if.valid && rx_data_if.ready) begin
+                if (is_first_beat) begin
+                    // For 32-bit width, extract only what's available
+                    // This is a simplified placeholder - actual positions depend on packet format
+                    ethertype_reg <= 16'h0800;              // Default to IPv4
+                    vlan_pcp_reg  <= rx_data_if.data[31:29]; // Top 3 bits
+                    ip_tos_reg    <= 8'h00;                 // Default to best-effort
+                    tcp_src_port_reg <= rx_data_if.data[15:0];  // Lower 16 bits
+                    tcp_dst_port_reg <= rx_data_if.data[31:16]; // Upper 16 bits
+                end
 
-            is_first_beat <= rx_data_if.last;  // Next beat is first of new packet
+                is_first_beat <= rx_data_if.last;
+            end
         end
     end
 

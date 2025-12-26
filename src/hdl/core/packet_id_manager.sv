@@ -2,6 +2,7 @@
 // `default_nettype none
 
 `include "fabric_params.vh"
+`include "qos_defines.vh"
 
 module packet_id_manager #(
     parameter ID_WIDTH   = `PACKET_ID_WIDTH,
@@ -34,11 +35,14 @@ module packet_id_manager #(
 
     assign free_id_count = count;
 
-    // Priority encoder for allocation requests
-    logic [MAX_PORTS-1:0] grant_mask;
-    logic [$clog2(MAX_PORTS)-1:0] grant_encode [MAX_PORTS];
-
+    // Loop counters - declared outside for Vivado 2019.1 compatibility
     integer i, j;
+    
+    // Counters for allocation and release - moved outside always_ff
+    integer alloc_count_next;
+    integer release_count_next;
+    logic [ID_WIDTH:0] alloc_ptr;
+    logic [ID_WIDTH:0] release_ptr;
 
     // Initialize free list
     initial begin
@@ -64,40 +68,38 @@ module packet_id_manager #(
             alloc_grant <= '0;
         end else begin
             alloc_grant <= '0;
+            alloc_count_next = 0;
+            release_count_next = 0;
 
             // Handle allocations (priority encoded)
-            automatic int alloc_count = 0;
             for (i = 0; i < MAX_PORTS; i = i + 1) begin
-                if (alloc_req[i] && (count > alloc_count)) begin
-                    automatic logic [ID_WIDTH:0] alloc_ptr;
-                    alloc_ptr = (head_ptr + alloc_count) % MAX_IDS;
+                if (alloc_req[i] && (count > alloc_count_next)) begin
+                    alloc_ptr = (head_ptr + alloc_count_next) % MAX_IDS;
 
                     allocated_id[i] <= free_list[alloc_ptr];
                     alloc_grant[i] <= 1'b1;
                     id_in_use[free_list[alloc_ptr]] <= 1'b1;
 
-                    alloc_count = alloc_count + 1;
+                    alloc_count_next = alloc_count_next + 1;
                 end
             end
 
             // Handle releases
-            automatic int release_count = 0;
             for (i = 0; i < MAX_PORTS; i = i + 1) begin
                 if (release_req[i]) begin
-                    automatic logic [ID_WIDTH:0] release_ptr;
-                    release_ptr = (tail_ptr + release_count) % MAX_IDS;
+                    release_ptr = (tail_ptr + release_count_next) % MAX_IDS;
 
                     free_list[release_ptr] <= release_id[i];
                     id_in_use[release_id[i]] <= 1'b0;
 
-                    release_count = release_count + 1;
+                    release_count_next = release_count_next + 1;
                 end
             end
 
             // Update pointers
-            head_ptr <= (head_ptr + alloc_count) % MAX_IDS;
-            tail_ptr <= (tail_ptr + release_count) % MAX_IDS;
-            count <= count - alloc_count + release_count;
+            head_ptr <= (head_ptr + alloc_count_next) % MAX_IDS;
+            tail_ptr <= (tail_ptr + release_count_next) % MAX_IDS;
+            count <= count - alloc_count_next + release_count_next;
         end
     end
 

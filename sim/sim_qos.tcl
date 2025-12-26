@@ -34,8 +34,8 @@ puts "  QoS Switch Fabric Simulation"
 puts "  Testbench: $TB"
 puts "════════════════════════════════════════════════════════════"
 
-# Common includes
-set INCLUDE_OPTS "+incdir+$include_path +incdir+$sim_include_path +define+SIMULATION"
+# Common includes - Using list instead of string
+set INCLUDE_OPTS [list +incdir+$include_path +incdir+$sim_include_path +define+SIMULATION]
 
 #===============================================================================
 # Compile Xilinx libraries
@@ -87,7 +87,7 @@ if {$compile_error == 0} {
         
         foreach f $files_to_compile {
             if {[file exists $f]} {
-                if {[catch {vlog -sv $INCLUDE_OPTS $f} err]} {
+                if {[catch {eval vlog -sv $INCLUDE_OPTS $f} err]} {
                     puts "ERROR compiling $f: $err"
                     set compile_error 1
                     break
@@ -119,7 +119,7 @@ if {$compile_error == 0} {
         set compile_error 1
     } else {
         puts "  Found: $TB_FILE"
-        if {[catch {vlog -sv $INCLUDE_OPTS $TB_FILE} err]} {
+        if {[catch {eval vlog -sv $INCLUDE_OPTS $TB_FILE} err]} {
             puts "ERROR compiling testbench: $err"
             set compile_error 1
         }

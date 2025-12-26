@@ -12,7 +12,7 @@ proc run_test {test_name compile_script} {
 
     # Run the compile script
     if {[catch {source $compile_script} result]} {
-        puts "✗ ERROR: Test $test_name failed during compilation"
+        puts " ERROR: Test $test_name failed during compilation"
         puts "  Error: $result"
         return 0
     }
@@ -20,7 +20,7 @@ proc run_test {test_name compile_script} {
     set end_time [clock seconds]
     set duration [expr $end_time - $start_time]
 
-    puts "\n✓ Test $test_name completed in $duration seconds\n"
+    puts "\n Test $test_name completed in $duration seconds\n"
     return 1
 }
 
@@ -147,7 +147,7 @@ if {[run_test "Basic Fabric (NO QoS)" "scr/tb_fabric_basic/compile_all.tcl"]} {
 } else {
     incr failed_tests
     lappend test_results [list "Basic Fabric" "FAILED" "Compilation error"]
-    puts "\n⚠ WARNING: Basic fabric test failed! Skipping QoS tests."
+    puts "\n WARNING: Basic fabric test failed! Skipping QoS tests."
     puts "  Fix basic fabric before testing QoS features.\n"
 }
 
@@ -193,7 +193,7 @@ if {$failed_tests == 0} {
         lappend test_results [list "Ethernet Switch" "FAILED" "Compilation error"]
     }
 } else {
-    puts "\n⚠ WARNING: Skipping Ethernet Switch test due to previous failures\n"
+    puts "\n WARNING: Skipping Ethernet Switch test due to previous failures\n"
 }
 
 # ============================================================================
@@ -218,9 +218,9 @@ foreach result $test_results {
     set note [lindex $result 2]
 
     if {$status == "PASSED"} {
-        set symbol "✓"
+        set symbol ""
     } else {
-        set symbol "✗"
+        set symbol ""
     }
 
     if {$note != ""} {
@@ -235,14 +235,14 @@ puts "╠═══════════════════════�
 
 if {$failed_tests == 0} {
     puts "║                                                                   ║"
-    puts "║                    ✓ ALL TESTS PASSED ✓                          ║"
+    puts "║                     ALL TESTS PASSED                           ║"
     puts "║                                                                   ║"
     puts "║  Your QoS-enabled Ethernet Switch is fully validated!            ║"
     puts "║  Ready for synthesis and hardware deployment.                    ║"
     puts "║                                                                   ║"
 } else {
     puts "║                                                                   ║"
-    puts "║                    ✗ SOME TESTS FAILED ✗                         ║"
+    puts "║                     SOME TESTS FAILED                          ║"
     puts "║                                                                   ║"
     puts "║  Please review failed tests above and fix issues.                ║"
     puts "║                                                                   ║"

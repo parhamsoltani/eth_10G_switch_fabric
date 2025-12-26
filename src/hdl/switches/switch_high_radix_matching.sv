@@ -102,14 +102,20 @@ module switch_high_radix_matching #(
     wire [S_LOG-1:0]            col_dest_finder_cell2pkt_barrel_sel [NUM_XPQ_COL];
     wire [S_LOG-1:0]            col_dest_finder_xpq_pop_id [NUM_XPQ_COL];
 
-    wire [NUM_PORT-1:0]         row_dest_finder_none_mepty_ports_1 [NUM_DEST_FINDER_MATCHING];
-    wire [NUM_PORT-1:0]         row_dest_finder_none_mepty_ports_2 [NUM_DEST_FINDER_MATCHING];
-    wire                        row_dest_finder_dfifo_last_1 [NUM_DEST_FINDER_MATCHING];
-    wire                        row_dest_finder_dfifo_last_2 [NUM_DEST_FINDER_MATCHING];
-    wire                        row_dest_finder_dest_valid_1 [NUM_DEST_FINDER_MATCHING];
-    wire                        row_dest_finder_dest_valid_2 [NUM_DEST_FINDER_MATCHING];
-    wire [NUM_PORT_LOG-1:0]     row_dest_finder_dest_o_1 [NUM_DEST_FINDER_MATCHING];
-    wire [NUM_PORT_LOG-1:0]     row_dest_finder_dest_o_2 [NUM_DEST_FINDER_MATCHING];
+    // Conditionally declare row dest finder signals only if needed
+    generate
+        if (NUM_DEST_FINDER_MATCHING > 0) begin : gen_row_dest_finder_signals
+            wire [NUM_PORT-1:0]         row_dest_finder_none_mepty_ports_1 [NUM_DEST_FINDER_MATCHING];
+            wire [NUM_PORT-1:0]         row_dest_finder_none_mepty_ports_2 [NUM_DEST_FINDER_MATCHING];
+            wire                        row_dest_finder_dfifo_last_1 [NUM_DEST_FINDER_MATCHING];
+            wire                        row_dest_finder_dfifo_last_2 [NUM_DEST_FINDER_MATCHING];
+            wire                        row_dest_finder_dest_valid_1 [NUM_DEST_FINDER_MATCHING];
+            wire                        row_dest_finder_dest_valid_2 [NUM_DEST_FINDER_MATCHING];
+            wire [NUM_PORT_LOG-1:0]     row_dest_finder_dest_o_1 [NUM_DEST_FINDER_MATCHING];
+            wire [NUM_PORT_LOG-1:0]     row_dest_finder_dest_o_2 [NUM_DEST_FINDER_MATCHING];
+        end
+    endgenerate
+
     wire [NUM_PORT-1:0]         row_dest_finder_single_none_mepty_ports;
     wire                        row_dest_finder_single_dfifo_last;
     wire                        row_dest_finder_single_dest_valid;
@@ -161,11 +167,16 @@ module switch_high_radix_matching #(
     wire [NUM_XPQ_COL_LOG-1:0]      rep_xpq_index [NUM_VOQ][NUM_XPQ_COL];
     wire col_dest_finder_chosen_xpq_valid_D[NUM_XPQ_COL][0:COL_READ_LATENCY];
 
-    wire                           rm_push [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
-    wire                           rm_last_cell [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
-    wire [META_DATA_WIDTH-1:0]     rm_metadata [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
-    wire [S_LOG-1:0]               rm_push_id [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
-    wire [W_MINI-1:0]              rm_data [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL][S];
+    // Conditionally declare rm signals only if needed
+    generate
+        if (NUM_DEST_FINDER_MATCHING > 0) begin : gen_rm_signals
+            wire                           rm_push [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
+            wire                           rm_last_cell [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
+            wire [META_DATA_WIDTH-1:0]     rm_metadata [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
+            wire [S_LOG-1:0]               rm_push_id [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
+            wire [W_MINI-1:0]              rm_data [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL][S];
+        end
+    endgenerate
 
     // Assignments
     generate
@@ -258,13 +269,13 @@ module switch_high_radix_matching #(
                     .blocked_ports(xpq_blocked_ports[r][c])
                 );
 
-                if (r<NUM_DEST_FINDER_MATCHING) begin
-                    assign xpq_push[r][c] = rm_push[r][c];
-                    assign xpq_push_last_cell[r][c] = rm_last_cell[r][c];
-                    assign xpq_push_metadata[r][c] = rm_metadata[r][c];
-                    assign xpq_push_id[r][c] = rm_push_id[r][c];
+                if (NUM_DEST_FINDER_MATCHING > 0 && r < NUM_DEST_FINDER_MATCHING) begin
+                    assign xpq_push[r][c] = gen_rm_signals.rm_push[r][c];
+                    assign xpq_push_last_cell[r][c] = gen_rm_signals.rm_last_cell[r][c];
+                    assign xpq_push_metadata[r][c] = gen_rm_signals.rm_metadata[r][c];
+                    assign xpq_push_id[r][c] = gen_rm_signals.rm_push_id[r][c];
                     for (genvar i = 0; i < S; ++i) begin : g_xpq_push_lane
-                        assign xpq_push_data[r][c][i] = rm_data[r][c][i];
+                        assign xpq_push_data[r][c][i] = gen_rm_signals.rm_data[r][c][i];
                     end
                 end else if (r==NUM_XPQ_ROW-1) begin
                     assign xpq_push[r][c] = rep_push[NUM_VOQ-1][c] && (rep_xpq_index[NUM_VOQ-1][c] == c);
@@ -335,43 +346,42 @@ module switch_high_radix_matching #(
     //═══════════════════════════════════════════════════════════════════════════
 
     generate
-        for (genvar p = 0; p < NUM_DEST_FINDER_MATCHING; ++p) begin : g_row_df_pair
-            (* keep_hierarchy = "yes" *)
-            dest_finder_row_matching_qos #(  // CHANGED: QoS version
-                .S(S),
-                .NUM_PORT(NUM_PORT),
-                .QOS_ENABLE(`ENABLE_QOS),
-                .QOS_TAG_WIDTH(QOS_TAG_WIDTH),
-                .META_DATA_WIDTH(META_DATA_WIDTH),
-                .ROW_RTT_DELAY(ROW_RTT_DELAY)
-            ) u_row_df_match (
-                .clk(clk),
+        if (NUM_DEST_FINDER_MATCHING > 0) begin : g_row_df_enabled
+            for (genvar p = 0; p < NUM_DEST_FINDER_MATCHING; ++p) begin : g_row_df_pair
+                (* keep_hierarchy = "yes" *)
+                dest_finder_row_matching_qos #(
+                    .S(S),
+                    .NUM_PORT(NUM_PORT),
+                    .QOS_ENABLE(`ENABLE_QOS),
+                    .QOS_TAG_WIDTH(QOS_TAG_WIDTH),
+                    .META_DATA_WIDTH(META_DATA_WIDTH),
+                    .ROW_RTT_DELAY(ROW_RTT_DELAY)
+                ) u_row_df_match (
+                    .clk(clk),
+                    .metadata_1(voq_cell_metadata[2*p]),
+                    .metadata_2(voq_cell_metadata[2*p+1]),
+                    .none_mepty_ports_1(gen_row_dest_finder_signals.row_dest_finder_none_mepty_ports_1[p]),
+                    .none_mepty_ports_2(gen_row_dest_finder_signals.row_dest_finder_none_mepty_ports_2[p]),
+                    .block_ports(row_dest_finder_block_ports[p]),
+                    .dfifo_last_1(gen_row_dest_finder_signals.row_dest_finder_dfifo_last_1[p]),
+                    .dfifo_last_2(gen_row_dest_finder_signals.row_dest_finder_dfifo_last_2[p]),
+                    .dest_valid_o_1(gen_row_dest_finder_signals.row_dest_finder_dest_valid_1[p]),
+                    .dest_valid_o_2(gen_row_dest_finder_signals.row_dest_finder_dest_valid_2[p]),
+                    .dest_o_1(gen_row_dest_finder_signals.row_dest_finder_dest_o_1[p]),
+                    .dest_o_2(gen_row_dest_finder_signals.row_dest_finder_dest_o_2[p])
+                );
 
-                // NEW: Metadata inputs
-                .metadata_1(voq_cell_metadata[2*p]),
-                .metadata_2(voq_cell_metadata[2*p+1]),
-
-                .none_mepty_ports_1(row_dest_finder_none_mepty_ports_1[p]),
-                .none_mepty_ports_2(row_dest_finder_none_mepty_ports_2[p]),
-                .block_ports(row_dest_finder_block_ports[p]),
-                .dfifo_last_1(row_dest_finder_dfifo_last_1[p]),
-                .dfifo_last_2(row_dest_finder_dfifo_last_2[p]),
-                .dest_valid_o_1(row_dest_finder_dest_valid_1[p]),
-                .dest_valid_o_2(row_dest_finder_dest_valid_2[p]),
-                .dest_o_1(row_dest_finder_dest_o_1[p]),
-                .dest_o_2(row_dest_finder_dest_o_2[p])
-            );
-
-            localparam int R0 = 2*p;
-            localparam int R1 = 2*p + 1;
-            assign voq_pop_index[R0] = row_dest_finder_dest_o_1[p];
-            assign voq_pop[R0] = row_dest_finder_dest_valid_1[p];
-            assign voq_pop_index[R1] = row_dest_finder_dest_o_2[p];
-            assign voq_pop[R1] = row_dest_finder_dest_valid_2[p];
-            assign row_dest_finder_none_mepty_ports_1[p] = voq_none_mepty_fifos[R0];
-            assign row_dest_finder_none_mepty_ports_2[p] = voq_none_mepty_fifos[R1];
-            assign row_dest_finder_dfifo_last_1[p] = voq_last_cell[R0];
-            assign row_dest_finder_dfifo_last_2[p] = voq_last_cell[R1];
+                localparam int R0 = 2*p;
+                localparam int R1 = 2*p + 1;
+                assign voq_pop_index[R0] = gen_row_dest_finder_signals.row_dest_finder_dest_o_1[p];
+                assign voq_pop[R0] = gen_row_dest_finder_signals.row_dest_finder_dest_valid_1[p];
+                assign voq_pop_index[R1] = gen_row_dest_finder_signals.row_dest_finder_dest_o_2[p];
+                assign voq_pop[R1] = gen_row_dest_finder_signals.row_dest_finder_dest_valid_2[p];
+                assign gen_row_dest_finder_signals.row_dest_finder_none_mepty_ports_1[p] = voq_none_mepty_fifos[R0];
+                assign gen_row_dest_finder_signals.row_dest_finder_none_mepty_ports_2[p] = voq_none_mepty_fifos[R1];
+                assign gen_row_dest_finder_signals.row_dest_finder_dfifo_last_1[p] = voq_last_cell[R0];
+                assign gen_row_dest_finder_signals.row_dest_finder_dfifo_last_2[p] = voq_last_cell[R1];
+            end
         end
     endgenerate
 
@@ -532,43 +542,45 @@ module switch_high_radix_matching #(
     endgenerate
 
     generate
-        for (genvar p = 0; p < NUM_DEST_FINDER_MATCHING; ++p) begin : g_rowmux_pair
-            localparam int R0 = 2*p;
-            localparam int R1 = 2*p + 1;
-            for (genvar c = 0; c < NUM_XPQ_COL; ++c) begin : g_rowmux_col
-                wire [W_MINI-1:0] data_1 [S];
-                wire [W_MINI-1:0] data_2 [S];
-                for (genvar i = 0; i < S; ++i) begin : g_lane_map
-                    assign data_1[i] = rep_data[R0][i][c];
-                    assign data_2[i] = rep_data[R1][i][c];
+        if (NUM_DEST_FINDER_MATCHING > 0) begin : g_rowmux_enabled
+            for (genvar p = 0; p < NUM_DEST_FINDER_MATCHING; ++p) begin : g_rowmux_pair
+                localparam int R0 = 2*p;
+                localparam int R1 = 2*p + 1;
+                for (genvar c = 0; c < NUM_XPQ_COL; ++c) begin : g_rowmux_col
+                    wire [W_MINI-1:0] data_1 [S];
+                    wire [W_MINI-1:0] data_2 [S];
+                    for (genvar i = 0; i < S; ++i) begin : g_lane_map
+                        assign data_1[i] = rep_data[R0][i][c];
+                        assign data_2[i] = rep_data[R1][i][c];
+                    end
+                    row_mux #(
+                        .META_DATA_WIDTH(META_DATA_WIDTH),
+                        .NUM_XPQ_COL_LOG(NUM_XPQ_COL_LOG),
+                        .S(S),
+                        .S_LOG(S_LOG),
+                        .W_MINI(W_MINI),
+                        .XPQ_INDEX(c)
+                    ) u_row_mux_pc (
+                        .clk(clk),
+                        .voq_cell_valid_1(rep_push[R0][c]),
+                        .voq_cell_metadata_1(rep_metadata[R0][c]),
+                        .voq_last_cell_1(rep_last_cell[R0][c]),
+                        .voq_xpq_index_1(rep_xpq_index[R0][c]),
+                        .voq_dest_s_index_1(rep_push_id[R0][c]),
+                        .voq_main_mem_rd_data_1(data_1),
+                        .voq_cell_valid_2(rep_push[R1][c]),
+                        .voq_cell_metadata_2(rep_metadata[R1][c]),
+                        .voq_last_cell_2(rep_last_cell[R1][c]),
+                        .voq_xpq_index_2(rep_xpq_index[R1][c]),
+                        .voq_dest_s_index_2(rep_push_id[R1][c]),
+                        .voq_main_mem_rd_data_2(data_2),
+                        .xpq_push_o(gen_rm_signals.rm_push[p][c]),
+                        .voq_cell_metadata_o(gen_rm_signals.rm_metadata[p][c]),
+                        .voq_last_cell_o(gen_rm_signals.rm_last_cell[p][c]),
+                        .voq_dest_s_index_o(gen_rm_signals.rm_push_id[p][c]),
+                        .voq_main_mem_rd_data_o(gen_rm_signals.rm_data[p][c])
+                    );
                 end
-                row_mux #(
-                    .META_DATA_WIDTH(META_DATA_WIDTH),
-                    .NUM_XPQ_COL_LOG(NUM_XPQ_COL_LOG),
-                    .S(S),
-                    .S_LOG(S_LOG),
-                    .W_MINI(W_MINI),
-                    .XPQ_INDEX(c)
-                ) u_row_mux_pc (
-                    .clk(clk),
-                    .voq_cell_valid_1(rep_push[R0][c]),
-                    .voq_cell_metadata_1(rep_metadata[R0][c]),
-                    .voq_last_cell_1(rep_last_cell[R0][c]),
-                    .voq_xpq_index_1(rep_xpq_index[R0][c]),
-                    .voq_dest_s_index_1(rep_push_id[R0][c]),
-                    .voq_main_mem_rd_data_1(data_1),
-                    .voq_cell_valid_2(rep_push[R1][c]),
-                    .voq_cell_metadata_2(rep_metadata[R1][c]),
-                    .voq_last_cell_2(rep_last_cell[R1][c]),
-                    .voq_xpq_index_2(rep_xpq_index[R1][c]),
-                    .voq_dest_s_index_2(rep_push_id[R1][c]),
-                    .voq_main_mem_rd_data_2(data_2),
-                    .xpq_push_o(rm_push[p][c]),
-                    .voq_cell_metadata_o(rm_metadata[p][c]),
-                    .voq_last_cell_o(rm_last_cell[p][c]),
-                    .voq_dest_s_index_o(rm_push_id[p][c]),
-                    .voq_main_mem_rd_data_o(rm_data[p][c])
-                );
             end
         end
     endgenerate

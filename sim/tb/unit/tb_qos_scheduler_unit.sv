@@ -110,9 +110,9 @@ module tb_qos_scheduler_unit;
         @(posedge clk);
         $display("─────────────────────────────────────────────────────────────────────");
         if (test_errors == 0) begin
-            $display("✓ Test #%0d PASSED: %s", test_num, test_name);
+            $display(" Test #%0d PASSED: %s", test_num, test_name);
         end else begin
-            $display("✗ Test #%0d FAILED: %s (%0d errors)", test_num, test_name, test_errors);
+            $display(" Test #%0d FAILED: %s (%0d errors)", test_num, test_name, test_errors);
         end
         $display("");
     endtask
@@ -127,15 +127,15 @@ module tb_qos_scheduler_unit;
         #1;  // Sample after clock edge
 
         if (grant !== expected_grant) begin
-            $display("   ✗ ERROR [%0t] %s", $time, msg);
+            $display("    ERROR [%0t] %s", $time, msg);
             $display("      Expected grant: 0x%h, Got: 0x%h", expected_grant, grant);
             total_errors++;
         end else if (grant_valid !== expected_valid) begin
-            $display("   ✗ ERROR [%0t] %s", $time, msg);
+            $display("    ERROR [%0t] %s", $time, msg);
             $display("      Expected valid: %b, Got: %b", expected_valid, grant_valid);
             total_errors++;
         end else begin
-            $display("   ✓ [%0t] %s - grant=0x%h, valid=%b", $time, msg, grant, grant_valid);
+            $display("    [%0t] %s - grant=0x%h, valid=%b", $time, msg, grant, grant_valid);
         end
     endtask
 
@@ -149,15 +149,15 @@ module tb_qos_scheduler_unit;
         #1;  // Sample after clock edge
 
         if (grant_valid !== expected_valid) begin
-            $display("   ✗ ERROR [%0t] %s", $time, msg);
+            $display("    ERROR [%0t] %s", $time, msg);
             $display("      Expected valid: %b, Got: %b", expected_valid, grant_valid);
             total_errors++;
         end else if (grant_valid && ((grant & valid_grants) == 0)) begin
-            $display("   ✗ ERROR [%0t] %s", $time, msg);
+            $display("    ERROR [%0t] %s", $time, msg);
             $display("      Expected grant from set: 0x%h, Got: 0x%h", valid_grants, grant);
             total_errors++;
         end else begin
-            $display("   ✓ [%0t] %s - grant=0x%h (from valid set 0x%h)", $time, msg, grant, valid_grants);
+            $display("    [%0t] %s - grant=0x%h (from valid set 0x%h)", $time, msg, grant, valid_grants);
         end
     endtask
 
@@ -390,7 +390,7 @@ module tb_qos_scheduler_unit;
 
             // Check grant is from requesting ports in MEDIUM queue
             if ((grant & 8'b0000_1111) == 0) begin
-                $display("   ✗ ERROR: Grant to non-requesting port at cycle %0d", cycle);
+                $display("    ERROR: Grant to non-requesting port at cycle %0d", cycle);
                 test_errors++;
                 break;
             end
@@ -405,10 +405,10 @@ module tb_qos_scheduler_unit;
         // Check that all 4 ports got served
         unique_grants = $countones(grants_seen & 8'b0000_1111);
         if (unique_grants != 4) begin
-            $display("   ✗ ERROR: Only %0d out of 4 ports served", unique_grants);
+            $display("    ERROR: Only %0d out of 4 ports served", unique_grants);
             test_errors++;
         end else begin
-            $display("   ✓ All 4 ports in MEDIUM queue served in round-robin fashion");
+            $display("    All 4 ports in MEDIUM queue served in round-robin fashion");
         end
 
         end_test();
@@ -461,7 +461,7 @@ module tb_qos_scheduler_unit;
                 end
                 if (grant[2] || grant[3]) begin
                     low_count++;
-                    $display("   ⚠ WARNING: Low queue got grant at cycle %0d (grant=0x%h)",
+                    $display("    WARNING: Low queue got grant at cycle %0d (grant=0x%h)",
                             cycle, grant);
                 end
             end
@@ -472,10 +472,10 @@ module tb_qos_scheduler_unit;
 
         // With strict queue priority, LOW should NEVER get grants while CRITICAL is requesting
         if (low_count > 0) begin
-            $display("   ✗ ERROR: LOW queue got %0d grants with CRITICAL queue pending", low_count);
+            $display("    ERROR: LOW queue got %0d grants with CRITICAL queue pending", low_count);
             test_errors++;
         end else begin
-            $display("   ✓ Strict queue priority enforced (CRITICAL always beats LOW)");
+            $display("    Strict queue priority enforced (CRITICAL always beats LOW)");
         end
 
         end_test();
@@ -521,10 +521,10 @@ module tb_qos_scheduler_unit;
 
         // Should be roughly equal (within 10%)
         if (pri7_count < 40 || pri7_count > 60 || pri6_count < 40 || pri6_count > 60) begin
-            $display("   ⚠ WARNING: Unfair distribution within queue");
+            $display("    WARNING: Unfair distribution within queue");
             warnings++;
         end else begin
-            $display("   ✓ Fair round-robin within CRITICAL queue");
+            $display("    Fair round-robin within CRITICAL queue");
         end
 
         end_test();
@@ -568,7 +568,7 @@ module tb_qos_scheduler_unit;
         apply_requests(request, pri);
         check_grant_in_set(8'b0000_1001, 1'b1, "One of LOW queue ports wins");
 
-        $display("   ✓ Dynamic queue transitions handled correctly");
+        $display("    Dynamic queue transitions handled correctly");
 
         end_test();
     endtask
@@ -600,7 +600,7 @@ module tb_qos_scheduler_unit;
             #1;
 
             if (!is_onehot(grant)) begin
-                $display("   ✗ ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
+                $display("    ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
                 test_errors++;
                 break;
             end
@@ -615,11 +615,11 @@ module tb_qos_scheduler_unit;
 
         // Check all ports got served
         if (grant_history != {NUM_INPUTS{1'b1}}) begin
-            $display("   ✗ ERROR: Not all ports served");
+            $display("    ERROR: Not all ports served");
             $display("      Grant history: 0x%h (expected 0x%h)", grant_history, {NUM_INPUTS{1'b1}});
             total_errors++;
         end else begin
-            $display("   ✓ All %0d ports served at least once", NUM_INPUTS);
+            $display("    All %0d ports served at least once", NUM_INPUTS);
         end
 
         // Check fairness (each port should get ~3 grants)
@@ -627,7 +627,7 @@ module tb_qos_scheduler_unit;
         for (int i = 0; i < NUM_INPUTS; i++) begin
             $display("      Port %0d (pri %0d): %0d grants", i, pri[i], grant_count[i]);
             if (grant_count[i] < 2 || grant_count[i] > 4) begin
-                $display("      ⚠ WARNING: Unfair distribution for port %0d", i);
+                $display("       WARNING: Unfair distribution for port %0d", i);
                 warnings++;
             end
         end
@@ -660,14 +660,14 @@ module tb_qos_scheduler_unit;
 
             if (grant_valid) begin
                 if (!is_onehot(grant)) begin
-                    $display("   ✗ ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
+                    $display("    ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
                     total_errors++;
                     break;
                 end
 
                 // Verify grant matches current request pattern
                 if ((grant & request) == 0) begin
-                    $display("   ✗ ERROR: Grant 0x%h doesn't match request 0x%h at cycle %0d",
+                    $display("    ERROR: Grant 0x%h doesn't match request 0x%h at cycle %0d",
                              grant, request, cycle);
                     total_errors++;
                     break;
@@ -675,7 +675,7 @@ module tb_qos_scheduler_unit;
             end
         end
 
-        $display("   ✓ Request toggling handled correctly");
+        $display("    Request toggling handled correctly");
 
         end_test();
     endtask
@@ -718,15 +718,15 @@ module tb_qos_scheduler_unit;
 
             if (grant[7]) begin
                 low_grant_count++;
-                $display("   ✓ Cycle %4d: Port 7 (LOW queue) got grant via aging boost!", cycle);
+                $display("    Cycle %4d: Port 7 (LOW queue) got grant via aging boost!", cycle);
             end
         end
 
         if (low_grant_count > 0) begin
-            $display("   ✓ Aging mechanism worked: LOW queue got %0d grants (prevented starvation)",
+            $display("    Aging mechanism worked: LOW queue got %0d grants (prevented starvation)",
                      low_grant_count);
         end else begin
-            $display("   ✗ ERROR: Aging failed - LOW queue starved for %0d cycles", cycle);
+            $display("    ERROR: Aging failed - LOW queue starved for %0d cycles", cycle);
             total_errors++;
         end
 
@@ -765,9 +765,9 @@ module tb_qos_scheduler_unit;
         end
 
         if (grants_in_group == 10) begin
-            $display("   ✓ Priorities 7,6 correctly share CRITICAL queue");
+            $display("    Priorities 7,6 correctly share CRITICAL queue");
         end else begin
-            $display("   ✗ ERROR: Unexpected behavior in CRITICAL queue");
+            $display("    ERROR: Unexpected behavior in CRITICAL queue");
             total_errors++;
         end
 
@@ -795,7 +795,7 @@ module tb_qos_scheduler_unit;
         apply_requests(request, pri);
         check_grant(8'b0000_0001, 1'b1, "MEDIUM (pri 2) beats LOW (pri 1)");
 
-        $display("   ✓ Queue priority ordering verified");
+        $display("    Queue priority ordering verified");
 
         end_test();
     endtask
@@ -834,7 +834,7 @@ module tb_qos_scheduler_unit;
                 // Check one-hot
                 if (!is_onehot(grant)) begin
                     if (error_count == 0) begin
-                        $display("   ✗ ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
+                        $display("    ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
                     end
                     error_count++;
                     if (error_count >= 10) break;
@@ -843,7 +843,7 @@ module tb_qos_scheduler_unit;
                 // Check grant matches request
                 if ((grant & request) == 0) begin
                     if (error_count == 0) begin
-                        $display("   ✗ ERROR: Grant 0x%h without matching request 0x%h at cycle %0d",
+                        $display("    ERROR: Grant 0x%h without matching request 0x%h at cycle %0d",
                                  grant, request, cycle);
                     end
                     error_count++;
@@ -853,7 +853,7 @@ module tb_qos_scheduler_unit;
                 // If no grant, should be no requests
                 if (request != 0) begin
                     if (error_count == 0) begin
-                        $display("   ✗ ERROR: No grant despite request 0x%h at cycle %0d", request, cycle);
+                        $display("    ERROR: No grant despite request 0x%h at cycle %0d", request, cycle);
                     end
                     error_count++;
                     if (error_count >= 10) break;
@@ -901,13 +901,13 @@ module tb_qos_scheduler_unit;
             #1;
 
             if (!grant_valid) begin
-                $display("   ✗ ERROR: No grant at cycle %0d with pending requests", cycle);
+                $display("    ERROR: No grant at cycle %0d with pending requests", cycle);
                 total_errors++;
                 break;
             end
 
             if (!is_onehot(grant)) begin
-                $display("   ✗ ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
+                $display("    ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
                 total_errors++;
                 break;
             end
@@ -916,7 +916,7 @@ module tb_qos_scheduler_unit;
         end
 
         if (consecutive_grants == 50) begin
-            $display("   ✓ Maintained continuous grants for %0d cycles", consecutive_grants);
+            $display("    Maintained continuous grants for %0d cycles", consecutive_grants);
         end
 
         end_test();
@@ -947,11 +947,11 @@ module tb_qos_scheduler_unit;
             #1;
 
             if (grant != request) begin
-                $display("   ✗ ERROR: Single request at position %0d not granted correctly", i);
+                $display("    ERROR: Single request at position %0d not granted correctly", i);
                 total_errors++;
             end
         end
-        $display("   ✓ All single-bit positions tested");
+        $display("    All single-bit positions tested");
 
         // Edge case 3: All requests then sudden removal
         $display("\n   Test 3: All requests then sudden removal");
@@ -964,7 +964,7 @@ module tb_qos_scheduler_unit;
         apply_requests(request, pri);
         check_grant('0, 1'b0, "No grants after all requests removed");
 
-        $display("   ✓ Edge cases handled correctly");
+        $display("    Edge cases handled correctly");
 
         end_test();
     endtask
@@ -1044,7 +1044,7 @@ module tb_qos_scheduler_unit;
 
         if (total_errors == 0 && warnings == 0) begin
             $display("║                                                                   ║");
-            $display("║                    ✓ ALL TESTS PASSED ✓                          ║");
+            $display("║                     ALL TESTS PASSED                           ║");
             $display("║                                                                   ║");
             $display("║  Your 4-Queue QoS Scheduler is working perfectly!                ║");
             $display("║  - Strict priority between queues verified                       ║");
@@ -1054,13 +1054,13 @@ module tb_qos_scheduler_unit;
             $display("║                                                                   ║");
         end else if (total_errors == 0) begin
             $display("║                                                                   ║");
-            $display("║             ✓ ALL TESTS PASSED (with warnings) ✓                 ║");
+            $display("║              ALL TESTS PASSED (with warnings)                  ║");
             $display("║                                                                   ║");
             $display("║  Review warnings for potential improvements                      ║");
             $display("║                                                                   ║");
         end else begin
             $display("║                                                                   ║");
-            $display("║                    ✗ SOME TESTS FAILED ✗                         ║");
+            $display("║                     SOME TESTS FAILED                          ║");
             $display("║                                                                   ║");
             $display("║  Please review error messages above                              ║");
             $display("║                                                                   ║");
@@ -1077,7 +1077,7 @@ module tb_qos_scheduler_unit;
 
     initial begin
         #100ms;  // 100 millisecond timeout
-        $display("\n⚠ TIMEOUT: Simulation exceeded 100ms\n");
+        $display("\n TIMEOUT: Simulation exceeded 100ms\n");
         $finish;
     end
 

@@ -116,9 +116,9 @@ module tb_qos_classifier_unit;
         actual_qos = qos_tag;
 
         if (actual_qos == expected_qos) begin
-            $display("  ✓ PASS: %s (QoS=%0d)", description, actual_qos);
+            $display("   PASS: %s (QoS=%0d)", description, actual_qos);
         end else begin
-            $display("  ✗ ERROR: %s", description);
+            $display("   ERROR: %s", description);
             $display("    Expected QoS: %0d, Got: %0d", expected_qos, actual_qos);
             errors++;
         end
@@ -367,7 +367,7 @@ module tb_qos_classifier_unit;
 
         if (errors == 0 && warnings == 0) begin
             $display("║                                                                   ║");
-            $display("║              ✓✓✓ ALL TESTS PASSED ✓✓✓                            ║");
+            $display("║               ALL TESTS PASSED                             ║");
             $display("║                                                                   ║");
         end else if (errors == 0) begin
             $display("║                                                                   ║");
@@ -375,7 +375,7 @@ module tb_qos_classifier_unit;
             $display("║                                                                   ║");
         end else begin
             $display("║                                                                   ║");
-            $display("║                    ✗✗✗ TESTS FAILED ✗✗✗                          ║");
+            $display("║                     TESTS FAILED                           ║");
             $display("║                                                                   ║");
         end
 
@@ -386,7 +386,7 @@ module tb_qos_classifier_unit;
 
     initial begin
         #10ms;
-        $display("\n✗✗✗ TIMEOUT ✗✗✗\n");
+        $display("\n TIMEOUT \n");
         $finish;
     end
 
