@@ -39,7 +39,7 @@ if {![file exists $mem_init_path] || [llength [glob -nocomplain "$mem_init_path/
     }
 }
 
-set TB                  "tb_fabric_basic"
+set TB                  "tb_pipeline_mux"
 set wlf_save_name       "wlf/vsim.wlf"
 set opened_wlf_name     "ref_sim"
 set run_time            "200 us"

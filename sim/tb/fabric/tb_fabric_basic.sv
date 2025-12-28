@@ -65,13 +65,11 @@ module tb_fabric_basic;
         .PACKET_ID_WIDTH(PACKET_ID_WIDTH),
         .QOS_TAG_WIDTH(3)
     ) dut (
-        .clk(sys_clk),
-        .reset(sys_reset),
-        .rx_data_if(rx_data_if),
-        .rx_meta_if(rx_meta_if),
-        .tx_data_if(tx_data_if),
-        .addr_fifos_num_free_o(),
-        .free_fifo_count_o()
+        .clk        (sys_clk),
+        .reset      (sys_reset),
+        .rx_data_if (rx_data_if),
+        .rx_meta_if (rx_meta_if),
+        .tx_data_if (tx_data_if)
     );
 
     // Clock generation
