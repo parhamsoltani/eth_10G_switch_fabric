@@ -11,6 +11,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 `include "fabric_params.vh"
+`include "implement_options.vh"
 
 module switch_fabric_qos_wrapper #(
     parameter   NUM_PORT                = `NUM_PORTS,

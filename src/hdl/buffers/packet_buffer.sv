@@ -1,11 +1,10 @@
 `timescale 1ns / 1ps
-// `default_nettype none
 
 `include "fabric_params.vh"
 
 module packet_buffer #(
     parameter DATA_WIDTH        = `DATA_WIDTH,
-    parameter MAX_PACKET_SIZE   = 512,      // In DATA_WIDTH words
+    parameter MAX_PACKET_SIZE   = 512,
     parameter BUFFER_DEPTH      = `PACKET_BUFFER_DEPTH,
     parameter ID_WIDTH          = `PACKET_ID_WIDTH,
     parameter ADDR_WIDTH        = $clog2(BUFFER_DEPTH)
@@ -40,7 +39,7 @@ module packet_buffer #(
     typedef struct packed {
         logic [ADDR_WIDTH-1:0]  head_ptr;
         logic [ADDR_WIDTH-1:0]  tail_ptr;
-        logic [15:0]            length;     // In words
+        logic [15:0]            length;
         logic                   valid;
         logic                   is_bad;
     } packet_desc_t;
@@ -61,7 +60,7 @@ module packet_buffer #(
     logic [ADDR_WIDTH-1:0]  free_list [BUFFER_DEPTH];
     logic [ADDR_WIDTH:0]    free_head;
     logic [ADDR_WIDTH:0]    free_tail;
-    logic [ADDR_WIDTH:0]    free_count;
+    logic signed [ADDR_WIDTH+2:0] free_count;  // Extra bit for signed comparison
 
     // Write state machine
     typedef enum logic [1:0] {
@@ -78,6 +77,7 @@ module packet_buffer #(
     // Read state machine
     typedef enum logic [1:0] {
         RD_IDLE,
+        RD_FETCH,
         RD_PACKET,
         RD_WAIT
     } rd_state_t;
@@ -90,50 +90,79 @@ module packet_buffer #(
     logic [ID_WIDTH-1:0] packet_queue [2**ID_WIDTH];
     logic [ID_WIDTH:0] pkt_wr_ptr;
     logic [ID_WIDTH:0] pkt_rd_ptr;
-    logic [ID_WIDTH:0] pkt_count;
+    logic [15:0] pkt_count;
 
-    assign packet_count = pkt_count[15:0];
-    assign wr_ready = (free_count > MAX_PACKET_SIZE);
+    assign packet_count = pkt_count;
+    
+    // FIX: Changed from ">" to ">=" and use a reasonable threshold
+    // Ready if we have at least 1 free slot (for single-beat packets)
+    // Or use a smaller threshold for multi-beat packets
+    assign wr_ready = (free_count > 0) && (wr_state == WR_IDLE || wr_state == WR_PACKET);
+    
+    assign word_count = BUFFER_DEPTH - free_count;
 
-    // Initialize free list
-    initial begin
-        for (int i = 0; i < BUFFER_DEPTH; i++) begin
-            free_list[i] = i;
-        end
-        free_head = 0;
-        free_tail = BUFFER_DEPTH;
-        free_count = BUFFER_DEPTH;
-        pkt_wr_ptr = 0;
-        pkt_rd_ptr = 0;
-        pkt_count = 0;
-    end
-
-    // Write FSM
+    // Combined always_ff for all state
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
+            // Write FSM reset
             wr_state <= WR_IDLE;
             wr_word_count <= 0;
+            wr_head <= '0;
+            wr_current <= '0;
+            
+            // Read FSM reset
+            rd_state <= RD_IDLE;
+            rd_valid <= 1'b0;
+            rd_current <= '0;
+            rd_current_id <= '0;
+            rd_id <= '0;
+            rd_is_bad <= 1'b0;
+            rd_data <= '0;
+            rd_keep <= '0;
+            rd_last <= 1'b0;
+            
+            // Free list reset
+            free_head <= 0;
+            free_tail <= 0;  // Changed: tail starts at 0, wraps around
+            free_count <= BUFFER_DEPTH;
+            
+            // Packet queue reset
+            pkt_wr_ptr <= 0;
+            pkt_rd_ptr <= 0;
+            pkt_count <= 0;
+            
+            // Initialize free list
+            for (int i = 0; i < BUFFER_DEPTH; i++) begin
+                free_list[i] <= i[ADDR_WIDTH-1:0];
+            end
+            
         end else begin
+            
+            // Track allocation and free operations for free_count update
+            automatic logic do_alloc = 1'b0;
+            automatic logic do_free = 1'b0;
+            
+            //=================================================================
+            // Write FSM
+            //=================================================================
             case (wr_state)
                 WR_IDLE: begin
-                    if (wr_valid && wr_ready) begin
-                        // Allocate head pointer
-                        wr_head <= free_list[free_head];
-                        wr_current <= free_list[free_head];
+                    if (wr_valid && (free_count > 0)) begin
+                        // Allocate from free list
+                        wr_head <= free_list[free_head[ADDR_WIDTH-1:0]];
+                        wr_current <= free_list[free_head[ADDR_WIDTH-1:0]];
                         wr_word_count <= 1;
 
-                        // Initialize descriptor
-                        descriptors[wr_id].head_ptr <= free_list[free_head];
+                        descriptors[wr_id].head_ptr <= free_list[free_head[ADDR_WIDTH-1:0]];
                         descriptors[wr_id].is_bad <= wr_is_bad;
 
-                        // Write first word
-                        memory[free_list[free_head]].data <= wr_data;
-                        memory[free_list[free_head]].keep <= wr_keep;
-                        memory[free_list[free_head]].is_last <= wr_last;
+                        memory[free_list[free_head[ADDR_WIDTH-1:0]]].data <= wr_data;
+                        memory[free_list[free_head[ADDR_WIDTH-1:0]]].keep <= wr_keep;
+                        memory[free_list[free_head[ADDR_WIDTH-1:0]]].is_last <= wr_last;
 
                         free_head <= (free_head + 1) % BUFFER_DEPTH;
-                        free_count <= free_count - 1;
-
+                        do_alloc = 1'b1;
+                        
                         if (wr_last) begin
                             wr_state <= WR_COMMIT;
                         end else begin
@@ -143,20 +172,18 @@ module packet_buffer #(
                 end
 
                 WR_PACKET: begin
-                    if (wr_valid) begin
-                        // Link previous cell to new cell
-                        memory[wr_current].next_ptr <= free_list[free_head];
+                    if (wr_valid && (free_count > 0)) begin
+                        memory[wr_current].next_ptr <= free_list[free_head[ADDR_WIDTH-1:0]];
 
-                        // Write current word
-                        memory[free_list[free_head]].data <= wr_data;
-                        memory[free_list[free_head]].keep <= wr_keep;
-                        memory[free_list[free_head]].is_last <= wr_last;
+                        memory[free_list[free_head[ADDR_WIDTH-1:0]]].data <= wr_data;
+                        memory[free_list[free_head[ADDR_WIDTH-1:0]]].keep <= wr_keep;
+                        memory[free_list[free_head[ADDR_WIDTH-1:0]]].is_last <= wr_last;
 
-                        wr_current <= free_list[free_head];
+                        wr_current <= free_list[free_head[ADDR_WIDTH-1:0]];
                         wr_word_count <= wr_word_count + 1;
 
                         free_head <= (free_head + 1) % BUFFER_DEPTH;
-                        free_count <= free_count - 1;
+                        do_alloc = 1'b1;
 
                         if (wr_last) begin
                             wr_state <= WR_COMMIT;
@@ -165,83 +192,81 @@ module packet_buffer #(
                 end
 
                 WR_COMMIT: begin
-                    // Finalize descriptor
-                    memory[wr_current].next_ptr <= {ADDR_WIDTH{1'b1}};  // NULL
+                    memory[wr_current].next_ptr <= {ADDR_WIDTH{1'b1}};
                     descriptors[wr_id].tail_ptr <= wr_current;
                     descriptors[wr_id].length <= wr_word_count;
                     descriptors[wr_id].valid <= 1'b1;
 
-                    // Enqueue packet ID
-                    packet_queue[pkt_wr_ptr] <= wr_id;
-                    pkt_wr_ptr <= (pkt_wr_ptr + 1) % (2**ID_WIDTH);
+                    packet_queue[pkt_wr_ptr[ID_WIDTH-1:0]] <= wr_id;
+                    pkt_wr_ptr <= pkt_wr_ptr + 1;
                     pkt_count <= pkt_count + 1;
 
                     wr_state <= WR_IDLE;
                 end
-            endcase
-        end
-    end
 
-    // Read FSM
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            rd_state <= RD_IDLE;
-            rd_valid <= 1'b0;
-        end else begin
+                default: wr_state <= WR_IDLE;
+            endcase
+
+            //=================================================================
+            // Read FSM
+            //=================================================================
             case (rd_state)
                 RD_IDLE: begin
                     rd_valid <= 1'b0;
                     if (pkt_count > 0) begin
-                        // Dequeue packet ID
-                        rd_current_id <= packet_queue[pkt_rd_ptr];
-                        pkt_rd_ptr <= (pkt_rd_ptr + 1) % (2**ID_WIDTH);
+                        rd_current_id <= packet_queue[pkt_rd_ptr[ID_WIDTH-1:0]];
+                        rd_current <= descriptors[packet_queue[pkt_rd_ptr[ID_WIDTH-1:0]]].head_ptr;
+                        rd_id <= packet_queue[pkt_rd_ptr[ID_WIDTH-1:0]];
+                        rd_is_bad <= descriptors[packet_queue[pkt_rd_ptr[ID_WIDTH-1:0]]].is_bad;
+                        
+                        pkt_rd_ptr <= pkt_rd_ptr + 1;
                         pkt_count <= pkt_count - 1;
 
-                        // Start reading from head
-                        rd_current <= descriptors[packet_queue[pkt_rd_ptr]].head_ptr;
-                        rd_id <= packet_queue[pkt_rd_ptr];
-                        rd_is_bad <= descriptors[packet_queue[pkt_rd_ptr]].is_bad;
-
-                        rd_state <= RD_PACKET;
+                        rd_state <= RD_FETCH;
                     end
                 end
 
-                RD_PACKET: begin
-                    rd_valid <= 1'b1;
+                RD_FETCH: begin
+                    // Fetch data from memory
                     rd_data <= memory[rd_current].data;
                     rd_keep <= memory[rd_current].keep;
                     rd_last <= memory[rd_current].is_last;
+                    rd_valid <= 1'b1;
+                    rd_state <= RD_PACKET;
+                end
 
+                RD_PACKET: begin
                     if (rd_ready) begin
                         // Return current cell to free list
-                        free_list[free_tail] <= rd_current;
+                        free_list[free_tail[ADDR_WIDTH-1:0]] <= rd_current;
                         free_tail <= (free_tail + 1) % BUFFER_DEPTH;
-                        free_count <= free_count + 1;
+                        do_free = 1'b1;
 
-                        if (memory[rd_current].is_last) begin
-                            // Packet complete
+                        if (rd_last) begin
                             descriptors[rd_current_id].valid <= 1'b0;
+                            rd_valid <= 1'b0;
                             rd_state <= RD_IDLE;
                         end else begin
-                            // Move to next cell
                             rd_current <= memory[rd_current].next_ptr;
-                            rd_state <= RD_WAIT;
+                            rd_valid <= 1'b0;
+                            rd_state <= RD_FETCH;
                         end
                     end
                 end
 
-                RD_WAIT: begin
-                    // 1-cycle bubble for memory read
-                    rd_valid <= 1'b0;
-                    rd_state <= RD_PACKET;
-                end
+                default: rd_state <= RD_IDLE;
             endcase
+
+            //=================================================================
+            // Free count management
+            //=================================================================
+            if (do_alloc && !do_free) begin
+                free_count <= free_count - 1;
+            end else if (!do_alloc && do_free) begin
+                free_count <= free_count + 1;
+            end
+            // If both or neither, free_count stays the same
         end
     end
 
-    // Word count (for monitoring)
-    assign word_count = (BUFFER_DEPTH - free_count);
-
 endmodule
-
-// `default_nettype wire

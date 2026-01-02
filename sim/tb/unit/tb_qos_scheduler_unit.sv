@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps
-// `default_nettype none
 
 `include "fabric_params.vh"
 `include "qos_defines.vh"
@@ -37,6 +36,7 @@ module tb_qos_scheduler_unit;
     integer test_errors;      // Errors in current test
     integer total_errors;     // Total errors across all tests
     integer tests_passed;     // Number of passed tests
+    integer tests_failed;     // Number of failed tests
     integer warnings;
     string test_name;
 
@@ -99,6 +99,7 @@ module tb_qos_scheduler_unit;
     task automatic start_test(string name);
         test_num++;
         test_name = name;
+        test_errors = 0;
         $display("\n╔═══════════════════════════════════════════════════════════════════╗");
         $display("║ Test #%0d: %-56s ║", test_num, name);
         $display("╚═══════════════════════════════════════════════════════════════════╝");
@@ -110,8 +111,11 @@ module tb_qos_scheduler_unit;
         @(posedge clk);
         $display("─────────────────────────────────────────────────────────────────────");
         if (test_errors == 0) begin
+            tests_passed++;
             $display(" Test #%0d PASSED: %s", test_num, test_name);
         end else begin
+            tests_failed++;
+            total_errors += test_errors;
             $display(" Test #%0d FAILED: %s (%0d errors)", test_num, test_name, test_errors);
         end
         $display("");
@@ -129,11 +133,11 @@ module tb_qos_scheduler_unit;
         if (grant !== expected_grant) begin
             $display("    ERROR [%0t] %s", $time, msg);
             $display("      Expected grant: 0x%h, Got: 0x%h", expected_grant, grant);
-            total_errors++;
+            test_errors++;
         end else if (grant_valid !== expected_valid) begin
             $display("    ERROR [%0t] %s", $time, msg);
             $display("      Expected valid: %b, Got: %b", expected_valid, grant_valid);
-            total_errors++;
+            test_errors++;
         end else begin
             $display("    [%0t] %s - grant=0x%h, valid=%b", $time, msg, grant, grant_valid);
         end
@@ -151,11 +155,11 @@ module tb_qos_scheduler_unit;
         if (grant_valid !== expected_valid) begin
             $display("    ERROR [%0t] %s", $time, msg);
             $display("      Expected valid: %b, Got: %b", expected_valid, grant_valid);
-            total_errors++;
+            test_errors++;
         end else if (grant_valid && ((grant & valid_grants) == 0)) begin
             $display("    ERROR [%0t] %s", $time, msg);
             $display("      Expected grant from set: 0x%h, Got: 0x%h", valid_grants, grant);
-            total_errors++;
+            test_errors++;
         end else begin
             $display("    [%0t] %s - grant=0x%h (from valid set 0x%h)", $time, msg, grant, valid_grants);
         end
@@ -183,6 +187,14 @@ module tb_qos_scheduler_unit;
         return $countones(vec) == 1;
     endfunction
 
+    // Get granted port index
+    function automatic int get_granted_port();
+        for (int i = 0; i < NUM_INPUTS; i++) begin
+            if (grant[i]) return i;
+        end
+        return -1;
+    endfunction
+
     // Get priority name
     function automatic string get_priority_name(logic [QOS_TAG_WIDTH-1:0] pri);
         case (pri)
@@ -193,18 +205,7 @@ module tb_qos_scheduler_unit;
             3'd4: return "CRITICAL";
             3'd5: return "VIDEO";
             3'd6: return "VOICE";
-            3'd7: return "NETWORK_CONTROL";
-            default: return "UNKNOWN";
-        endcase
-    endfunction
-
-    // Get queue name from priority
-    function automatic string get_queue_name(logic [QOS_TAG_WIDTH-1:0] pri);
-        case (pri[2:1])
-            2'd3: return "CRITICAL";  // Priorities 6-7
-            2'd2: return "HIGH";      // Priorities 4-5
-            2'd1: return "MEDIUM";    // Priorities 2-3
-            2'd0: return "LOW";       // Priorities 0-1
+            3'd7: return "NETWORK_CTRL";
             default: return "UNKNOWN";
         endcase
     endfunction
@@ -221,7 +222,6 @@ module tb_qos_scheduler_unit;
                 for (int i = 0; i < NUM_INPUTS; i++) begin
                     if (grant[i]) begin
                         total_grants[i]++;
-                        // Bounds check before indexing
                         if (qos_tag[i] < QOS_LEVELS) begin
                             priority_grants[qos_tag[i]]++;
                         end
@@ -253,7 +253,7 @@ module tb_qos_scheduler_unit;
         $display("╠═══════════════════════════════════════════════════════════════════╣");
         $display("║ Grants by Priority Level:                                         ║");
 
-        for (int p = QOS_LEVELS-1; p >= 0; p--) begin  // Show highest first
+        for (int p = QOS_LEVELS-1; p >= 0; p--) begin
             if (total_cycles > 0) begin
                 avg_grant = (real'(priority_grants[p]) / real'(total_cycles)) * 100.0;
                 $display("║   Priority %0d (%12s): %5d grants (%5.2f%%)              ║",
@@ -299,75 +299,89 @@ module tb_qos_scheduler_unit;
         end_test();
     endtask
 
-    // Test 2: Queue-level strict priority (4 queues)
-    task automatic test_queue_priority();
+    // Test 2: Strict Priority - All 8 Levels
+    task automatic test_strict_priority_all_levels();
         logic [QOS_TAG_WIDTH-1:0] pri [NUM_INPUTS];
 
-        start_test("Queue-Level Strict Priority (4 Queues)");
+        start_test("Strict Priority - All 8 Levels");
 
-        $display("   Design uses 4 queues:");
-        $display("   - CRITICAL queue: Priorities 7,6");
-        $display("   - HIGH queue:     Priorities 5,4");
-        $display("   - MEDIUM queue:   Priorities 3,2");
-        $display("   - LOW queue:      Priorities 1,0");
+        $display("   Design uses 8 STRICT priority levels:");
+        $display("   Priority 7 > 6 > 5 > 4 > 3 > 2 > 1 > 0");
+        $display("   Higher priority ALWAYS wins (no grouping into queues)");
 
-        // Initialize all to BACKGROUND
-        for (int i = 0; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_BACKGROUND;
+        // Assign each port a unique priority
+        for (int i = 0; i < NUM_INPUTS; i++) begin
+            pri[i] = i[2:0];  // Port 0=pri0, Port 1=pri1, ... Port 7=pri7
+        end
 
-        // Test 1: CRITICAL queue beats all others
-        $display("\n   Test 1: CRITICAL queue (pri 6,7) beats HIGH queue (pri 4,5)");
-        pri[0] = 3'd7;  // CRITICAL queue
-        pri[1] = 3'd5;  // HIGH queue
-        pri[2] = 3'd3;  // MEDIUM queue
-        pri[3] = 3'd1;  // LOW queue
+        // Test: All ports request, highest priority should always win
+        request = 8'hFF;
+        apply_requests(request, pri);
+
+        $display("\n   All 8 ports requesting with unique priorities:");
+        
+        // Priority 7 (port 7) should win
+        check_grant(8'b1000_0000, 1'b1, "Priority 7 (port 7) wins");
+
+        // Remove port 7, priority 6 should win
+        request = 8'b0111_1111;
+        apply_requests(request, pri);
+        check_grant(8'b0100_0000, 1'b1, "Priority 6 (port 6) wins");
+
+        // Remove port 6, priority 5 should win
+        request = 8'b0011_1111;
+        apply_requests(request, pri);
+        check_grant(8'b0010_0000, 1'b1, "Priority 5 (port 5) wins");
+
+        // Continue for remaining priorities
+        request = 8'b0001_1111;
+        apply_requests(request, pri);
+        check_grant(8'b0001_0000, 1'b1, "Priority 4 (port 4) wins");
 
         request = 8'b0000_1111;
         apply_requests(request, pri);
-        check_grant(8'b0000_0001, 1'b1, "CRITICAL queue (port 0, pri 7) wins");
+        check_grant(8'b0000_1000, 1'b1, "Priority 3 (port 3) wins");
 
-        // Test 2: HIGH queue beats MEDIUM and LOW
-        $display("\n   Test 2: HIGH queue (pri 4,5) beats MEDIUM and LOW");
-        request = 8'b0000_1110;  // Exclude CRITICAL
+        request = 8'b0000_0111;
         apply_requests(request, pri);
-        check_grant(8'b0000_0010, 1'b1, "HIGH queue (port 1, pri 5) wins");
+        check_grant(8'b0000_0100, 1'b1, "Priority 2 (port 2) wins");
 
-        // Test 3: MEDIUM queue beats LOW
-        $display("\n   Test 3: MEDIUM queue (pri 2,3) beats LOW");
-        request = 8'b0000_1100;  // Exclude CRITICAL and HIGH
+        request = 8'b0000_0011;
         apply_requests(request, pri);
-        check_grant(8'b0000_0100, 1'b1, "MEDIUM queue (port 2, pri 3) wins");
+        check_grant(8'b0000_0010, 1'b1, "Priority 1 (port 1) wins");
 
-        // Test 4: LOW queue served when alone
-        $display("\n   Test 4: LOW queue served when no higher queues");
-        request = 8'b0000_1000;  // Only LOW
+        request = 8'b0000_0001;
         apply_requests(request, pri);
-        check_grant(8'b0000_1000, 1'b1, "LOW queue (port 3, pri 1) served");
+        check_grant(8'b0000_0001, 1'b1, "Priority 0 (port 0) wins when alone");
 
         end_test();
     endtask
 
-    // Test 3: Round-robin within same queue
-    task automatic test_round_robin_within_queue();
+    // Test 3: Round-robin within SAME priority level
+    task automatic test_round_robin_same_priority();
         logic [QOS_TAG_WIDTH-1:0] pri [NUM_INPUTS];
         logic [NUM_INPUTS-1:0] grants_seen;
+        int port_grants [4];
         int unique_grants;
 
-        start_test("Round-Robin Within Same Queue");
+        start_test("Round-Robin Within SAME Priority Level");
 
-        // All inputs at same queue (MEDIUM queue - priorities 2,3)
-        pri[0] = 3'd2;  // MEDIUM queue
-        pri[1] = 3'd3;  // MEDIUM queue (same queue as 2)
-        pri[2] = 3'd2;  // MEDIUM queue
-        pri[3] = 3'd3;  // MEDIUM queue
+        $display("   Ports 0-3 all at priority 5 (same level)");
+        $display("   Should see fair round-robin among them");
+
+        // All 4 ports at SAME priority level 5
+        pri[0] = 3'd5;
+        pri[1] = 3'd5;
+        pri[2] = 3'd5;
+        pri[3] = 3'd5;
         for (int i = 4; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_BACKGROUND;
 
-        // Request from inputs 0-3 (all in MEDIUM queue)
+        // Request from inputs 0-3
         request = 8'b0000_1111;
         apply_requests(request, pri);
 
         grants_seen = '0;
-
-        $display("   Testing round-robin among 4 requesters in MEDIUM queue");
+        for (int i = 0; i < 4; i++) port_grants[i] = 0;
 
         // Run for 12 cycles (3 full rounds)
         for (int cycle = 0; cycle < 12; cycle++) begin
@@ -375,30 +389,26 @@ module tb_qos_scheduler_unit;
             #1;
 
             if (!grant_valid) begin
-                $display("   ERROR: No grant at cycle %0d with pending requests", cycle);
+                $display("    ERROR: No grant at cycle %0d with pending requests", cycle);
                 test_errors++;
                 break;
             end
 
             if (!is_onehot(grant)) begin
-                $display("   ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
+                $display("    ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
                 test_errors++;
                 break;
             end
 
             grants_seen |= grant;
 
-            // Check grant is from requesting ports in MEDIUM queue
-            if ((grant & 8'b0000_1111) == 0) begin
-                $display("    ERROR: Grant to non-requesting port at cycle %0d", cycle);
-                test_errors++;
-                break;
+            // Count grants per port
+            for (int i = 0; i < 4; i++) begin
+                if (grant[i]) port_grants[i]++;
             end
 
             if (cycle < 4) begin
-                $display("      Cycle %2d: grant=0x%h (port %0d, pri %0d)", cycle, grant,
-                         grant[0] ? 0 : grant[1] ? 1 : grant[2] ? 2 : 3,
-                         grant[0] ? pri[0] : grant[1] ? pri[1] : grant[2] ? pri[2] : pri[3]);
+                $display("      Cycle %2d: grant=0x%h (port %0d)", cycle, grant, get_granted_port());
             end
         end
 
@@ -408,90 +418,28 @@ module tb_qos_scheduler_unit;
             $display("    ERROR: Only %0d out of 4 ports served", unique_grants);
             test_errors++;
         end else begin
-            $display("    All 4 ports in MEDIUM queue served in round-robin fashion");
+            $display("    All 4 ports served in round-robin fashion");
+            $display("    Grant distribution: P0=%0d, P1=%0d, P2=%0d, P3=%0d",
+                     port_grants[0], port_grants[1], port_grants[2], port_grants[3]);
         end
 
         end_test();
     endtask
 
-
-    // Test 4: Mixed queues with round-robin
-    task automatic test_mixed_queues();
-        logic [QOS_TAG_WIDTH-1:0] pri [NUM_INPUTS];
-        int critical_count, low_count;
-        int test_cycles;
-
-        start_test("Mixed Queues - Strict Queue Priority");
-
-        // Ports 0-1: CRITICAL queue (priorities 6,7)
-        // Ports 2-3: LOW queue (priorities 0,1)
-        pri[0] = 3'd7;  // CRITICAL queue
-        pri[1] = 3'd6;  // CRITICAL queue
-        pri[2] = 3'd1;  // LOW queue
-        pri[3] = 3'd0;  // LOW queue
-        for (int i = 4; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_BACKGROUND;
-
-        request = 8'b0000_1111;  // Ports 0-3 requesting
-        apply_requests(request, pri);
-
-        critical_count = 0;
-        low_count = 0;
-
-        $display("   Testing: CRITICAL queue should always beat LOW queue");
-        $display("   Ports 0,1 in CRITICAL queue (pri 7,6)");
-        $display("   Ports 2,3 in LOW queue (pri 1,0)");
-
-        // Run for less than aging threshold to avoid interference
-        if (ENABLE_AGING) begin
-            test_cycles = AGING_THRESHOLD - 10;  // Stop before aging kicks in
-            $display("   Running for %0d cycles (before aging threshold)", test_cycles);
-        end else begin
-            test_cycles = 100;
-            $display("   Running for %0d cycles", test_cycles);
-        end
-
-        // Run test
-        for (int cycle = 0; cycle < test_cycles; cycle++) begin
-            @(posedge clk);
-            #1;
-
-            if (grant_valid) begin
-                if (grant[0] || grant[1]) begin
-                    critical_count++;
-                end
-                if (grant[2] || grant[3]) begin
-                    low_count++;
-                    $display("    WARNING: Low queue got grant at cycle %0d (grant=0x%h)",
-                            cycle, grant);
-                end
-            end
-        end
-
-        $display("   CRITICAL queue grants: %0d", critical_count);
-        $display("   LOW queue grants: %0d", low_count);
-
-        // With strict queue priority, LOW should NEVER get grants while CRITICAL is requesting
-        if (low_count > 0) begin
-            $display("    ERROR: LOW queue got %0d grants with CRITICAL queue pending", low_count);
-            test_errors++;
-        end else begin
-            $display("    Strict queue priority enforced (CRITICAL always beats LOW)");
-        end
-
-        end_test();
-    endtask
-
-
-    // Test 5: Within-queue fairness (priorities 6 and 7 in same CRITICAL queue)
-    task automatic test_within_queue_fairness();
+    // Test 4: Strict priority between adjacent levels (6 vs 7)
+    task automatic test_adjacent_priority_levels();
         logic [QOS_TAG_WIDTH-1:0] pri [NUM_INPUTS];
         int pri7_count, pri6_count;
+        int test_cycles;
 
-        start_test("Within-Queue Fairness (Priorities 6,7 in CRITICAL Queue)");
+        start_test("Strict Priority Between Adjacent Levels (6 vs 7)");
 
-        // Both ports in CRITICAL queue
-        pri[0] = 3'd7;  // CRITICAL queue
-        pri[1] = 3'd6;  // CRITICAL queue (same queue!)
+        $display("   Port 0: priority 7 (highest)");
+        $display("   Port 1: priority 6");
+        $display("   Priority 7 should ALWAYS win (no fair sharing between levels)");
+
+        pri[0] = 3'd7;
+        pri[1] = 3'd6;
         for (int i = 2; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_BACKGROUND;
 
         request = 8'b0000_0011;  // Ports 0,1
@@ -500,13 +448,16 @@ module tb_qos_scheduler_unit;
         pri7_count = 0;
         pri6_count = 0;
 
-        $display("   Both ports in CRITICAL queue:");
-        $display("   Port 0: priority 7");
-        $display("   Port 1: priority 6");
-        $display("   Expected: Round-robin (fair sharing within queue)");
+        // Run for cycles before aging kicks in
+        if (ENABLE_AGING) begin
+            test_cycles = AGING_THRESHOLD - 10;
+        end else begin
+            test_cycles = 50;
+        end
 
-        // Run for 100 cycles
-        for (int cycle = 0; cycle < 100; cycle++) begin
+        $display("   Running for %0d cycles (before aging threshold)", test_cycles);
+
+        for (int cycle = 0; cycle < test_cycles; cycle++) begin
             @(posedge clk);
             #1;
 
@@ -519,71 +470,127 @@ module tb_qos_scheduler_unit;
         $display("   Port 0 (pri 7) grants: %0d", pri7_count);
         $display("   Port 1 (pri 6) grants: %0d", pri6_count);
 
-        // Should be roughly equal (within 10%)
-        if (pri7_count < 40 || pri7_count > 60 || pri6_count < 40 || pri6_count > 60) begin
-            $display("    WARNING: Unfair distribution within queue");
-            warnings++;
+        // Priority 7 should get ALL grants (strict priority)
+        if (pri6_count > 0) begin
+            $display("    ERROR: Priority 6 got %0d grants while priority 7 was pending", pri6_count);
+            test_errors++;
         end else begin
-            $display("    Fair round-robin within CRITICAL queue");
+            $display("    Strict priority enforced: Priority 7 always wins");
         end
 
         end_test();
     endtask
 
-    // Test 6: Dynamic priority changes across queues
-    task automatic test_dynamic_priority_queues();
+    // Test 5: Mixed priorities - highest always wins
+    task automatic test_mixed_priorities();
         logic [QOS_TAG_WIDTH-1:0] pri [NUM_INPUTS];
+        int highest_count, other_count;
+        int test_cycles;
 
-        start_test("Dynamic Priority Changes Across Queues");
+        start_test("Mixed Priorities - Highest Always Wins");
 
-        // Start with all in LOW queue
-        for (int i = 0; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_BACKGROUND;  // LOW queue
-        request = 8'b0000_1111;  // Ports 0-3
+        // Ports with various priorities
+        pri[0] = 3'd7;  // Highest
+        pri[1] = 3'd5;
+        pri[2] = 3'd3;
+        pri[3] = 3'd0;  // Lowest
+        for (int i = 4; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_BACKGROUND;
+
+        request = 8'b0000_1111;  // Ports 0-3 requesting
         apply_requests(request, pri);
 
-        $display("   Phase 1: All in LOW queue - round-robin expected");
-        wait_cycles(2);
+        highest_count = 0;
+        other_count = 0;
 
-        // Boost port 2 to CRITICAL queue
-        $display("   Phase 2: Boost port 2 to CRITICAL queue (priority 7)");
-        pri[2] = 3'd7;  // CRITICAL queue
-        apply_requests(request, pri);
-        check_grant(8'b0000_0100, 1'b1, "Port 2 (CRITICAL queue) wins immediately");
+        if (ENABLE_AGING) begin
+            test_cycles = AGING_THRESHOLD - 10;
+        end else begin
+            test_cycles = 100;
+        end
 
-        // Boost port 1 to HIGH queue (still lower than CRITICAL)
-        $display("   Phase 3: Boost port 1 to HIGH queue (priority 5)");
-        pri[1] = 3'd5;  // HIGH queue
-        apply_requests(request, pri);
-        check_grant(8'b0000_0100, 1'b1, "Port 2 (CRITICAL) still wins over port 1 (HIGH)");
+        $display("   Testing: Port 0 (pri 7) should always win over ports 1-3");
+        $display("   Running for %0d cycles", test_cycles);
 
-        // Remove port 2's request
-        $display("   Phase 4: Remove port 2's request");
-        request = 8'b0000_1011;  // Ports 0,1,3
-        apply_requests(request, pri);
-        check_grant(8'b0000_0010, 1'b1, "Port 1 (HIGH queue) wins when CRITICAL absent");
+        for (int cycle = 0; cycle < test_cycles; cycle++) begin
+            @(posedge clk);
+            #1;
 
-        // Remove port 1, now port 0 and 3 compete (both in LOW queue)
-        $display("   Phase 5: Remove port 1, ports 0,3 in LOW queue compete");
-        request = 8'b0000_1001;  // Ports 0,3
-        apply_requests(request, pri);
-        check_grant_in_set(8'b0000_1001, 1'b1, "One of LOW queue ports wins");
+            if (grant_valid) begin
+                if (grant[0]) begin
+                    highest_count++;
+                end else begin
+                    other_count++;
+                    if (other_count <= 3) begin
+                        $display("    WARNING: Non-highest priority got grant at cycle %0d (grant=0x%h)",
+                                cycle, grant);
+                    end
+                end
+            end
+        end
 
-        $display("    Dynamic queue transitions handled correctly");
+        $display("   Highest priority (port 0) grants: %0d", highest_count);
+        $display("   Other ports grants: %0d", other_count);
+
+        if (other_count > 0) begin
+            $display("    ERROR: Lower priority ports got %0d grants while highest pending", other_count);
+            test_errors++;
+        end else begin
+            $display("    Strict priority enforced correctly");
+        end
 
         end_test();
     endtask
 
-    // Test 7: All inputs same queue - fair round-robin
-    task automatic test_all_same_queue();
+    // Test 6: Dynamic priority changes
+    task automatic test_dynamic_priority_changes();
+        logic [QOS_TAG_WIDTH-1:0] pri [NUM_INPUTS];
+
+        start_test("Dynamic Priority Changes");
+
+        for (int i = 0; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_BACKGROUND;
+
+        // Start with port 0 at priority 3, port 1 at priority 5
+        pri[0] = 3'd3;
+        pri[1] = 3'd5;
+        request = 8'b0000_0011;
+        apply_requests(request, pri);
+
+        $display("   Phase 1: Port 0 (pri 3) vs Port 1 (pri 5)");
+        check_grant(8'b0000_0010, 1'b1, "Port 1 (pri 5) wins");
+
+        // Boost port 0 to priority 7
+        $display("   Phase 2: Boost port 0 to priority 7");
+        pri[0] = 3'd7;
+        apply_requests(request, pri);
+        check_grant(8'b0000_0001, 1'b1, "Port 0 (pri 7) now wins");
+
+        // Lower port 0 back to priority 2
+        $display("   Phase 3: Lower port 0 to priority 2");
+        pri[0] = 3'd2;
+        apply_requests(request, pri);
+        check_grant(8'b0000_0010, 1'b1, "Port 1 (pri 5) wins again");
+
+        // Both at same priority - should round-robin
+        $display("   Phase 4: Both at priority 4 (round-robin expected)");
+        pri[0] = 3'd4;
+        pri[1] = 3'd4;
+        apply_requests(request, pri);
+        check_grant_in_set(8'b0000_0011, 1'b1, "One of equal-priority ports wins");
+
+        end_test();
+    endtask
+
+    // Test 7: All inputs same priority - fair round-robin
+    task automatic test_all_same_priority();
         logic [QOS_TAG_WIDTH-1:0] pri [NUM_INPUTS];
         logic [NUM_INPUTS-1:0] grant_history;
         int grant_count [NUM_INPUTS];
 
-        start_test("All Inputs Same Queue - Fair Round-Robin");
+        start_test("All Inputs Same Priority - Fair Round-Robin");
 
-        // All inputs in HIGH queue (priority 4 or 5)
+        // All inputs at priority 4
         for (int i = 0; i < NUM_INPUTS; i++) begin
-            pri[i] = (i % 2 == 0) ? 3'd4 : 3'd5;  // Alternate 4 and 5 (both in HIGH queue)
+            pri[i] = 3'd4;
             grant_count[i] = 0;
         end
 
@@ -592,12 +599,18 @@ module tb_qos_scheduler_unit;
 
         grant_history = '0;
 
-        $display("   Running for %0d cycles with all ports in HIGH queue", NUM_INPUTS * 3);
+        $display("   Running for %0d cycles with all ports at priority 4", NUM_INPUTS * 3);
 
         // Run for 3 full rounds
         for (int cycle = 0; cycle < NUM_INPUTS * 3; cycle++) begin
             @(posedge clk);
             #1;
+
+            if (!grant_valid) begin
+                $display("    ERROR: No grant at cycle %0d with pending requests", cycle);
+                test_errors++;
+                break;
+            end
 
             if (!is_onehot(grant)) begin
                 $display("    ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
@@ -617,15 +630,15 @@ module tb_qos_scheduler_unit;
         if (grant_history != {NUM_INPUTS{1'b1}}) begin
             $display("    ERROR: Not all ports served");
             $display("      Grant history: 0x%h (expected 0x%h)", grant_history, {NUM_INPUTS{1'b1}});
-            total_errors++;
+            test_errors++;
         end else begin
             $display("    All %0d ports served at least once", NUM_INPUTS);
         end
 
-        // Check fairness (each port should get ~3 grants)
+        // Check fairness
         $display("   Grant distribution:");
         for (int i = 0; i < NUM_INPUTS; i++) begin
-            $display("      Port %0d (pri %0d): %0d grants", i, pri[i], grant_count[i]);
+            $display("      Port %0d: %0d grants", i, grant_count[i]);
             if (grant_count[i] < 2 || grant_count[i] > 4) begin
                 $display("       WARNING: Unfair distribution for port %0d", i);
                 warnings++;
@@ -641,11 +654,10 @@ module tb_qos_scheduler_unit;
 
         start_test("Request Toggling");
 
-        for (int i = 0; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_STANDARD;  // MEDIUM queue
+        for (int i = 0; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_STANDARD;
 
         $display("   Toggling requests between even/odd ports for 20 cycles");
 
-        // Toggle requests on and off
         for (int cycle = 0; cycle < 20; cycle++) begin
             if (cycle % 2 == 0) begin
                 request = 8'b1010_1010;  // Even ports
@@ -661,21 +673,22 @@ module tb_qos_scheduler_unit;
             if (grant_valid) begin
                 if (!is_onehot(grant)) begin
                     $display("    ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
-                    total_errors++;
+                    test_errors++;
                     break;
                 end
 
-                // Verify grant matches current request pattern
                 if ((grant & request) == 0) begin
                     $display("    ERROR: Grant 0x%h doesn't match request 0x%h at cycle %0d",
                              grant, request, cycle);
-                    total_errors++;
+                    test_errors++;
                     break;
                 end
             end
         end
 
-        $display("    Request toggling handled correctly");
+        if (test_errors == 0) begin
+            $display("    Request toggling handled correctly");
+        end
 
         end_test();
     endtask
@@ -689,16 +702,16 @@ module tb_qos_scheduler_unit;
         start_test("Aging Mechanism (Starvation Prevention)");
 
         if (!ENABLE_AGING) begin
-            $display("  ℹ Aging disabled in design, skipping test");
-            end_test();
+            $display("   INFO: Aging disabled in design, skipping test");
+            tests_passed++;
             return;
         end
 
-        // Port 0: CRITICAL queue (priority 7) - always requesting
-        // Port 7: LOW queue (priority 0) - always requesting, will age out
+        // Port 0: priority 7 - always requesting
+        // Port 7: priority 0 - always requesting, will age out
         for (int i = 0; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_BACKGROUND;
-        pri[0] = 3'd7;  // CRITICAL queue
-        pri[7] = 3'd0;  // LOW queue
+        pri[0] = 3'd7;
+        pri[7] = 3'd0;
 
         request = 8'b1000_0001;  // Ports 0 and 7
         apply_requests(request, pri);
@@ -707,95 +720,62 @@ module tb_qos_scheduler_unit;
         cycle = 0;
 
         $display("   Running for %0d cycles (2x aging threshold)", AGING_THRESHOLD * 2);
-        $display("   Port 0 in CRITICAL queue (pri 7)");
-        $display("   Port 7 in LOW queue (pri 0)");
-        $display("   Expecting port 7 to get boosted to CRITICAL after ~%0d cycles", AGING_THRESHOLD);
+        $display("   Port 0: priority 7 (highest)");
+        $display("   Port 7: priority 0 (lowest)");
+        $display("   Expecting port 7 to get boosted after ~%0d cycles", AGING_THRESHOLD);
 
-        // Run for 2x aging threshold
         for (cycle = 0; cycle < AGING_THRESHOLD * 2; cycle++) begin
             @(posedge clk);
             #1;
 
             if (grant[7]) begin
                 low_grant_count++;
-                $display("    Cycle %4d: Port 7 (LOW queue) got grant via aging boost!", cycle);
+                if (low_grant_count == 1) begin
+                    $display("    Cycle %4d: Port 7 (priority 0) got grant via aging boost!", cycle);
+                end
             end
         end
 
         if (low_grant_count > 0) begin
-            $display("    Aging mechanism worked: LOW queue got %0d grants (prevented starvation)",
-                     low_grant_count);
+            $display("    Aging mechanism worked: Priority 0 port got %0d grants", low_grant_count);
         end else begin
-            $display("    ERROR: Aging failed - LOW queue starved for %0d cycles", cycle);
-            total_errors++;
+            $display("    ERROR: Aging failed - priority 0 port starved for %0d cycles", cycle);
+            test_errors++;
         end
 
         end_test();
     endtask
 
-    // Test 10: Queue mapping verification
-    task automatic test_queue_mapping();
+    // Test 10: Priority level boundary tests
+    task automatic test_priority_boundaries();
         logic [QOS_TAG_WIDTH-1:0] pri [NUM_INPUTS];
-        int grants_in_group;
 
-        start_test("Queue Mapping Verification (8 Priorities → 4 Queues)");
-
-        $display("   Verifying priority-to-queue mapping:");
-        $display("   - CRITICAL: Priorities 7,6");
-        $display("   - HIGH:     Priorities 5,4");
-        $display("   - MEDIUM:   Priorities 3,2");
-        $display("   - LOW:      Priorities 1,0");
+        start_test("Priority Level Boundary Tests");
 
         for (int i = 0; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_BACKGROUND;
 
-        // Test 1: Priorities 7,6 round-robin (both in CRITICAL)
-        $display("\n   Test 1: Priorities 7 & 6 share CRITICAL queue (should round-robin)");
-        pri[0] = 3'd7;
-        pri[1] = 3'd6;
-        request = 8'b0000_0011;
-        apply_requests(request, pri);
+        // Test each adjacent priority pair
+        $display("   Testing each adjacent priority pair:");
 
-        grants_in_group = 0;
-        for (int i = 0; i < 10; i++) begin
+        for (int high_pri = 7; high_pri >= 1; high_pri--) begin
+            int low_pri = high_pri - 1;
+            
+            pri[0] = high_pri[2:0];
+            pri[1] = low_pri[2:0];
+            request = 8'b0000_0011;
+            apply_requests(request, pri);
+
             @(posedge clk);
             #1;
-            if (grant_valid && (grant[0] || grant[1])) begin
-                grants_in_group++;
+
+            if (grant != 8'b0000_0001) begin
+                $display("    ERROR: Priority %0d should beat priority %0d, got grant=0x%h",
+                         high_pri, low_pri, grant);
+                test_errors++;
+            end else begin
+                $display("    Priority %0d > Priority %0d: OK", high_pri, low_pri);
             end
         end
-
-        if (grants_in_group == 10) begin
-            $display("    Priorities 7,6 correctly share CRITICAL queue");
-        end else begin
-            $display("    ERROR: Unexpected behavior in CRITICAL queue");
-            total_errors++;
-        end
-
-        // Test 2: CRITICAL beats HIGH
-        $display("\n   Test 2: CRITICAL queue beats HIGH queue");
-        pri[0] = 3'd6;  // CRITICAL
-        pri[1] = 3'd5;  // HIGH
-        request = 8'b0000_0011;
-        apply_requests(request, pri);
-        check_grant(8'b0000_0001, 1'b1, "CRITICAL (pri 6) beats HIGH (pri 5)");
-
-        // Test 3: HIGH beats MEDIUM
-        $display("\n   Test 3: HIGH queue beats MEDIUM queue");
-        pri[0] = 3'd4;  // HIGH
-        pri[1] = 3'd3;  // MEDIUM
-        request = 8'b0000_0011;
-        apply_requests(request, pri);
-        check_grant(8'b0000_0001, 1'b1, "HIGH (pri 4) beats MEDIUM (pri 3)");
-
-        // Test 4: MEDIUM beats LOW
-        $display("\n   Test 4: MEDIUM queue beats LOW queue");
-        pri[0] = 3'd2;  // MEDIUM
-        pri[1] = 3'd1;  // LOW
-        request = 8'b0000_0011;
-        apply_requests(request, pri);
-        check_grant(8'b0000_0001, 1'b1, "MEDIUM (pri 2) beats LOW (pri 1)");
-
-        $display("    Queue priority ordering verified");
 
         end_test();
     endtask
@@ -819,7 +799,7 @@ module tb_qos_scheduler_unit;
             // Randomize requests and priorities
             request = $random;
             for (int i = 0; i < NUM_INPUTS; i++) begin
-                pri[i] = $random % QOS_LEVELS;  // 0-7
+                pri[i] = $random % QOS_LEVELS;
             end
 
             apply_requests(request, pri);
@@ -827,7 +807,6 @@ module tb_qos_scheduler_unit;
             @(posedge clk);
             #1;
 
-            // Verify grant properties
             if (grant_valid) begin
                 grant_count++;
 
@@ -860,14 +839,14 @@ module tb_qos_scheduler_unit;
                 end
             end
 
-            // Progress indicator every 200 cycles
+            // Progress indicator
             if (cycle % 200 == 199) begin
                 $display("      Progress: %0d/%0d cycles, %0d grants, %0d errors",
                          cycle+1, cycles, grant_count, error_count);
             end
         end
 
-        total_errors += error_count;
+        test_errors += error_count;
 
         if (error_count == 0) begin
             $display("   Stress test passed: %0d cycles, %0d grants, 0 errors", cycles, grant_count);
@@ -886,9 +865,8 @@ module tb_qos_scheduler_unit;
 
         start_test("Back-to-Back Requests (Continuous Grant Test)");
 
-        for (int i = 0; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_EXCELLENT;  // MEDIUM queue
+        for (int i = 0; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_EXCELLENT;
 
-        // Continuously request from all inputs
         request = {NUM_INPUTS{1'b1}};
         apply_requests(request, pri);
 
@@ -902,13 +880,13 @@ module tb_qos_scheduler_unit;
 
             if (!grant_valid) begin
                 $display("    ERROR: No grant at cycle %0d with pending requests", cycle);
-                total_errors++;
+                test_errors++;
                 break;
             end
 
             if (!is_onehot(grant)) begin
                 $display("    ERROR: Grant not one-hot at cycle %0d: 0x%h", cycle, grant);
-                total_errors++;
+                test_errors++;
                 break;
             end
 
@@ -928,19 +906,19 @@ module tb_qos_scheduler_unit;
 
         start_test("Edge Cases and Boundary Conditions");
 
-        // Edge case 1: Valid priorities at queue boundaries
-        $display("   Test 1: Queue boundary priorities");
+        // Edge case 1: Highest and lowest priority only
+        $display("   Test 1: Extreme priority difference (7 vs 0)");
         for (int i = 0; i < NUM_INPUTS; i++) pri[i] = `PRIORITY_BACKGROUND;
-        pri[0] = 3'd0;  // LOW queue lower bound
-        pri[1] = 3'd1;  // LOW queue upper bound
-        request = 8'b0000_0011;
+        pri[0] = 3'd7;
+        pri[7] = 3'd0;
+        request = 8'b1000_0001;
         apply_requests(request, pri);
-        check_grant_in_set(8'b0000_0011, 1'b1, "Both priorities in LOW queue");
+        check_grant(8'b0000_0001, 1'b1, "Priority 7 beats priority 0");
 
         // Edge case 2: Single bit request at each position
         $display("\n   Test 2: Single request at each input position");
         for (int i = 0; i < NUM_INPUTS; i++) begin
-            pri[i] = 3'd4;  // HIGH queue
+            pri[i] = 3'd4;
             request = (1 << i);
             apply_requests(request, pri);
             @(posedge clk);
@@ -948,7 +926,7 @@ module tb_qos_scheduler_unit;
 
             if (grant != request) begin
                 $display("    ERROR: Single request at position %0d not granted correctly", i);
-                total_errors++;
+                test_errors++;
             end
         end
         $display("    All single-bit positions tested");
@@ -964,7 +942,9 @@ module tb_qos_scheduler_unit;
         apply_requests(request, pri);
         check_grant('0, 1'b0, "No grants after all requests removed");
 
-        $display("    Edge cases handled correctly");
+        if (test_errors == 0) begin
+            $display("    Edge cases handled correctly");
+        end
 
         end_test();
     endtask
@@ -980,8 +960,7 @@ module tb_qos_scheduler_unit;
         $display("║          QoS SCHEDULER COMPREHENSIVE TESTBENCH                    ║");
         $display("║          =====================================                    ║");
         $display("║                                                                   ║");
-        $display("║  Design: 4-Queue Scheduler with 8 Priority Levels                ║");
-        $display("║  Queue Mapping: 8 priorities → 4 queues                          ║");
+        $display("║  Design: 8-Level Strict Priority Scheduler                        ║");
         $display("║                                                                   ║");
         $display("║  Parameters:                                                      ║");
         $display("║    • NUM_INPUTS:       %2d                                        ║", NUM_INPUTS);
@@ -990,15 +969,10 @@ module tb_qos_scheduler_unit;
         $display("║    • ENABLE_AGING:     %2d                                        ║", ENABLE_AGING);
         $display("║    • AGING_THRESHOLD:  %3d                                       ║", AGING_THRESHOLD);
         $display("║                                                                   ║");
-        $display("║  Queue Architecture:                                              ║");
-        $display("║    • CRITICAL Queue: Priorities 7,6 (Highest)                     ║");
-        $display("║    • HIGH Queue:     Priorities 5,4                               ║");
-        $display("║    • MEDIUM Queue:   Priorities 3,2                               ║");
-        $display("║    • LOW Queue:      Priorities 1,0 (Lowest)                      ║");
-        $display("║                                                                   ║");
         $display("║  Behavior:                                                        ║");
-        $display("║    • Strict priority between queues                               ║");
-        $display("║    • Round-robin fairness within each queue                       ║");
+        $display("║    • Priority 7 > 6 > 5 > 4 > 3 > 2 > 1 > 0 (strict ordering)     ║");
+        $display("║    • Round-robin fairness ONLY within SAME priority level         ║");
+        $display("║    • Aging boosts starved requests to highest priority            ║");
         $display("║                                                                   ║");
         $display("╚═══════════════════════════════════════════════════════════════════╝\n");
 
@@ -1007,6 +981,7 @@ module tb_qos_scheduler_unit;
         test_errors = 0;
         total_errors = 0;
         tests_passed = 0;
+        tests_failed = 0;
         warnings = 0;
         reset_statistics();
 
@@ -1015,19 +990,19 @@ module tb_qos_scheduler_unit;
         #100;
 
         // Run all tests
-        test_basic_single_request();        // Test 1
-        test_queue_priority();              // Test 2 - CORRECTED for 4 queues
-        test_round_robin_within_queue();    // Test 3 - CORRECTED
-        test_mixed_queues();                // Test 4 - CORRECTED
-        test_within_queue_fairness();       // Test 5 - NEW (tests pri 6,7 fairness)
-        test_dynamic_priority_queues();     // Test 6 - CORRECTED
-        test_all_same_queue();              // Test 7
-        test_request_toggling();            // Test 8
-        test_aging_mechanism();             // Test 9
-        test_queue_mapping();               // Test 10 - CORRECTED
-        test_random_requests();             // Test 11
-        test_back_to_back();                // Test 12
-        test_edge_cases();                  // Test 13
+        test_basic_single_request();           // Test 1
+        test_strict_priority_all_levels();     // Test 2 - All 8 levels strict
+        test_round_robin_same_priority();      // Test 3 - RR within SAME level
+        test_adjacent_priority_levels();       // Test 4 - 6 vs 7 strict
+        test_mixed_priorities();               // Test 5 - Multiple levels
+        test_dynamic_priority_changes();       // Test 6
+        test_all_same_priority();              // Test 7
+        test_request_toggling();               // Test 8
+        test_aging_mechanism();                // Test 9
+        test_priority_boundaries();            // Test 10 - All adjacent pairs
+        test_random_requests();                // Test 11
+        test_back_to_back();                   // Test 12
+        test_edge_cases();                     // Test 13
 
         // Final summary
         #100;
@@ -1037,32 +1012,32 @@ module tb_qos_scheduler_unit;
         $display("║                      FINAL TEST SUMMARY                           ║");
         $display("╠═══════════════════════════════════════════════════════════════════╣");
         $display("║  Total Tests:  %2d                                                 ║", test_num);
-        $display("║  Passed:       %2d                                                 ║", test_num - (total_errors > 0 ? 1 : 0));
-        $display("║  Failed:       %2d                                                 ║", total_errors > 0 ? 1 : 0);
+        $display("║  Passed:       %2d                                                 ║", tests_passed);
+        $display("║  Failed:       %2d                                                 ║", tests_failed);
         $display("║  Warnings:     %2d                                                 ║", warnings);
         $display("╠═══════════════════════════════════════════════════════════════════╣");
 
-        if (total_errors == 0 && warnings == 0) begin
+        if (tests_failed == 0 && warnings == 0) begin
             $display("║                                                                   ║");
-            $display("║                     ALL TESTS PASSED                           ║");
+            $display("║                     ✓ ALL TESTS PASSED ✓                          ║");
             $display("║                                                                   ║");
-            $display("║  Your 4-Queue QoS Scheduler is working perfectly!                ║");
-            $display("║  - Strict priority between queues verified                       ║");
-            $display("║  - Round-robin fairness within queues confirmed                  ║");
-            $display("║  - Aging mechanism functional                                    ║");
-            $display("║  - All edge cases handled                                        ║");
+            $display("║  Your 8-Level QoS Scheduler is working perfectly!                 ║");
+            $display("║  - Strict priority between all 8 levels verified                  ║");
+            $display("║  - Round-robin fairness within same level confirmed               ║");
+            $display("║  - Aging mechanism functional                                     ║");
+            $display("║  - All edge cases handled                                         ║");
             $display("║                                                                   ║");
-        end else if (total_errors == 0) begin
+        end else if (tests_failed == 0) begin
             $display("║                                                                   ║");
-            $display("║              ALL TESTS PASSED (with warnings)                  ║");
+            $display("║              ✓ ALL TESTS PASSED (with warnings) ✓                 ║");
             $display("║                                                                   ║");
-            $display("║  Review warnings for potential improvements                      ║");
+            $display("║  Review warnings for potential improvements                       ║");
             $display("║                                                                   ║");
         end else begin
             $display("║                                                                   ║");
-            $display("║                     SOME TESTS FAILED                          ║");
+            $display("║                     ✗ SOME TESTS FAILED ✗                         ║");
             $display("║                                                                   ║");
-            $display("║  Please review error messages above                              ║");
+            $display("║  Please review error messages above                               ║");
             $display("║                                                                   ║");
         end
 
@@ -1076,8 +1051,8 @@ module tb_qos_scheduler_unit;
     //═══════════════════════════════════════════════════════════════════════════
 
     initial begin
-        #100ms;  // 100 millisecond timeout
-        $display("\n TIMEOUT: Simulation exceeded 100ms\n");
+        #100ms;
+        $display("\n ERROR: TIMEOUT - Simulation exceeded 100ms\n");
         $finish;
     end
 

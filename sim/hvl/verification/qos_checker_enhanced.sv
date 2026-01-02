@@ -7,8 +7,9 @@
 // Create Date:  2025-11-25
 // Module Name: qos_checker_enhanced
 // Description: QoS verification with latency/jitter tracking
-// Uses your mailbox-based verification framework
 //////////////////////////////////////////////////////////////////////////////////
+
+`include "qos_defines.vh"
 
 import fabric_frame_pkg::*;
 
@@ -56,7 +57,7 @@ module qos_checker_enhanced #(
         input int dst_port,
         input logic [2:0] qos
     );
-        qos_event_t evt;
+        automatic qos_event_t evt;
         evt.id = id;
         evt.qos = qos;
         evt.tx_time = $time;
@@ -76,42 +77,54 @@ module qos_checker_enhanced #(
         input int dst_port,
         input logic [2:0] qos
     );
+        automatic real latency_ns;
+        automatic int qos_idx;
+        automatic int found_idx;
+        
+        found_idx = -1;
+        
         foreach (event_log[i]) begin
             if (event_log[i].id == id && event_log[i].dst_port == dst_port) begin
-                real latency_ns = $time - event_log[i].tx_time;
-                int qos_idx = qos[1:0];
-
-                // Update statistics
-                if (latency_ns < min_latency[qos_idx])
-                    min_latency[qos_idx] = latency_ns;
-                if (latency_ns > max_latency[qos_idx])
-                    max_latency[qos_idx] = latency_ns;
-
-                sum_latency[qos_idx] += latency_ns;
-                sum_latency_sq[qos_idx] += latency_ns * latency_ns;
-                pkt_count[qos_idx]++;
-
-                // Check priority inversion
-                check_priority_order(id, qos, $time);
-
-                $display("[QoS] RX: ID=%0d qos=%0d latency=%.2f ns",
-                         id, qos, latency_ns);
-
-                event_log.delete(i);
+                found_idx = i;
                 break;
             end
         end
+        
+        if (found_idx >= 0) begin
+            latency_ns = real'($time - event_log[found_idx].tx_time);
+            qos_idx = int'(qos[1:0]);
+
+            // Update statistics
+            if (latency_ns < min_latency[qos_idx])
+                min_latency[qos_idx] = latency_ns;
+            if (latency_ns > max_latency[qos_idx])
+                max_latency[qos_idx] = latency_ns;
+
+            sum_latency[qos_idx] += latency_ns;
+            sum_latency_sq[qos_idx] += latency_ns * latency_ns;
+            pkt_count[qos_idx]++;
+
+            // Check priority inversion
+            check_priority_order(id, qos, $time);
+
+            $display("[QoS] RX: ID=%0d qos=%0d latency=%.2f ns",
+                     id, qos, latency_ns);
+
+            event_log.delete(found_idx);
+        end
     endtask
 
-    // Priority inversion detection (your pattern)
+    // Priority inversion detection
     task check_priority_order(
         input logic [ID_WIDTH-1:0] id,
         input logic [2:0] qos,
         input time current_time
     );
+        automatic real time_diff;
+        
         foreach (event_log[i]) begin
             if (event_log[i].qos > qos && event_log[i].rx_time == 0) begin
-                real time_diff = current_time - event_log[i].tx_time;
+                time_diff = real'(current_time - event_log[i].tx_time);
                 if (time_diff < 1000) begin  // Within 1us
                     $warning("[QoS] Priority inversion: P%0d after P%0d (%.2f ns)",
                              qos, event_log[i].qos, time_diff);
@@ -121,17 +134,21 @@ module qos_checker_enhanced #(
         end
     endtask
 
-    // Final report (matches your scoreboard style)
+    // Final report
     task print_report();
+        automatic real avg;
+        automatic real variance;
+        automatic real jitter;
+        
         $display("\n========================================");
         $display("  QoS CHECKER REPORT");
         $display("========================================");
 
         for (int q = 0; q < QOS_LEVELS; q++) begin
             if (pkt_count[q] > 0) begin
-                real avg = sum_latency[q] / pkt_count[q];
-                real variance = (sum_latency_sq[q] / pkt_count[q]) - (avg * avg);
-                real jitter = $sqrt(variance);
+                avg = sum_latency[q] / pkt_count[q];
+                variance = (sum_latency_sq[q] / pkt_count[q]) - (avg * avg);
+                jitter = $sqrt(variance);
 
                 $display("QoS Level %0d:", q);
                 $display("  Packets:  %0d", pkt_count[q]);

@@ -78,7 +78,8 @@ module qos_classifier #(
             6'd16, 6'd18, 6'd20: return `PRIORITY_EXCELLENT;  // AF21, AF22, AF23
 
             // Assured Forwarding Class 1 (AF1x) - Bulk data
-            6'd8, 6'd10, 6'd12: return `PRIORITY_STANDARD;    // AF11, AF12, AF13
+            // Note: AF11=10, AF12=12, AF13=14 (not 8, 10, 12)
+            6'd10, 6'd12, 6'd14: return `PRIORITY_STANDARD;   // AF11, AF12, AF13
 
             // Class Selector 1 (CS1) - Low priority bulk
             6'd8:           return `PRIORITY_BEST_EFFORT;     // CS1

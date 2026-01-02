@@ -6,16 +6,10 @@
 //
 // Create Date:  2025-08-02 16:33:51
 // Module Name: switch_high_radix_matching
-// Project Name:
-// Target Devices:
-// Tool Versions: Vivado 2022.2
-// Description:
-// Dependencies:
+// Description: High radix switch with QoS support and packet ID preservation
 //
-// Additional Comments:
-
+// MODIFIED: Added packet_id_tx output and proper metadata width calculation
 //////////////////////////////////////////////////////////////////////////////////
-
 
 `include "fabric_params.vh"
 `include "qos_defines.vh"
@@ -30,7 +24,7 @@ module switch_high_radix_matching #(
     parameter   MULTICAST_SUPPORT       = 0,
     parameter   MULTICAST_RATE          = 1,
     parameter   PACKET_ID_WIDTH         = 8,
-    parameter   QOS_TAG_WIDTH           = 3,  // CHANGED: 3 bits for 8 levels
+    parameter   QOS_TAG_WIDTH           = 3,
     parameter   KEEP_WIDTH              = $clog2((W_MINI/8) + 1),
     parameter   MAIN_MEM_DEPTH_LOG      = $clog2(MAIN_MEM_DEPTH)
 ) (
@@ -51,6 +45,7 @@ module switch_high_radix_matching #(
     output  wire [KEEP_WIDTH-1:0]               keep_tx [NUM_PORT],
     output  wire                                valid_tx [NUM_PORT],
     output  wire                                is_bad_frame_tx [NUM_PORT],
+    output  wire [PACKET_ID_WIDTH-1:0]          packet_id_tx [NUM_PORT],    // NEW: Packet ID output
     output  wire                                last_tx [NUM_PORT],
     input   wire                                oq_wr_prog_full [NUM_PORT],
 
@@ -58,9 +53,14 @@ module switch_high_radix_matching #(
     output  wire [MAIN_MEM_DEPTH_LOG:0]         free_fifo_count_o
 );
 
+    //==========================================================================
+    // Local Parameters
+    //==========================================================================
     localparam S_LOG = $clog2(S);
     localparam NUM_PORT_LOG = $clog2(NUM_PORT);
-    localparam META_DATA_WIDTH = S + KEEP_WIDTH + 1 + S_LOG + QOS_TAG_WIDTH;  // CHANGED: Added QoS tag
+    // MODIFIED: Metadata now includes PACKET_ID_WIDTH instead of QOS_TAG_WIDTH
+    // Format: [packet_id | keep_minicell | keep_last | is_bad_frame | last_minicell_index]
+    localparam META_DATA_WIDTH = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH;
     localparam DFIFO_READY_THRESHOLD = 2*S+20;
     localparam READ_OFFSET = 0;
     localparam FULL_WAIT_DURATION = 50;
@@ -81,7 +81,9 @@ module switch_high_radix_matching #(
     localparam int ROW_MAX_FANOUT = 2;
     localparam NUM_DEST_FINDER_MATCHING = NUM_VOQ/2;
 
-    // Wires
+    //==========================================================================
+    // Wires - Cell to Packet
+    //==========================================================================
     wire                                cell2pkt_start_of_cell[NUM_XPQ_COL];
     wire [META_DATA_WIDTH-1:0]          cell2pkt_metadata[NUM_XPQ_COL];
     wire                                cell2pkt_last_cell[NUM_XPQ_COL];
@@ -92,7 +94,11 @@ module switch_high_radix_matching #(
     wire                                cell2pkt_valid_tx [NUM_XPQ_COL][S];
     wire                                cell2pkt_is_bad_frame_tx [NUM_XPQ_COL][S];
     wire                                cell2pkt_last_tx [NUM_XPQ_COL][S];
+    wire [PACKET_ID_WIDTH-1:0]          cell2pkt_packet_id_tx [NUM_XPQ_COL][S];  // NEW: Packet ID from C2P
 
+    //==========================================================================
+    // Wires - Column Destination Finder
+    //==========================================================================
     wire [S-1:0]                col_dest_finder_none_mepty_ports [NUM_XPQ_COL][NUM_XPQ_ROW];
     wire [S-1:0]                col_dest_finder_block_ports [NUM_XPQ_COL];
     wire                        col_dest_finder_chosen_xpq_valid [NUM_XPQ_COL];
@@ -102,7 +108,9 @@ module switch_high_radix_matching #(
     wire [S_LOG-1:0]            col_dest_finder_cell2pkt_barrel_sel [NUM_XPQ_COL];
     wire [S_LOG-1:0]            col_dest_finder_xpq_pop_id [NUM_XPQ_COL];
 
-    // Conditionally declare row dest finder signals only if needed
+    //==========================================================================
+    // Wires - Row Destination Finder (Conditional)
+    //==========================================================================
     generate
         if (NUM_DEST_FINDER_MATCHING > 0) begin : gen_row_dest_finder_signals
             wire [NUM_PORT-1:0]         row_dest_finder_none_mepty_ports_1 [NUM_DEST_FINDER_MATCHING];
@@ -122,6 +130,9 @@ module switch_high_radix_matching #(
     wire [NUM_PORT_LOG-1:0]     row_dest_finder_single_dest_o;
     wire [NUM_PORT-1:0]         row_dest_finder_block_ports [NUM_XPQ_ROW];
 
+    //==========================================================================
+    // Wires - VOQ
+    //==========================================================================
     wire [W_MINI-1:0]                  voq_data_rx [NUM_VOQ][S];
     wire [KEEP_WIDTH-1:0]              voq_keep_rx [NUM_VOQ][S];
     wire                               voq_valid_rx [NUM_VOQ][S];
@@ -142,6 +153,9 @@ module switch_high_radix_matching #(
     wire [W_MINI-1:0]                  voq_main_mem_rd_data [NUM_VOQ][S];
     wire [NUM_PORT-1:0]                voq_none_mepty_fifos [NUM_VOQ];
 
+    //==========================================================================
+    // Wires - XPQ
+    //==========================================================================
     wire                              xpq_push [NUM_XPQ_ROW][NUM_XPQ_COL];
     wire                              xpq_push_last_cell [NUM_XPQ_ROW][NUM_XPQ_COL];
     wire [W_MINI-1:0]                 xpq_push_data [NUM_XPQ_ROW][NUM_XPQ_COL][S];
@@ -155,10 +169,16 @@ module switch_high_radix_matching #(
     wire [S-1:0]                      xpq_none_mepty_fifos [NUM_XPQ_ROW][NUM_XPQ_COL];
     wire [S-1:0]                      xpq_blocked_ports [NUM_XPQ_ROW][NUM_XPQ_COL];
 
+    //==========================================================================
+    // Wires - Mux
+    //==========================================================================
     wire [META_DATA_WIDTH-1:0] mux_pop_metadata [NUM_XPQ_COL];
     wire                       mux_pop_last_cell [NUM_XPQ_COL];
     wire [W_MINI-1:0]          mux_pop_data [NUM_XPQ_COL][S];
 
+    //==========================================================================
+    // Wires - Replication
+    //==========================================================================
     wire                            rep_push [NUM_VOQ][NUM_XPQ_COL];
     wire                            rep_last_cell [NUM_VOQ][NUM_XPQ_COL];
     wire [META_DATA_WIDTH-1:0]      rep_metadata [NUM_VOQ][NUM_XPQ_COL];
@@ -167,7 +187,9 @@ module switch_high_radix_matching #(
     wire [NUM_XPQ_COL_LOG-1:0]      rep_xpq_index [NUM_VOQ][NUM_XPQ_COL];
     wire col_dest_finder_chosen_xpq_valid_D[NUM_XPQ_COL][0:COL_READ_LATENCY];
 
-    // Conditionally declare rm signals only if needed
+    //==========================================================================
+    // Wires - Row Mux (Conditional)
+    //==========================================================================
     generate
         if (NUM_DEST_FINDER_MATCHING > 0) begin : gen_rm_signals
             wire                           rm_push [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
@@ -178,19 +200,21 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
-    // Assignments
+    //==========================================================================
+    // Assignments - Cell to Packet
+    //==========================================================================
     generate
-        for (genvar c = 0; c < NUM_XPQ_COL; c++) begin
+        for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : gen_c2p_assign
             assign cell2pkt_start_of_cell[c] = col_dest_finder_chosen_xpq_valid_D[c][COL_READ_LATENCY];
             assign cell2pkt_metadata[c] = mux_pop_metadata[c];
             assign cell2pkt_last_cell[c] = mux_pop_last_cell[c];
             assign cell2pkt_barrel_sel[c] = col_dest_finder_cell2pkt_barrel_sel[c];
             assign cell2pkt_data[c] = mux_pop_data[c];
 
-            for (genvar r = 0; r < NUM_XPQ_ROW; r++) begin
+            for (genvar r = 0; r < NUM_XPQ_ROW; r++) begin : gen_col_df_ports
                 assign col_dest_finder_none_mepty_ports[c][r] = xpq_none_mepty_fifos[r][c];
             end
-            for (genvar j = 0; j < S; j++) begin
+            for (genvar j = 0; j < S; j++) begin : gen_block_ports
                 if (c*S+j >= NUM_PORT) begin
                     assign col_dest_finder_block_ports[c][j] = 0;
                 end else begin
@@ -201,10 +225,13 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
+    //==========================================================================
+    // Assignments - Row Block Ports
+    //==========================================================================
     generate
-        for (genvar r = 0; r < NUM_XPQ_ROW; r++) begin
-            for (genvar c = 0; c < NUM_XPQ_COL; c++) begin
-                for (genvar j=0; j<S; ++j) begin
+        for (genvar r = 0; r < NUM_XPQ_ROW; r++) begin : gen_row_block
+            for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : gen_row_block_col
+                for (genvar j=0; j<S; ++j) begin : gen_row_block_lane
                     if (c*S+j < NUM_PORT) begin
                         assign row_dest_finder_block_ports[r][c*S+j] = xpq_blocked_ports[r][c][j];
                     end
@@ -213,9 +240,12 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
+    //==========================================================================
+    // Assignments - VOQ RX Mapping
+    //==========================================================================
     generate
         for (genvar r = 0; r < NUM_VOQ; r++) begin : g_voq_rx_map
-            for (genvar i = 0; i < S; i++) begin
+            for (genvar i = 0; i < S; i++) begin : g_voq_rx_lane
                 if (r*S + i < NUM_PORT) begin
                     assign voq_data_rx[r][i] = data_rx[r*S + i];
                     assign voq_keep_rx[r][i] = keep_rx[r*S + i];
@@ -241,6 +271,9 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
+    //==========================================================================
+    // XPQ Instances
+    //==========================================================================
     generate
         for (genvar r = 0; r < NUM_XPQ_ROW; r++) begin : g_xpq_r
             for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : g_xpq_c
@@ -269,7 +302,7 @@ module switch_high_radix_matching #(
                     .blocked_ports(xpq_blocked_ports[r][c])
                 );
 
-                if (NUM_DEST_FINDER_MATCHING > 0 && r < NUM_DEST_FINDER_MATCHING) begin
+                if (NUM_DEST_FINDER_MATCHING > 0 && r < NUM_DEST_FINDER_MATCHING) begin : gen_xpq_rm_connect
                     assign xpq_push[r][c] = gen_rm_signals.rm_push[r][c];
                     assign xpq_push_last_cell[r][c] = gen_rm_signals.rm_last_cell[r][c];
                     assign xpq_push_metadata[r][c] = gen_rm_signals.rm_metadata[r][c];
@@ -277,7 +310,7 @@ module switch_high_radix_matching #(
                     for (genvar i = 0; i < S; ++i) begin : g_xpq_push_lane
                         assign xpq_push_data[r][c][i] = gen_rm_signals.rm_data[r][c][i];
                     end
-                end else if (r==NUM_XPQ_ROW-1) begin
+                end else if (r==NUM_XPQ_ROW-1) begin : gen_xpq_direct_connect
                     assign xpq_push[r][c] = rep_push[NUM_VOQ-1][c] && (rep_xpq_index[NUM_VOQ-1][c] == c);
                     assign xpq_push_last_cell[r][c] = rep_last_cell[NUM_VOQ-1][c];
                     assign xpq_push_metadata[r][c] = rep_metadata[NUM_VOQ-1][c];
@@ -292,6 +325,9 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
+    //==========================================================================
+    // TX Output Mapping - NEW: Includes packet_id_tx
+    //==========================================================================
     generate
         for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : g_tx_flatten_col
             for (genvar i = 0; i < S; i++) begin : g_tx_flatten_lane
@@ -301,11 +337,15 @@ module switch_high_radix_matching #(
                     assign valid_tx[c*S + i] = cell2pkt_valid_tx[c][i];
                     assign is_bad_frame_tx[c*S + i] = cell2pkt_is_bad_frame_tx[c][i];
                     assign last_tx[c*S + i] = cell2pkt_last_tx[c][i];
+                    assign packet_id_tx[c*S + i] = cell2pkt_packet_id_tx[c][i];  // NEW: Connect packet_id
                 end
             end
         end
     endgenerate
 
+    //==========================================================================
+    // RX Read Enable Mapping
+    //==========================================================================
     generate
         for (genvar r = 0; r < NUM_VOQ; r++) begin : g_rd_en_flatten_row
             for (genvar i = 0; i < S; i++) begin : g_rd_en_flatten_lane
@@ -316,10 +356,9 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
-    //═══════════════════════════════════════════════════════════════════════════
-    // Dest Finders with QoS Support
-    //═══════════════════════════════════════════════════════════════════════════
-
+    //==========================================================================
+    // Column Destination Finders
+    //==========================================================================
     generate
         for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : g_col_df
             (* keep_hierarchy = "yes" *)
@@ -341,10 +380,9 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
-    //═══════════════════════════════════════════════════════════════════════════
+    //==========================================================================
     // Row Destination Finders (WITH QoS SUPPORT)
-    //═══════════════════════════════════════════════════════════════════════════
-
+    //==========================================================================
     generate
         if (NUM_DEST_FINDER_MATCHING > 0) begin : g_row_df_enabled
             for (genvar p = 0; p < NUM_DEST_FINDER_MATCHING; ++p) begin : g_row_df_pair
@@ -408,13 +446,17 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
+    //==========================================================================
+    // Cell to Packet Converters - MODIFIED: Added PACKET_ID_WIDTH and packet_id_tx
+    //==========================================================================
     generate
         for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : g_cell2pkt_col
             (* keep_hierarchy = "yes" *)
             cell_to_packet_s_port_with_barrel #(
                 .S(S),
                 .W_MINI(W_MINI),
-                .START_OF_CELL_DELAY(C2P_START_OF_CELL_DELAY)
+                .START_OF_CELL_DELAY(C2P_START_OF_CELL_DELAY),
+                .PACKET_ID_WIDTH(PACKET_ID_WIDTH)           // NEW: Pass parameter
             ) u_cell2pkt_c (
                 .clk(clk),
                 .start_of_cell_i(cell2pkt_start_of_cell[c]),
@@ -426,11 +468,15 @@ module switch_high_radix_matching #(
                 .keep_tx(cell2pkt_keep_tx[c]),
                 .valid_tx(cell2pkt_valid_tx[c]),
                 .is_bad_frame_tx(cell2pkt_is_bad_frame_tx[c]),
-                .last_tx(cell2pkt_last_tx[c])
+                .last_tx(cell2pkt_last_tx[c]),
+                .packet_id_tx(cell2pkt_packet_id_tx[c])     // NEW: Connect packet_id
             );
         end
     endgenerate
 
+    //==========================================================================
+    // VOQ Instances
+    //==========================================================================
     generate
         for (genvar r = 0; r < NUM_VOQ; r++) begin : g_voq
             (* keep_hierarchy = "yes" *)
@@ -445,9 +491,7 @@ module switch_high_radix_matching #(
                 .MULTICAST_RATE(MULTICAST_RATE),
                 .PACKET_ID_WIDTH(PACKET_ID_WIDTH),
                 .QOS_TAG_WIDTH(QOS_TAG_WIDTH),
-                .KEEP_WIDTH(KEEP_WIDTH),
-                .MAIN_MEM_DEPTH_LOG(MAIN_MEM_DEPTH_LOG),
-                .DFIFO_META_DATA_WIDTH(META_DATA_WIDTH)
+                .KEEP_WIDTH(KEEP_WIDTH)
             ) voq_i (
                 .clk(clk),
                 .data_rx(voq_data_rx[r]),
@@ -475,6 +519,9 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
+    //==========================================================================
+    // Replication Delay Chains
+    //==========================================================================
     generate
         for (genvar r = 0; r < NUM_VOQ; r++) begin : g_voq_rep
             delayed_regs #(.WIDTH(1), .NUM_DELAY(NUM_XPQ_COL-1))
@@ -499,6 +546,9 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
+    //==========================================================================
+    // Column Pipeline Muxes
+    //==========================================================================
     generate
         for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : g_col_mux
             wire [META_DATA_WIDTH-1:0] col_metadata_in [NUM_XPQ_ROW];
@@ -530,6 +580,9 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
+    //==========================================================================
+    // Column Valid Delay
+    //==========================================================================
     generate
         for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : g_col_valid_delay
             delayed_regs #(.WIDTH(1), .NUM_DELAY(COL_READ_LATENCY))
@@ -541,6 +594,9 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
+    //==========================================================================
+    // Row Muxes
+    //==========================================================================
     generate
         if (NUM_DEST_FINDER_MATCHING > 0) begin : g_rowmux_enabled
             for (genvar p = 0; p < NUM_DEST_FINDER_MATCHING; ++p) begin : g_rowmux_pair
@@ -585,6 +641,15 @@ module switch_high_radix_matching #(
         end
     endgenerate
 
+    //==========================================================================
+    // Debug Outputs (tie off for now)
+    //==========================================================================
+    assign addr_fifos_num_free_o = '0;
+    assign free_fifo_count_o = '0;
+
+    //==========================================================================
+    // Helper Functions
+    //==========================================================================
     function automatic int rr_index(input int port_index, input int delay_val);
         return (port_index + delay_val + 10*S) % S;
     endfunction

@@ -18,6 +18,11 @@ vlog -vopt -sv +acc +initreg+0 +initmem+0 -incr -source +define+SIM \
     +incdir+$include_path +incdir+$sim_include_path \
     $project_path/src/hdl/ip/fifos/dynamic_fifo/packet_mode_fifo_array.sv
 
+puts "→ Compiling packet_buffer.sv..."
+vlog -vopt -sv +acc +initreg+0 +initmem+0 -incr -source +define+SIM \
+    +incdir+$include_path +incdir+$sim_include_path \
+    $project_path/src/hdl/buffers/packet_buffer.sv
+
 puts "→ Compiling voq_buffer.sv..."
 vlog -vopt -sv +acc +initreg+0 +initmem+0 -incr -source +define+SIM \
     +incdir+$include_path +incdir+$sim_include_path \

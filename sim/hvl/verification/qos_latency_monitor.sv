@@ -2,7 +2,6 @@
 // `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // QoS Latency Tracking Monitor
-// Measures end-to-end latency per QoS class with statistical analysis
 //////////////////////////////////////////////////////////////////////////////////
 
 `ifndef QOS_LATENCY_MONITOR_SV
@@ -11,6 +10,12 @@
 `include "qos_defines.vh"
 
 class qos_latency_tracker;
+
+    //==========================================================================
+    // Parameters
+    //==========================================================================
+    
+    localparam int NUM_PRIORITY_LEVELS = `PRIORITY_LEVELS;
 
     //==========================================================================
     // Data Types
@@ -31,30 +36,33 @@ class qos_latency_tracker;
     // Storage
     //==========================================================================
 
-    latency_record_t records[$];  // All packet records
+    latency_record_t records[$];
 
-    // Per-QoS statistics
-    real avg_latency [`PRIORITY_LEVELS];
-    real std_dev_latency [`PRIORITY_LEVELS];
-    time min_latency [`PRIORITY_LEVELS];
-    time max_latency [`PRIORITY_LEVELS];
-    int packet_count [`PRIORITY_LEVELS];
+    // Per-QoS statistics - use fixed size arrays
+    real avg_latency [8];
+    real std_dev_latency [8];
+    time min_latency [8];
+    time max_latency [8];
+    int packet_count [8];
 
-    // Jitter tracking (inter-packet arrival variation)
-    time prev_rx_time [`PRIORITY_LEVELS];
-    real avg_jitter [`PRIORITY_LEVELS];
+    // Jitter tracking
+    time prev_rx_time [8];
+    real avg_jitter [8];
 
-    // Percentile tracking (for SLA validation)
-    time latency_p50 [`PRIORITY_LEVELS];  // Median
-    time latency_p95 [`PRIORITY_LEVELS];
-    time latency_p99 [`PRIORITY_LEVELS];
+    // Percentile tracking
+    time latency_p50 [8];
+    time latency_p95 [8];
+    time latency_p99 [8];
+    
+    // Latency histogram
+    int latency_hist [8][4];
 
     //==========================================================================
     // Constructor
     //==========================================================================
 
     function new();
-        for (int i = 0; i < `PRIORITY_LEVELS; i++) begin
+        for (int i = 0; i < 8; i++) begin
             avg_latency[i] = 0.0;
             std_dev_latency[i] = 0.0;
             min_latency[i] = time'(32'hFFFFFFFF);
@@ -62,6 +70,12 @@ class qos_latency_tracker;
             packet_count[i] = 0;
             prev_rx_time[i] = 0;
             avg_jitter[i] = 0.0;
+            latency_p50[i] = 0;
+            latency_p95[i] = 0;
+            latency_p99[i] = 0;
+            for (int j = 0; j < 4; j++) begin
+                latency_hist[i][j] = 0;
+            end
         end
     endfunction
 
@@ -70,7 +84,7 @@ class qos_latency_tracker;
     //==========================================================================
 
     function void record_tx(bit [15:0] id, int src, int dst, logic [2:0] qos);
-        latency_record_t rec;
+        automatic latency_record_t rec;
         rec.id = id;
         rec.src_port = src;
         rec.dst_port = dst;
@@ -88,17 +102,16 @@ class qos_latency_tracker;
     //==========================================================================
 
     function void record_rx(bit [15:0] id, int port, logic [2:0] qos);
+        automatic int qos_idx;
+        
         foreach (records[i]) begin
             if (records[i].id == id && records[i].dst_port == port && !records[i].matched) begin
                 records[i].rx_time = $time;
                 records[i].latency = $time - records[i].tx_time;
                 records[i].matched = 1'b1;
 
-                // Clamp QoS to valid range
-                int qos_idx = (qos >= `PRIORITY_LEVELS) ? `PRIORITY_LEVELS-1 : int'(qos);
-
+                qos_idx = (int'(qos) >= NUM_PRIORITY_LEVELS) ? NUM_PRIORITY_LEVELS-1 : int'(qos);
                 update_statistics(qos_idx, records[i].latency);
-
                 return;
             end
         end
@@ -111,35 +124,46 @@ class qos_latency_tracker;
     //==========================================================================
 
     function void update_statistics(int qos_idx, time lat);
-        int n = packet_count[qos_idx];
-        real lat_ns = real'(lat);
+        automatic int n;
+        automatic real lat_ns;
+        automatic real prev_avg;
+        automatic real delta;
+        automatic real delta2;
+        automatic time inter_arrival;
+        automatic real jitter;
+        automatic int bin;
+        
+        n = packet_count[qos_idx];
+        lat_ns = real'(lat);
 
-        // Update count
         packet_count[qos_idx]++;
         n++;
 
-        // Running average
-        real prev_avg = avg_latency[qos_idx];
+        prev_avg = avg_latency[qos_idx];
         avg_latency[qos_idx] = (prev_avg * (n-1) + lat_ns) / real'(n);
 
-        // Standard deviation (Welford's online algorithm)
         if (n > 1) begin
-            real delta = lat_ns - prev_avg;
-            real delta2 = lat_ns - avg_latency[qos_idx];
+            delta = lat_ns - prev_avg;
+            delta2 = lat_ns - avg_latency[qos_idx];
             std_dev_latency[qos_idx] = std_dev_latency[qos_idx] + delta * delta2;
         end
 
-        // Min/Max
         if (lat < min_latency[qos_idx]) min_latency[qos_idx] = lat;
         if (lat > max_latency[qos_idx]) max_latency[qos_idx] = lat;
 
-        // Jitter (variation between consecutive packets)
         if (prev_rx_time[qos_idx] != 0) begin
-            time inter_arrival = $time - prev_rx_time[qos_idx];
-            real jitter = $abs(real'(inter_arrival) - avg_jitter[qos_idx]);
+            inter_arrival = $time - prev_rx_time[qos_idx];
+            jitter = $abs(real'(inter_arrival) - avg_jitter[qos_idx]);
             avg_jitter[qos_idx] = (avg_jitter[qos_idx] * (n-2) + jitter) / real'(n-1);
         end
         prev_rx_time[qos_idx] = $time;
+        
+        // Update histogram
+        if (lat_ns < 100) bin = 0;
+        else if (lat_ns < 200) bin = 1;
+        else if (lat_ns < 500) bin = 2;
+        else bin = 3;
+        latency_hist[qos_idx][bin]++;
     endfunction
 
     //==========================================================================
@@ -147,24 +171,24 @@ class qos_latency_tracker;
     //==========================================================================
 
     function void compute_percentiles();
-        time sorted_latencies [`PRIORITY_LEVELS][$];
+        automatic time sorted_latencies [8][$];
+        automatic int q;
+        automatic int n;
 
-        // Group latencies by QoS
         foreach (records[i]) begin
             if (records[i].matched) begin
-                int q = int'(records[i].qos_tag);
-                if (q < `PRIORITY_LEVELS) begin
+                q = int'(records[i].qos_tag);
+                if (q < NUM_PRIORITY_LEVELS) begin
                     sorted_latencies[q].push_back(records[i].latency);
                 end
             end
         end
 
-        // Sort and extract percentiles
-        for (int q = 0; q < `PRIORITY_LEVELS; q++) begin
+        for (q = 0; q < NUM_PRIORITY_LEVELS; q++) begin
             if (sorted_latencies[q].size() == 0) continue;
 
             sorted_latencies[q].sort();
-            int n = sorted_latencies[q].size();
+            n = sorted_latencies[q].size();
 
             latency_p50[q] = sorted_latencies[q][n * 50 / 100];
             latency_p95[q] = sorted_latencies[q][n * 95 / 100];
@@ -177,6 +201,8 @@ class qos_latency_tracker;
     //==========================================================================
 
     function void print_summary();
+        automatic real std_dev;
+        
         compute_percentiles();
 
         $display("\n");
@@ -186,11 +212,11 @@ class qos_latency_tracker;
 
         $display("\n%-12s %8s %10s %10s %10s %10s %10s %10s",
             "QoS Level", "Count", "Min(ns)", "Avg(ns)", "Max(ns)", "StdDev", "P95(ns)", "Jitter");
-        $display({80{"-"}});
+        $display("--------------------------------------------------------------------------------");
 
-        for (int q = 0; q < `PRIORITY_LEVELS; q++) begin
+        for (int q = 0; q < NUM_PRIORITY_LEVELS; q++) begin
             if (packet_count[q] > 0) begin
-                real std_dev = (packet_count[q] > 1) ?
+                std_dev = (packet_count[q] > 1) ?
                     $sqrt(std_dev_latency[q] / real'(packet_count[q]-1)) : 0.0;
 
                 $display("%-12s %8d %10.2f %10.2f %10.2f %10.2f %10.2f %10.2f",
@@ -206,7 +232,7 @@ class qos_latency_tracker;
             end
         end
 
-        $display({80{"="}});
+        $display("================================================================================");
 
         // Priority ordering validation
         if (packet_count[`PRIORITY_CRITICAL] > 0 && packet_count[`PRIORITY_LOW] > 0) begin
@@ -223,22 +249,22 @@ class qos_latency_tracker;
 
         // Latency distribution
         $display("\n[Latency Distribution]");
-        for (int q = 0; q < `PRIORITY_LEVELS; q++) begin
+        for (int q = 0; q < NUM_PRIORITY_LEVELS; q++) begin
             if (packet_count[q] > 0) begin
                 $display("  %s:", qos_name(q));
-                $display("    0-100ns:   %5d pkts (%5.1f%%)", latency_hist[0][q][0],
-                    100.0*latency_hist[0][q][0]/packet_count[q]);
-                $display("    100-200ns: %5d pkts (%5.1f%%)", latency_hist[0][q][1],
-                    100.0*latency_hist[0][q][1]/packet_count[q]);
-                $display("    200-500ns: %5d pkts (%5.1f%%)", latency_hist[0][q][2],
-                    100.0*latency_hist[0][q][2]/packet_count[q]);
-                $display("    500+ns:    %5d pkts (%5.1f%%)", latency_hist[0][q][3],
-                    100.0*latency_hist[0][q][3]/packet_count[q]);
+                $display("    0-100ns:   %5d pkts (%5.1f%%)", latency_hist[q][0],
+                    100.0*real'(latency_hist[q][0])/real'(packet_count[q]));
+                $display("    100-200ns: %5d pkts (%5.1f%%)", latency_hist[q][1],
+                    100.0*real'(latency_hist[q][1])/real'(packet_count[q]));
+                $display("    200-500ns: %5d pkts (%5.1f%%)", latency_hist[q][2],
+                    100.0*real'(latency_hist[q][2])/real'(packet_count[q]));
+                $display("    500+ns:    %5d pkts (%5.1f%%)", latency_hist[q][3],
+                    100.0*real'(latency_hist[q][3])/real'(packet_count[q]));
             end
         end
 
         $display("\n");
-    endtask
+    endfunction
 
     function string qos_name(int level);
         case (level)

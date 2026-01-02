@@ -2,16 +2,11 @@
 // `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // QoS-Aware Scoreboard with Priority Checking
-// Validates:
-//   - Packet ordering per QoS level
-//   - Priority enforcement (higher QoS exits first)
-//   - No starvation of low-priority traffic
 //////////////////////////////////////////////////////////////////////////////////
 
-import fabric_frame_pkg::*;
-// import class_pkg::*;
-
 `include "qos_defines.vh"
+
+import fabric_frame_pkg::*;
 
 module qos_checker_scoreboard #(
     parameter NUM_PORT = 10,
@@ -83,8 +78,8 @@ module qos_checker_scoreboard #(
     generate
         for (genvar p = 0; p < NUM_PORT; p++) begin : g_expected_mon
             initial begin
-                Fabric_frame_tr frame;
-                qos_packet_t pkt;
+                automatic Fabric_frame_tr frame;
+                automatic qos_packet_t pkt;
 
                 wait (expected_mailbox[p] != null);
 
@@ -92,7 +87,7 @@ module qos_checker_scoreboard #(
                     expected_mailbox[p].get(frame);
 
                     pkt.frame = frame.do_copy();
-                    pkt.qos_tag = extract_qos_from_frame(frame);  // Extract from packet data
+                    pkt.qos_tag = extract_qos_from_frame(frame);
                     pkt.arrival_time = $time;
                     pkt.departure_time = 0;
 
@@ -100,7 +95,7 @@ module qos_checker_scoreboard #(
                     packets_sent[p][pkt.qos_tag]++;
                     last_tx_time[p][pkt.qos_tag] = $time;
 
-                    // Check starvation (low-priority not sent for too long)
+                    // Check starvation
                     if (pkt.qos_tag == `PRIORITY_LOW && qos_enable) begin
                         check_starvation(p);
                     end
@@ -116,37 +111,31 @@ module qos_checker_scoreboard #(
     generate
         for (genvar p = 0; p < NUM_PORT; p++) begin : g_actual_mon
             initial begin
-                Fabric_frame_tr frame;
-                qos_packet_t match_pkt;
-                time latency;
+                automatic Fabric_frame_tr frame;
+                automatic qos_packet_t match_pkt;
+                automatic time latency;
 
                 wait (actual_mailbox[p] != null);
 
                 forever begin
                     actual_mailbox[p].get(frame);
 
-                    // Find matching packet in expected queue
                     if (find_and_remove_expected(p, frame, match_pkt)) begin
-
-                        // Calculate latency
                         latency = $time - match_pkt.arrival_time;
                         match_pkt.departure_time = $time;
 
-                        // Update statistics
                         packets_recv[p][match_pkt.qos_tag]++;
                         update_avg_latency(p, match_pkt.qos_tag, latency);
                         update_latency_histogram(p, match_pkt.qos_tag, latency);
 
                         rx_queue[p].push_back(match_pkt);
 
-                        // QoS validation
                         if (qos_enable) begin
                             check_priority_enforcement(p, match_pkt.qos_tag, latency);
                         end
-
                     end else begin
                         $error("[QoS_SCOREBOARD] Port %0d: Unexpected frame (ID=%0d)",
-                               p, frame.id);
+                            p, frame.id);
                         total_errors++;
                     end
                 end
@@ -159,7 +148,6 @@ module qos_checker_scoreboard #(
     //==========================================================================
 
     task check_priority_enforcement(input int port, input logic [2:0] qos, input time latency);
-        // Verify higher priority has lower average latency
         for (int q = 0; q < qos; q++) begin
             if (packets_recv[port][q] > 10 && avg_latency[port][q] > avg_latency[port][qos]) begin
                 $warning("[PRIORITY_VIOLATION] Port %0d: QoS %s (avg=%.2f ns) slower than %s (avg=%.2f ns)",
@@ -170,17 +158,19 @@ module qos_checker_scoreboard #(
     endtask
 
     task check_starvation(input int port);
-        // Ensure low-priority packets sent within threshold
-        time now = $time;
-        time elapsed = now - last_tx_time[port][`PRIORITY_LOW];
+        automatic time now;
+        automatic time elapsed;
+        
+        now = $time;
+        elapsed = now - last_tx_time[port][`PRIORITY_LOW];
 
-        if (elapsed > STARVATION_THRESHOLD * 10) begin  // Convert to ns
+        if (elapsed > STARVATION_THRESHOLD * 10) begin
             $error("[STARVATION] Port %0d: Low-priority not sent for %0t ns", port, elapsed);
             starvation_events++;
         end
     endtask
 
-    function bit find_and_remove_expected(input int port, input Fabric_frame_tr frame, output qos_packet_t match);
+    function automatic bit find_and_remove_expected(input int port, input Fabric_frame_tr frame, output qos_packet_t match);
         for (int i = 0; i < tx_queue[port].size(); i++) begin
             if (tx_queue[port][i].frame.do_compare(frame)) begin
                 match = tx_queue[port][i];
@@ -192,15 +182,19 @@ module qos_checker_scoreboard #(
     endfunction
 
     task update_avg_latency(input int port, input logic [2:0] qos, input time latency);
-        real prev_avg = avg_latency[port][qos];
-        int count = packets_recv[port][qos];
-
+        automatic real prev_avg;
+        automatic int count;
+        
+        prev_avg = avg_latency[port][qos];
+        count = packets_recv[port][qos];
         avg_latency[port][qos] = (prev_avg * (count - 1) + real'(latency)) / real'(count);
     endtask
 
     task update_latency_histogram(input int port, input logic [2:0] qos, input time latency);
-        int bin;
-        real lat_ns = real'(latency);
+        automatic int bin;
+        automatic real lat_ns;
+        
+        lat_ns = real'(latency);
 
         if (lat_ns < 100) bin = 0;
         else if (lat_ns < 200) bin = 1;
@@ -210,7 +204,7 @@ module qos_checker_scoreboard #(
         latency_hist[port][qos][bin]++;
     endtask
 
-    function string qos_name(input logic [2:0] level);
+    function automatic string qos_name(input logic [2:0] level);
         case (level)
             `PRIORITY_CRITICAL: return "CRITICAL";
             `PRIORITY_HIGH:     return "HIGH";
@@ -220,9 +214,7 @@ module qos_checker_scoreboard #(
         endcase
     endfunction
 
-    function logic [2:0] extract_qos_from_frame(input Fabric_frame_tr frame);
-        // Extract QoS from packet metadata (implementation depends on your framing)
-        // Placeholder: use packet ID modulo QoS levels
+    function automatic logic [2:0] extract_qos_from_frame(input Fabric_frame_tr frame);
         return frame.id % QOS_LEVELS;
     endfunction
 
@@ -233,28 +225,29 @@ module qos_checker_scoreboard #(
     initial begin
         @(posedge end_of_sim);
         repeat (100) @(posedge sys_clk);
-
         print_final_report();
     end
 
     task print_final_report();
-        int total_sent = 0;
-        int total_recv = 0;
+        automatic int total_sent;
+        automatic int total_recv;
+        
+        total_sent = 0;
+        total_recv = 0;
 
         $display("\n");
         $display("╔════════════════════════════════════════════════════════════════╗");
         $display("║           QoS SCOREBOARD FINAL REPORT                          ║");
         $display("╚════════════════════════════════════════════════════════════════╝");
 
-        // Per-port, per-QoS summary
         for (int p = 0; p < NUM_PORT; p++) begin
             $display("\n[Port %0d]", p);
             $display("  %-10s %8s %8s %12s %15s", "QoS Level", "Sent", "Recv", "Avg Lat(ns)", "Histogram");
-            $display("  " + {60{"-"}});
+            $display("  ------------------------------------------------------------");
 
             for (int q = 0; q < QOS_LEVELS; q++) begin
                 $display("  %-10s %8d %8d %12.2f   [%3d|%3d|%3d|%3d]",
-                    qos_name(q),
+                    qos_name(q[2:0]),
                     packets_sent[p][q],
                     packets_recv[p][q],
                     avg_latency[p][q],
@@ -268,7 +261,6 @@ module qos_checker_scoreboard #(
             end
         end
 
-        // Overall statistics
         $display("\n╔════════════════════════════════════════════════════════════════╗");
         $display("║ OVERALL STATISTICS                                             ║");
         $display("╚════════════════════════════════════════════════════════════════╝");
@@ -278,7 +270,6 @@ module qos_checker_scoreboard #(
         $display("  Starvation Events:       %0d", starvation_events);
         $display("  Total Errors:            %0d", total_errors);
 
-        // Pass/Fail
         if (total_errors == 0 && priority_violations == 0 && starvation_events == 0) begin
             $display("\n   QoS VALIDATION PASSED ");
         end else begin

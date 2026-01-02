@@ -6,26 +6,20 @@
 //
 // Create Date:  2025-08-02 16:01:13
 // Module Name: egress_switch
-// Project Name:
-// Target Devices:
-// Tool Versions: Vivado 2022.2
-// Description:
-// Dependencies:
+// Description: Egress stage with packet ID preservation
 //
-// Additional Comments:
-
+// MODIFIED: Added packet_id_tx input and proper propagation to output
 //////////////////////////////////////////////////////////////////////////////////
-
-
 
 module egress_switch #(
     parameter   NUM_PORT                = 10,            // number of ports
     parameter   W_MINI                  = 64,            // bus data width (mini cell data width)
     parameter   KEEP_WIDTH              = 10,
     parameter   OUTPUT_QUEUE_DEPTH      = 16,
-    parameter   OUTPUT_QUEUE_TUSER      = 1,
+    parameter   OUTPUT_QUEUE_TUSER      = 1,             // Legacy parameter (not used directly now)
     parameter   OQ_PROG_FULL_THRESH     = 30,
-    parameter   NOT_READY_LIMIT         = 20
+    parameter   NOT_READY_LIMIT         = 20,
+    parameter   PACKET_ID_WIDTH         = 8              // NEW: Packet ID width
 ) (
     input   wire                                clk,
     switch_data_if.master_mp                    tx_data_if,
@@ -34,37 +28,36 @@ module egress_switch #(
     input   wire                                valid_tx,
     input   wire                                is_bad_frame_tx,
     input   wire                                last_tx,
+    input   wire [PACKET_ID_WIDTH-1:0]          packet_id_tx,    // NEW: Packet ID input
     output  wire                                oq_wr_prog_full
 );
 
     //==============================================================================
     // local parameters and integers
     //==============================================================================
-
+    // MODIFIED: Updated tuser width to include packet_id
+    localparam OUTPUT_QUEUE_TUSER_ACTUAL = PACKET_ID_WIDTH + 1 + KEEP_WIDTH;
 
     //==============================================================================
     // wires, regs and memories
     //==============================================================================
 
     wire [W_MINI-1:0] output_queue_wr_tdata;
-    wire [OUTPUT_QUEUE_TUSER-1:0] output_queue_wr_tuser;
+    wire [OUTPUT_QUEUE_TUSER_ACTUAL-1:0] output_queue_wr_tuser;
     wire output_queue_wr_tvalid;
     wire output_queue_wr_tlast;
     wire output_queue_wr_tready;
     wire output_queue_wr_prog_full;
 
     wire [W_MINI-1:0] output_queue_rd_tdata;
-    wire [OUTPUT_QUEUE_TUSER-1:0] output_queue_rd_tuser;
+    wire [OUTPUT_QUEUE_TUSER_ACTUAL-1:0] output_queue_rd_tuser;
     wire output_queue_rd_tvalid;
     wire output_queue_rd_tlast;
-    wire  output_queue_rd_tready;
+    wire output_queue_rd_tready;
     wire output_queue_rd_almost_empty;
 
-
-    reg [$clog2(NOT_READY_LIMIT) -1:0] not_ready_counter = NOT_READY_LIMIT;
-
+    reg [$clog2(NOT_READY_LIMIT)-1:0] not_ready_counter = NOT_READY_LIMIT;
     reg oq_ready_int = 0;
-
 
     always @(posedge clk) begin
         if (tx_data_if.ready) begin
@@ -82,36 +75,23 @@ module egress_switch #(
         end
     end
 
-
     assign output_queue_rd_tready = oq_ready_int || tx_data_if.ready;
 
-
-
-
-
-
-
-
+    // MODIFIED: Pack packet_id into tuser
     assign output_queue_wr_tdata  = data_tx;
-    assign output_queue_wr_tuser  = {is_bad_frame_tx, keep_tx};
+    assign output_queue_wr_tuser  = {packet_id_tx, is_bad_frame_tx, keep_tx};
     assign output_queue_wr_tvalid = valid_tx;
     assign output_queue_wr_tlast  = last_tx;
 
     assign oq_wr_prog_full = output_queue_wr_prog_full;
 
-
-    // Connect output_queue read signals to tx_data_if
+    // MODIFIED: Unpack packet_id from tuser and connect to tx_data_if
     assign tx_data_if.data         = output_queue_rd_tdata;
-    assign {tx_data_if.is_bad_frame, tx_data_if.keep} = output_queue_rd_tuser;
+    assign tx_data_if.id           = output_queue_rd_tuser[OUTPUT_QUEUE_TUSER_ACTUAL-1 -: PACKET_ID_WIDTH];
+    assign tx_data_if.is_bad_frame = output_queue_rd_tuser[KEEP_WIDTH];
+    assign tx_data_if.keep         = output_queue_rd_tuser[KEEP_WIDTH-1:0];
     assign tx_data_if.valid        = output_queue_rd_tvalid;
     assign tx_data_if.last         = output_queue_rd_tlast;
-
-    assign tx_data_if.id           = '0;
-
-
-    //==============================================================================
-    // Main Controls
-    //==============================================================================
 
     //==============================================================================
     // Instantiated Modules
@@ -119,7 +99,7 @@ module egress_switch #(
 
     axis_fifo #(
         .TDATA_WIDTH(W_MINI),
-        .TUSER_WIDTH(OUTPUT_QUEUE_TUSER),
+        .TUSER_WIDTH(OUTPUT_QUEUE_TUSER_ACTUAL),         // MODIFIED: Use actual width
         .FIFO_DEPTH(OUTPUT_QUEUE_DEPTH),
         .PROG_FULL_THRESH(OQ_PROG_FULL_THRESH)
     ) output_queue_inst (
@@ -138,10 +118,6 @@ module egress_switch #(
         .rd_tready      (output_queue_rd_tready),
         .rd_almost_empty(output_queue_rd_almost_empty)
     );
-
-    //==============================================================================
-    // Functions
-    //==============================================================================
 
 endmodule
 

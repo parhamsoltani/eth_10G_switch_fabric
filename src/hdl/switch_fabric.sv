@@ -3,8 +3,8 @@
 // Company: IUST
 // Engineer: Parham Soltani
 // Module Name: switch_fabric
-// Description: QoS-Enabled Switch Fabric (FIXED INTEGRATION)
-// Version: 2.0 - Properly instantiates QoS modules
+// Description: QoS-Enabled Switch Fabric with Packet ID Preservation
+// Version: 2.1 - Added packet_id propagation to egress
 //////////////////////////////////////////////////////////////////////////////////
 
 `include "fabric_params.vh"
@@ -21,17 +21,13 @@ module switch_fabric #(
     parameter   MULTICAST_RATE          = 1,
     parameter   PACKET_ID_WIDTH         = 8,
     parameter   QOS_TAG_WIDTH           = 3,
-    parameter   ENABLE_QOS              = 1      // ← CRITICAL: Enable QoS
+    parameter   ENABLE_QOS              = 1
 ) (
     input   wire                                clk,
     input   wire                                reset,
     switch_data_if.slave_mp                     rx_data_if  [NUM_PORT],
     switch_metadata_if.slave_mp                 rx_meta_if  [NUM_PORT],
     switch_data_if.master_mp                    tx_data_if  [NUM_PORT]
-    
-    // DEBUG OUTPUTS REMOVED FOR IMPLEMENTATION - uncomment for simulation only
-    // output  wire [$clog2(MULTICAST_RATE * MAIN_MEM_DEPTH):0] addr_fifos_num_free_o,
-    // output  wire [$clog2(MAIN_MEM_DEPTH):0] free_fifo_count_o
 );
 
     //==========================================================================
@@ -40,7 +36,7 @@ module switch_fabric #(
     localparam KEEP_WIDTH = $clog2((W_MINI/8) + 1);
     localparam INPUT_QUEUE_DEPTH     = 2*S+10;
     localparam INPUT_QUEUE_TUSER     = PACKET_ID_WIDTH + 1 + KEEP_WIDTH + QOS_TAG_WIDTH;
-    localparam OUTPUT_QUEUE_TUSER    = 1 + KEEP_WIDTH;
+    localparam OUTPUT_QUEUE_TUSER    = 1 + KEEP_WIDTH + PACKET_ID_WIDTH;  // MODIFIED: Added PACKET_ID_WIDTH
     localparam OQ_PROG_FULL_THRESH   = 30;
     localparam NOT_READY_LIMIT       = 20;
 
@@ -57,21 +53,22 @@ module switch_fabric #(
     wire [NUM_PORT-1:0]         dest_mask_rx   [NUM_PORT];
     wire                        dest_mask_valid_rx [NUM_PORT];
     wire                        rd_en_rx       [NUM_PORT];
-    wire [QOS_TAG_WIDTH-1:0]    qos_tag_rx     [NUM_PORT];  // ← NEW
+    wire [QOS_TAG_WIDTH-1:0]    qos_tag_rx     [NUM_PORT];
 
     wire [W_MINI-1:0]           data_tx        [NUM_PORT];
     wire [KEEP_WIDTH-1:0]       keep_tx        [NUM_PORT];
     wire                        valid_tx       [NUM_PORT];
     wire                        is_bad_frame_tx [NUM_PORT];
     wire                        last_tx        [NUM_PORT];
+    wire [PACKET_ID_WIDTH-1:0]  packet_id_tx   [NUM_PORT];   // NEW: Packet ID from switch core
     wire                        oq_wr_prog_full [NUM_PORT];
 
-    // Debug outputs kept as internal wires (not exposed as ports)
+    // Debug outputs kept as internal wires
     wire [$clog2(MULTICAST_RATE * MAIN_MEM_DEPTH):0] addr_fifos_num_free_internal;
     wire [$clog2(MAIN_MEM_DEPTH):0] free_fifo_count_internal;
 
     //==========================================================================
-    // QoS Configuration (hardcoded for now - can be made runtime later)
+    // QoS Configuration
     //==========================================================================
     wire use_vlan_pcp       = 1'b1;
     wire use_ip_dscp        = 1'b1;
@@ -86,10 +83,6 @@ module switch_fabric #(
 
             if (ENABLE_QOS) begin : gen_qos_ingress
                 
-                //══════════════════════════════════════════════════════════════
-                // QoS-AWARE INGRESS (with header parsing & classification)
-                //══════════════════════════════════════════════════════════════
-                
                 ingress_line_qos #(
                     .NUM_PORT(NUM_PORT),
                     .W_MINI(W_MINI),
@@ -101,12 +94,8 @@ module switch_fabric #(
                 ) ingress_inst (
                     .clk(clk),
                     .rst_n(~reset),
-                    
-                    // External interfaces
                     .rx_data_if(rx_data_if[i]),
                     .rx_meta_if(rx_meta_if[i]),
-                    
-                    // To fabric
                     .rd_en_rx(rd_en_rx[i]),
                     .data_rx(data_rx[i]),
                     .keep_rx(keep_rx[i]),
@@ -117,19 +106,13 @@ module switch_fabric #(
                     .iq_fifo_almost_empty(iq_fifo_almost_empty[i]),
                     .dest_mask_rx(dest_mask_rx[i]),
                     .dest_mask_valid_rx(dest_mask_valid_rx[i]),
-                    .qos_tag_rx(qos_tag_rx[i]),  // ← QoS output
-                    
-                    // QoS controls
+                    .qos_tag_rx(qos_tag_rx[i]),
                     .use_vlan_pcp(use_vlan_pcp),
                     .use_ip_dscp(use_ip_dscp),
                     .use_port_classify(use_port_classify)
                 );
                 
             end else begin : gen_standard_ingress
-                
-                //══════════════════════════════════════════════════════════════
-                // STANDARD INGRESS (no QoS)
-                //══════════════════════════════════════════════════════════════
                 
                 ingress_switch #(
                     .NUM_PORT(NUM_PORT),
@@ -155,7 +138,6 @@ module switch_fabric #(
                     .dest_mask_valid_rx(dest_mask_valid_rx[i])
                 );
                 
-                // Tie off QoS tag to default priority
                 assign qos_tag_rx[i] = `PRIORITY_STANDARD;
                 
             end
@@ -169,13 +151,9 @@ module switch_fabric #(
     generate
         
         if (NUM_PORT <= S) begin : gen_under_s
-            //══════════════════════════════════════════════════════════════════
-            // NUM_PORT ≤ S: Use switch_s (or switch_high_radix_matching if QoS)
-            //══════════════════════════════════════════════════════════════════
-            
+
             if (ENABLE_QOS) begin : gen_qos_switch
                 
-                // Use QoS-aware matching arbiter even for small configs
                 switch_high_radix_matching #(
                     .NUM_PORT(NUM_PORT),
                     .S(S),
@@ -204,6 +182,7 @@ module switch_fabric #(
                     .keep_tx(keep_tx),
                     .valid_tx(valid_tx),
                     .is_bad_frame_tx(is_bad_frame_tx),
+                    .packet_id_tx(packet_id_tx),             // NEW: Connect packet_id
                     .last_tx(last_tx),
                     .oq_wr_prog_full(oq_wr_prog_full),
                     .addr_fifos_num_free_o(addr_fifos_num_free_internal),
@@ -212,7 +191,6 @@ module switch_fabric #(
                 
             end else begin : gen_standard_switch
                 
-                // Standard switch_s (no QoS)
                 switch_s #(
                     .NUM_PORT(NUM_PORT),
                     .S(S),
@@ -245,6 +223,11 @@ module switch_fabric #(
                     .addr_fifos_num_free_o(addr_fifos_num_free_internal),
                     .free_fifo_count_o(free_fifo_count_internal)
                 );
+                
+                // Tie off packet_id for non-QoS mode (legacy)
+                for (genvar j = 0; j < NUM_PORT; j++) begin : gen_pkt_id_tieoff
+                    assign packet_id_tx[j] = '0;
+                end
                 
             end
 
@@ -283,6 +266,11 @@ module switch_fabric #(
                 .free_fifo_count_o(free_fifo_count_internal)
             );
             
+            // Tie off packet_id for switch_2s (needs update if packet_id support added)
+            for (genvar j = 0; j < NUM_PORT; j++) begin : gen_pkt_id_tieoff_2s
+                assign packet_id_tx[j] = '0;
+            end
+            
         end else begin : gen_high_radix
             
             switch_high_radix_matching #(
@@ -312,6 +300,7 @@ module switch_fabric #(
                 .keep_tx(keep_tx),
                 .valid_tx(valid_tx),
                 .is_bad_frame_tx(is_bad_frame_tx),
+                .packet_id_tx(packet_id_tx),             // NEW: Connect packet_id
                 .last_tx(last_tx),
                 .oq_wr_prog_full(oq_wr_prog_full),
                 .addr_fifos_num_free_o(addr_fifos_num_free_internal),
@@ -322,7 +311,7 @@ module switch_fabric #(
     endgenerate
 
     //==========================================================================
-    // EGRESS: Same for Both QoS and Standard Modes
+    // EGRESS: With Packet ID Propagation
     //==========================================================================
     generate
         for (genvar i = 0; i < NUM_PORT; i++) begin : gen_egress_ports
@@ -334,7 +323,8 @@ module switch_fabric #(
                 .OUTPUT_QUEUE_DEPTH(OUTPUT_QUEUE_DEPTH),
                 .OUTPUT_QUEUE_TUSER(OUTPUT_QUEUE_TUSER),
                 .OQ_PROG_FULL_THRESH(OQ_PROG_FULL_THRESH),
-                .NOT_READY_LIMIT(NOT_READY_LIMIT)
+                .NOT_READY_LIMIT(NOT_READY_LIMIT),
+                .PACKET_ID_WIDTH(PACKET_ID_WIDTH)        // NEW: Pass parameter
             ) egress_inst (
                 .clk(clk),
                 .tx_data_if(tx_data_if[i]),
@@ -343,6 +333,7 @@ module switch_fabric #(
                 .valid_tx(valid_tx[i]),
                 .is_bad_frame_tx(is_bad_frame_tx[i]),
                 .last_tx(last_tx[i]),
+                .packet_id_tx(packet_id_tx[i]),          // NEW: Connect packet_id
                 .oq_wr_prog_full(oq_wr_prog_full[i])
             );
 
@@ -350,12 +341,12 @@ module switch_fabric #(
     endgenerate
 
     //==========================================================================
-    // Debug Display (Synthesis translate_off only)
+    // Debug Display
     //==========================================================================
     // synthesis translate_off
     initial begin
         $display("═══════════════════════════════════════════════════════════");
-        $display(" Switch Fabric Configuration (QoS-Enabled)");
+        $display(" Switch Fabric Configuration (QoS-Enabled + Packet ID)");
         $display("═══════════════════════════════════════════════════════════");
         $display("NUM_PORT =            %0d", NUM_PORT          );
         $display("S =                   %0d", S                 );

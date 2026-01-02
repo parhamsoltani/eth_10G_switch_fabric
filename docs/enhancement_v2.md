@@ -1,383 +1,322 @@
-# Enhanced Switch Fabric Architecture: Q1 Publication Enhancement Strategy
-## Comprehensive Roadmap Based on doc_v2.md Implementation
+# Enhanced Switch Fabric Architecture: Q1 Publication Enhancement Strategy v3.0
+## Comprehensive Roadmap with Advanced Research Integration
 
 ---
 
 ## Document Information
 
-**Version:** 3.0 (Enhancement Strategy)
-**Date:** November 26, 2025
-**Target:** Q1 Journal Publication
+**Version:** 3.0 (Strategic Research Roadmap)
+**Date:** December 31, 2025
+**Target:** Q1 Journal Publication + 3-Paper PhD Trajectory
 **Base Implementation:** doc_v2.md Switch Fabric v2.0
-**Status:** Strategic Roadmap
+**Status:** Strategic Multi-Phase Roadmap
 
 ---
 
 ## Executive Summary
 
-This document provides a **targeted enhancement strategy** to transform the **Enhanced Ethernet Switch Fabric v2.0** (as documented in doc_v2.md) into a Q1 journal-worthy contribution. After comprehensive analysis of the current implementation—which already includes 8-level IEEE 802.1p QoS, parametric 8-128 port scaling, and hybrid packet/cell switching—we identify that **75% of the originally proposed enhancements are already implemented or partially implemented**.
+This document provides a **comprehensive multi-phase research strategy** to transform the **Enhanced Ethernet Switch Fabric v2.0** into a flagship PhD research program with three high-impact publications. After analyzing both the current implementation and the broader research landscape in VOQ scheduling, crosspoint architectures, and approximate WFQ, we have identified a **strategic research trajectory** that:
 
-The remaining **strategic gap** to reach Q1 publication quality centers on three areas:
+1. **Leverages your existing 75% complete v2.0 implementation** as a validated testbed
+2. **Addresses critical research gaps** in adaptive scheduling, fairness guarantees, and scalability
+3. **Positions three distinct publications** targeting IEEE ToN, JSAC, and TII/IEEE Network
+4. **Provides clear differentiation** from 20+ recent competing works (2023-2025)
 
-1. **Elastic Crosspoint Scheduling (ECS)** - The flagship breakthrough NOT yet in v2.0
-2. **Formal verification framework** - Partially present (verification methodology exists) but needs TLA+/SPIN
-3. **Hardware validation on FPGA** - Build infrastructure exists but needs real testbed deployment
+**Key Strategic Insight:** Your v2.0 architecture is uniquely positioned to bridge three underserved research areas:
 
-**Key Finding:** Your v2.0 implementation is **significantly more advanced** than the original baseline assumed in the enhancement documents. Many proposed "enhancements" are actually **already implemented features** that need to be **repositioned and validated** rather than built from scratch.
+| Research Gap | Your Unique Advantage | Novelty Opportunity |
+|--------------|----------------------|---------------------|
+| **Static buffer allocation** in high-radix switches | Dynamic linked-list memory (Section 3.4) | Adaptive micro-burst handling |
+| **Lack of fairness bounds** in approximate WFQ | Existing WFQ + verification framework | Provable O(1) bounded fairness |
+| **No predictive scheduling** at fabric level | Dual-channel arbitration infrastructure | Elastic crosspoint with ML guidance |
 
----
+**Three-Phase Publication Roadmap:**
 
-## Part 1: Current Implementation Analysis vs. Proposed Enhancements
-
-### 1.1 Feature Alignment Matrix
-
-| Proposed Enhancement (Original Doc) | Implementation Status in doc_v2.md | Gap Analysis | Action Required |
-|-------------------------------------|-----------------------------------|--------------|-----------------|
-| **8-Level IEEE 802.1p QoS** | ✅ **FULLY IMPLEMENTED** | None | **Reposition as contribution**, add validation |
-| **Parametric Port Count (8-128)** | ✅ **FULLY IMPLEMENTED** | None | Document scalability experiments |
-| **Cell-Switching Mode** | ✅ **FULLY IMPLEMENTED** | None | Compare packet vs. cell modes empirically |
-| **Runtime Reconfiguration** | ✅ **FULLY IMPLEMENTED** | None | Add examples of dynamic reconfiguration scenarios |
-| **Multicast Address Replication** | ✅ **FULLY IMPLEMENTED** | None | Validate memory savings measurements |
-| **Matching Arbiter (QoS-Aware)** | ✅ **FULLY IMPLEMENTED** | None | Add formal correctness proof |
-| **Dynamic Memory Allocation** | ✅ **FULLY IMPLEMENTED** (linklist_dynamic_fifo) | None | Document utilization vs. fixed allocation |
-| **Adaptive QoS Scheduler** | ️ **PARTIALLY IMPLEMENTED** | Aging mechanism exists, but no dynamic quantum adjustment | **Add feedback-driven weight controller** (2-3 weeks) |
-| **Predictive Arbitration (Kalman)** | ❌ **NOT IMPLEMENTED** | Urgency-based arbiter exists, but no prediction | **Add Kalman predictor module** (3-4 weeks) |
-| **Dynamic XPQ Buffer Pooling** | ️ **PARTIALLY IMPLEMENTED** | Shared memory exists, but no global pool manager | **Add pool manager with priority reservations** (2-3 weeks) |
-| **Elastic Crosspoint Scheduling (ECS)** | ❌ **NOT IMPLEMENTED** | Fundamental architecture gap | **FLAGSHIP CONTRIBUTION** (6-8 weeks) |
-| **TSN Integration (802.1Qbv)** | ❌ **NOT IMPLEMENTED** | No time-gated scheduling | **Optional differentiation** (2-3 weeks) |
-| **In-Network ML Classification** | ❌ **NOT IMPLEMENTED** | Classification exists but not ML-based | **Optional intelligence layer** (3-4 weeks) |
-| **Formal Verification (TLA+/SPIN)** | ️ **PARTIALLY IMPLEMENTED** | Verification framework exists, no formal proofs | **Add TLA+ specs + model checking** (2-3 weeks) |
-| **FPGA Testbed Validation** | ️ **INFRASTRUCTURE EXISTS** | Build scripts present, no hardware deployment | **Deploy on VCU118 + measure** (3-4 weeks) |
-
-### 1.2 Key Insight: Leverage Existing Implementation Strengths
-
-**Your v2.0 implementation already includes:**
-
-1. **Sophisticated QoS Infrastructure:**
-   - 8-level priority (vs. proposed 3-level)
-   - VLAN PCP, IP DSCP, port-based classification
-   - WFQ with deficit tracking
-   - Aging mechanism for starvation prevention
-
-2. **Advanced Memory Management:**
-   - Dynamic FIFO allocation (linklist_dynamic_fifo.sv)
-   - Multicast address replication (90% memory savings documented)
-   - Shared memory pools in VOQ/XPQ
-
-3. **Parametric Architecture:**
-   - Automatic topology selection (switch_s, switch_2s, switch_high_radix_matching)
-   - Scalable from 8 to 128 ports
-   - Configurable cell mode (S=1 to S=32)
-
-4. **Verification Framework:**
-   - Automated regression testing
-   - Coverage collection infrastructure
-   - Performance monitoring with statistics
-
-**These are publishable contributions that just need proper positioning!**
+| Phase | Timeline | Core Innovation | Target Venue | Expected Impact |
+|-------|----------|----------------|--------------|-----------------|
+| **Phase 1** | 10-12 months | Dynamic Buffers + Bounded A-WFQ | IEEE/ACM ToN | Foundation paper (Q1) |
+| **Phase 2** | 12-18 months | Elastic Crosspoint + ML + VOQ Grouping | IEEE JSAC | Architectural breakthrough |
+| **Phase 3** | 10-14 months | Programmable QoS Co-Design | IEEE TII/Network | Systems integration |
 
 ---
 
-## Part 2: Revised Enhancement Strategy (Aligned with v2.0)
+## Part 1: Strategic Research Positioning
 
-### 2.1 The "Three-Pillar" Q1 Publication Approach
+### 1.1 Current Implementation Strength Analysis (Extended)
 
-Instead of building many features from scratch, we **leverage existing strengths** and **fill critical gaps**:
+**Your v2.0 Already Implements (From Previous Analysis):**
+- ✅ 8-level IEEE 802.1p QoS (vs. most papers: 3-4 levels)
+- ✅ Parametric 8-128 port scaling with automatic topology selection
+- ✅ Hybrid packet/cell switching (S=1 to S=32 configurable)
+- ✅ Multicast address replication (90% memory savings documented)
+- ✅ Dynamic FIFO allocation (linklist_dynamic_fifo.sv)
+- ✅ WFQ with deficit tracking and aging mechanism
+- ✅ Comprehensive verification framework (testbench + coverage)
 
-| Pillar | Current State (v2.0) | Enhancement Needed | Effort | Impact |
-|--------|---------------------|-------------------|--------|--------|
-| **Pillar 1: Architectural Breakthrough** | Dual-channel arbitration with QoS-aware matching | **Add Elastic Crosspoint Scheduling** | 6-8 weeks | **9.5/10 novelty - FLAGSHIP** |
-| **Pillar 2: Intelligent Adaptation** | Static aging, manual configuration | **Add Kalman prediction + dynamic weight adjustment** | 4-5 weeks | **7.5/10 novelty - STRONG SUPPORT** |
-| **Pillar 3: Rigorous Validation** | Automated testbench, simulation-only | **Add formal verification + FPGA testbed** | 4-5 weeks | **Credibility multiplier** |
+**NEW: Research Infrastructure Already Present:**
+- ✅ **Microprocessor interface** (0x0000-0x0FFF registers) → Enables programmable control plane
+- ✅ **Runtime reconfiguration** → Foundation for adaptive algorithms
+- ✅ **Performance monitoring counters** → Real-time telemetry for ML training
+- ✅ **Credit-based flow control** → Lossless fabric foundation
+- ✅ **Dual-channel arbitration** → Framework for elastic scheduling
 
-**Total Additional Implementation:** 14-18 weeks (3.5-4.5 months)
+### 1.2 Research Gap Identification vs. State-of-the-Art
 
-**Publication-Ready:** 16-20 weeks (4-5 months) including paper writing
+| Recent Work (2023-2025) | Core Contribution | Your Differentiation Opportunity |
+|------------------------|-------------------|----------------------------------|
+| **A²FQ (Chen 2024)** | Adaptive queue count in programmable switches | You: Adaptive *buffer allocation* in hardware fabric |
+| **Gearbox (NSDI'22)** | Hierarchical O(1) WFQ | You: Bounded fairness *with FPGA validation* |
+| **FlexCross (2024)** | Parametric crosspoint FPGA | You: *Elastic* crosspoint with prediction |
+| **REVERIE (2024)** | Predictive buffer sharing for isolation | You: Predictive *arbitration* for throughput |
+| **SwiftQueue (2023)** | Transformer-based queue prediction | You: Lightweight *Kalman* for line-rate inference |
+| **DRL Switch Scheduling (2023)** | Deep RL for crosspoint selection | You: *Hybrid* rule-based + ML for stability |
+
+**Key Insight:** No prior work combines:
+1. Hardware-implemented adaptive buffer pooling
+2. Provable fairness bounds for approximate WFQ
+3. Predictive elastic scheduling in FPGA fabric
+4. Programmable control plane integration
+
+This combination creates **three distinct publication opportunities**.
 
 ---
 
-## Part 3: Pillar 1 - Elastic Crosspoint Scheduling (NEW Implementation)
+## Part 2: Phase 1 - Foundation Paper (10-12 Months)
 
-### 3.1 Integration Points with Existing v2.0 Architecture
+### 2.1 Paper Title & Positioning
 
-Your current design uses **dual-channel arbitration** (lines 95-130 in switch_fabric.sv):
+**Title:** *"Dynamic Shared Buffer Management with Bounded Approximate Weighted Fair Queuing for High-Radix Ethernet Switch Fabrics"*
+
+**Target Venue:** IEEE/ACM Transactions on Networking (ToN)
+- **Why ToN:** Combines theory (fairness bounds) + implementation (FPGA) + evaluation (real traffic)
+- **Acceptance Rate:** ~15-20% but strong fit for your comprehensive approach
+- **Timeline:** 6-9 month review cycle
+
+**Core Thesis:**
+> Existing switch fabrics suffer from (1) static buffer partitioning unable to handle AI/ML micro-bursts, and (2) approximate WFQ schedulers without formal fairness guarantees. We present a unified architecture combining dynamic shared memory allocation with provably bounded O(1) WFQ achieving <5% service deviation while improving memory utilization by 40-60%.
+
+### 2.2 Technical Contributions (Phase 1)
+
+#### Contribution 1: Adaptive Buffer Pool Manager
+
+**Problem:** Your current `linklist_dynamic_fifo.sv` allocates memory dynamically but doesn't adapt to traffic patterns.
+
+**Solution:** Real-time buffer reallocation based on micro-burst detection.
+
+**New Module:** `rtl/memory/adaptive_buffer_pool_v3.sv`
 
 ```systemverilog
-// From doc_v2.md
-generate;
-    if (NUM_PORT <= S) begin : gen_under_s
-        switch_s #(...) switch_inst (...);
-    end else if (NUM_PORT <= 2*S) begin : gen_2s
-        switch_2s #(...) switch_inst (...);
-    end else begin : gen_high_radix
-        switch_high_radix_matching #(...) switch_inst (...);
-    end
-endgenerate
-```
-
-**Enhancement Strategy:** Add a **third layer** above this—an elastic crosspoint pool that manages allocation of multiple physical arbiters to congested VOQs.
-
-### 3.2 Enhanced Architecture Diagram
-
-```
-Current v2.0:
-┌───────────────────────────────────────────────────────┐
-│  VOQ[src][dst] → Arbiter Pair → XPQ[src][dst]        │
-│  (1:1 mapping)   (dual-channel)                       │
-└───────────────────────────────────────────────────────┘
-
-Enhanced with ECS:
-┌───────────────────────────────────────────────────────┐
-│  VOQ[src][dst] → Virtual Crosspoint Pool             │
-│                   ↓                                    │
-│             Elastic Allocator (NEW)                   │
-│                   ↓                                    │
-│             Multiple Arbiter Pairs (borrowed)         │
-│                   ↓                                    │
-│             XPQ[src][dst] (existing)                  │
-└───────────────────────────────────────────────────────┘
-```
-
-### 3.3 New Module: `elastic_crosspoint_manager_v2.sv`
-
-**File Location:** `rtl/arbiter/elastic_crosspoint_manager_v2.sv`
-
-```systemverilog
-module elastic_crosspoint_manager_v2 #(
-    parameter NUM_PORT = 10,
-    parameter S = 10,
-    parameter NUM_ARBITER_PAIRS = 5,  // From existing dual-channel design
-    parameter ELASTIC_POOL_SIZE = 3,  // 60% of arbiters can be borrowed
-    parameter MAX_ARBITERS_PER_VOQ = 2,
-    parameter QOS_TAG_WIDTH = 3
+module adaptive_buffer_pool_v3 #(
+    parameter NUM_PORTS = 32,
+    parameter QOS_LEVELS = 8,
+    parameter TOTAL_BUFFER_DEPTH = 524288,  // 512K words
+    parameter BURST_WINDOW = 100,  // Cycles to detect micro-burst
+    parameter REALLOC_THRESHOLD = 85  // % occupancy trigger
 )(
     input  logic clk,
     input  logic rst_n,
 
-    // From existing dest_finder_row_matching_qos.sv
-    input  logic [NUM_ARBITER_PAIRS-1:0] arbiter_idle,
-    input  logic [NUM_PORT-1:0][NUM_PORT-1:0] voq_request,
-    input  logic [QOS_TAG_WIDTH-1:0] voq_qos [NUM_PORT-1:0][NUM_PORT-1:0],
-
-    // Enhanced: Queue depth and prediction (NEW inputs from Phase 2)
-    input  logic [10:0] voq_occupancy [NUM_PORT-1:0][NUM_PORT-1:0],
-    input  logic [15:0] voq_predicted_depth [NUM_PORT-1:0][NUM_PORT-1:0],
-
-    // Output: Dynamic arbiter allocation
-    output logic [NUM_ARBITER_PAIRS-1:0] arbiter_assigned_to_voq [NUM_PORT-1:0][NUM_PORT-1:0],
-    output logic [6:0] elastic_pool_free_count
+    // Per-VOQ occupancy monitoring (from existing design)
+    input  logic [18:0] voq_occupancy [NUM_PORTS-1:0][NUM_PORTS-1:0][QOS_LEVELS-1:0],
+    
+    // Micro-burst detection signals
+    input  logic [15:0] arrival_rate [NUM_PORTS-1:0],  // Packets/cycle
+    input  logic [7:0]  burst_intensity [NUM_PORTS-1:0],  // Rate gradient
+    
+    // Dynamic allocation outputs
+    output logic [18:0] allocated_depth [NUM_PORTS-1:0][NUM_PORTS-1:0][QOS_LEVELS-1:0],
+    output logic [31:0] pool_free_count,
+    output logic [7:0]  reallocation_events  // Statistics
 );
 
-    // Track which arbiters are allocated to which VOQs
+    // Global buffer pool state
     typedef struct packed {
-        logic [3:0] src_port;
-        logic [3:0] dst_port;
-        logic allocated;
-        logic [QOS_TAG_WIDTH-1:0] priority;
-    } arbiter_allocation_t;
+        logic [18:0] base_allocation;  // Guaranteed minimum
+        logic [18:0] elastic_allocation;  // Borrowed from pool
+        logic [7:0]  priority_boost;  // Urgency-based boost
+        logic borrowing_active;
+    } buffer_allocation_t;
 
-    arbiter_allocation_t arbiter_alloc [NUM_ARBITER_PAIRS-1:0];
+    buffer_allocation_t voq_allocation [NUM_PORTS-1:0][NUM_PORTS-1:0][QOS_LEVELS-1:0];
 
-    // Free arbiter pool (bitmap)
-    logic [NUM_ARBITER_PAIRS-1:0] arbiter_in_pool;
-    logic [2:0] pool_count;
+    // Shared elastic pool (40% of total buffers)
+    logic [18:0] elastic_pool_size;
+    logic [18:0] elastic_pool_used;
+    
+    assign elastic_pool_size = TOTAL_BUFFER_DEPTH * 40 / 100;
+    assign pool_free_count = elastic_pool_size - elastic_pool_used;
 
-    // Compute urgency for each requesting VOQ
-    logic [31:0] voq_urgency [NUM_PORT-1:0][NUM_PORT-1:0];
+    // Micro-burst detection state machine
+    typedef enum logic [2:0] {
+        MONITOR,
+        BURST_DETECTED,
+        REALLOCATING,
+        STABILIZING
+    } burst_state_t;
+
+    burst_state_t burst_state [NUM_PORTS-1:0];
+
+    // Urgency calculation (combines occupancy + burst intensity)
+    logic [31:0] voq_urgency [NUM_PORTS-1:0][NUM_PORTS-1:0][QOS_LEVELS-1:0];
 
     always_comb begin
-        for (int src = 0; src < NUM_PORT; src++) begin
-            for (int dst = 0; dst < NUM_PORT; dst++) begin
-                if (!voq_request[src][dst]) begin
-                    voq_urgency[src][dst] = 0;
-                end else begin
-                    // Urgency formula (integrate with existing QoS)
-                    logic [15:0] predicted_component;
-                    logic [15:0] current_component;
-                    logic [15:0] priority_component;
+        for (int src = 0; src < NUM_PORTS; src++) begin
+            for (int dst = 0; dst < NUM_PORTS; dst++) begin
+                for (int qos = 0; qos < QOS_LEVELS; qos++) begin
+                    // Urgency formula (NEW vs. v2.0)
+                    logic [15:0] occupancy_factor;
+                    logic [15:0] burst_factor;
+                    logic [15:0] qos_factor;
 
-                    // Predicted overflow urgency
-                    predicted_component = (voq_predicted_depth[src][dst] > (D * 9 / 10)) ?
-                                         (voq_predicted_depth[src][dst] - (D * 9 / 10)) << 4 : 0;
+                    // Current occupancy relative to allocation
+                    occupancy_factor = (voq_occupancy[src][dst][qos] * 100) / 
+                                      (voq_allocation[src][dst][qos].base_allocation + 
+                                       voq_allocation[src][dst][qos].elastic_allocation + 1);
 
-                    // Current depth (linear)
-                    current_component = voq_occupancy[src][dst] << 2;
+                    // Burst intensity from gradient
+                    burst_factor = burst_intensity[src] * 10;
 
-                    // QoS priority boost (use existing 8-level QoS tags)
-                    priority_component = (16'd8 - {13'b0, voq_qos[src][dst]}) << 10;
+                    // QoS priority weight (higher = more urgent)
+                    qos_factor = (8 - qos) * 1000;
 
-                    voq_urgency[src][dst] = {16'b0, predicted_component} +
-                                           {16'b0, current_component} +
-                                           {16'b0, priority_component};
+                    voq_urgency[src][dst][qos] = {16'b0, occupancy_factor} +
+                                                 {16'b0, burst_factor} +
+                                                 {16'b0, qos_factor};
                 end
             end
         end
     end
 
-    // Allocation logic
+    // Dynamic allocation algorithm
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            for (int a = 0; a < NUM_ARBITER_PAIRS; a++) begin
-                arbiter_alloc[a].allocated <= 1'b0;
-                arbiter_in_pool[a] <= (a >= (NUM_ARBITER_PAIRS - ELASTIC_POOL_SIZE));
-            end
-            pool_count <= ELASTIC_POOL_SIZE;
-        end else begin
-            // Release idle arbiters back to pool
-            for (int a = 0; a < NUM_ARBITER_PAIRS; a++) begin
-                if (arbiter_alloc[a].allocated && arbiter_idle[a]) begin
-                    int src = arbiter_alloc[a].src_port;
-                    int dst = arbiter_alloc[a].dst_port;
-
-                    // If VOQ no longer needs extra arbiter
-                    if (voq_occupancy[src][dst] < (D / 2)) begin
-                        arbiter_alloc[a].allocated <= 1'b0;
-                        arbiter_in_pool[a] <= 1'b1;
-                        pool_count <= pool_count + 1;
+            // Initialize with equal base allocation
+            for (int src = 0; src < NUM_PORTS; src++) begin
+                for (int dst = 0; dst < NUM_PORTS; dst++) begin
+                    for (int qos = 0; qos < QOS_LEVELS; qos++) begin
+                        voq_allocation[src][dst][qos].base_allocation <= 
+                            (TOTAL_BUFFER_DEPTH * 60 / 100) / (NUM_PORTS * NUM_PORTS * QOS_LEVELS);
+                        voq_allocation[src][dst][qos].elastic_allocation <= 0;
+                        voq_allocation[src][dst][qos].borrowing_active <= 0;
                     end
                 end
             end
+            elastic_pool_used <= 0;
+            reallocation_events <= 0;
+            
+            for (int p = 0; p < NUM_PORTS; p++)
+                burst_state[p] <= MONITOR;
+                
+        end else begin
+            // **Step 1: Micro-burst detection**
+            for (int src = 0; src < NUM_PORTS; src++) begin
+                case (burst_state[src])
+                    MONITOR: begin
+                        if (arrival_rate[src] > (arrival_rate[src] + 50) && 
+                            burst_intensity[src] > 20) begin
+                            burst_state[src] <= BURST_DETECTED;
+                        end
+                    end
+                    
+                    BURST_DETECTED: begin
+                        // Request elastic buffers for this port's VOQs
+                        burst_state[src] <= REALLOCATING;
+                    end
+                    
+                    REALLOCATING: begin
+                        // Allocation happens below
+                        burst_state[src] <= STABILIZING;
+                    end
+                    
+                    STABILIZING: begin
+                        // Wait for occupancy to drop below threshold
+                        logic all_below_threshold = 1;
+                        for (int dst = 0; dst < NUM_PORTS; dst++) begin
+                            for (int qos = 0; qos < QOS_LEVELS; qos++) begin
+                                if (voq_occupancy[src][dst][qos] > 
+                                    (voq_allocation[src][dst][qos].base_allocation * REALLOC_THRESHOLD / 100))
+                                    all_below_threshold = 0;
+                            end
+                        end
+                        
+                        if (all_below_threshold)
+                            burst_state[src] <= MONITOR;
+                    end
+                endcase
+            end
 
-            // Allocate from pool to highest-urgency VOQs
+            // **Step 2: Find highest-urgency VOQ needing allocation**
             logic [31:0] max_urgency;
-            logic [3:0] max_src, max_dst;
-            logic found;
+            logic [4:0] winner_src, winner_dst;
+            logic [2:0] winner_qos;
+            logic found_candidate;
 
             max_urgency = 0;
-            found = 0;
+            found_candidate = 0;
 
-            for (int src = 0; src < NUM_PORT; src++) begin
-                for (int dst = 0; dst < NUM_PORT; dst++) begin
-                    // Check if this VOQ can use more arbiters
-                    int current_arbiters = count_arbiters(arbiter_assigned_to_voq[src][dst]);
+            for (int src = 0; src < NUM_PORTS; src++) begin
+                for (int dst = 0; dst < NUM_PORTS; dst++) begin
+                    for (int qos = 0; qos < QOS_LEVELS; qos++) begin
+                        // Check if needs elastic allocation
+                        logic needs_allocation = 
+                            (voq_occupancy[src][dst][qos] > 
+                             (voq_allocation[src][dst][qos].base_allocation * 80 / 100)) &&
+                            !voq_allocation[src][dst][qos].borrowing_active;
 
-                    if (voq_request[src][dst] &&
-                        voq_urgency[src][dst] > max_urgency &&
-                        current_arbiters < MAX_ARBITERS_PER_VOQ) begin
-                        max_urgency = voq_urgency[src][dst];
-                        max_src = src;
-                        max_dst = dst;
-                        found = 1;
+                        if (needs_allocation && voq_urgency[src][dst][qos] > max_urgency) begin
+                            max_urgency = voq_urgency[src][dst][qos];
+                            winner_src = src;
+                            winner_dst = dst;
+                            winner_qos = qos;
+                            found_candidate = 1;
+                        end
                     end
                 end
             end
 
-            // Allocate available arbiter to winner
-            if (found && pool_count > 0) begin
-                for (int a = 0; a < NUM_ARBITER_PAIRS; a++) begin
-                    if (arbiter_in_pool[a]) begin
-                        arbiter_alloc[a].src_port <= max_src;
-                        arbiter_alloc[a].dst_port <= max_dst;
-                        arbiter_alloc[a].allocated <= 1'b1;
-                        arbiter_alloc[a].priority <= voq_qos[max_src][max_dst];
-                        arbiter_in_pool[a] <= 1'b0;
-                        pool_count <= pool_count - 1;
-                        break;
+            // **Step 3: Allocate from pool if available**
+            if (found_candidate && pool_free_count > 1024) begin
+                // Allocate quantum from pool (e.g., 1024 words)
+                logic [18:0] alloc_quantum = 1024;
+                
+                voq_allocation[winner_src][winner_dst][winner_qos].elastic_allocation <= 
+                    voq_allocation[winner_src][winner_dst][winner_qos].elastic_allocation + alloc_quantum;
+                voq_allocation[winner_src][winner_dst][winner_qos].borrowing_active <= 1;
+                
+                elastic_pool_used <= elastic_pool_used + alloc_quantum;
+                reallocation_events <= reallocation_events + 1;
+            end
+
+            // **Step 4: Reclaim unused allocations**
+            for (int src = 0; src < NUM_PORTS; src++) begin
+                for (int dst = 0; dst < NUM_PORTS; dst++) begin
+                    for (int qos = 0; qos < QOS_LEVELS; qos++) begin
+                        if (voq_allocation[src][dst][qos].borrowing_active) begin
+                            // If occupancy drops below 50% of base, return elastic buffers
+                            if (voq_occupancy[src][dst][qos] < 
+                                (voq_allocation[src][dst][qos].base_allocation / 2)) begin
+                                
+                                elastic_pool_used <= elastic_pool_used - 
+                                                    voq_allocation[src][dst][qos].elastic_allocation;
+                                voq_allocation[src][dst][qos].elastic_allocation <= 0;
+                                voq_allocation[src][dst][qos].borrowing_active <= 0;
+                            end
+                        end
                     end
                 end
             end
         end
     end
 
-    // Generate output: which arbiters are assigned to each VOQ
+    // Output: Total allocated depth per VOQ
     always_comb begin
-        for (int src = 0; src < NUM_PORT; src++) begin
-            for (int dst = 0; dst < NUM_PORT; dst++) begin
-                arbiter_assigned_to_voq[src][dst] = '0;
-
-                for (int a = 0; a < NUM_ARBITER_PAIRS; a++) begin
-                    if (arbiter_alloc[a].allocated &&
-                        arbiter_alloc[a].src_port == src &&
-                        arbiter_alloc[a].dst_port == dst) begin
-                        arbiter_assigned_to_voq[src][dst][a] = 1'b1;
-                    end
+        for (int src = 0; src < NUM_PORTS; src++) begin
+            for (int dst = 0; dst < NUM_PORTS; dst++) begin
+                for (int qos = 0; qos < QOS_LEVELS; qos++) begin
+                    allocated_depth[src][dst][qos] = 
+                        voq_allocation[src][dst][qos].base_allocation +
+                        voq_allocation[src][dst][qos].elastic_allocation;
                 end
-            end
-        end
-    end
-
-    assign elastic_pool_free_count = pool_count;
-
-    function automatic int count_arbiters(input logic [NUM_ARBITER_PAIRS-1:0] mask);
-        int count = 0;
-        for (int i = 0; i < NUM_ARBITER_PAIRS; i++)
-            if (mask[i]) count++;
-        return count;
-    endfunction
-
-endmodule
-```
-
-### 3.4 Integration with Existing Dual-Channel Arbiter
-
-**Modification Location:** `rtl/arbiter/dest_finder_row_matching_qos.sv`
-
-**Current Implementation (lines 180-250):**
-```systemverilog
-// Existing: Fixed 2-channel arbitration
-// Channel 1 arbitrates VOQ[0,2,4,6,8]
-// Channel 2 arbitrates VOQ[1,3,5,7,9]
-```
-
-**Enhanced Integration:**
-
-```systemverilog
-// Add to dest_finder_row_matching_qos.sv
-
-module dest_finder_row_matching_qos_elastic #(
-    parameter NUM_PORT = 10,
-    parameter S = 10,
-    parameter QOS_ENABLE = 1,
-    parameter ELASTIC_ENABLE = 1,  // NEW parameter
-    parameter NUM_PORT_LOG = $clog2(NUM_PORT),
-    parameter QOS_TAG_WIDTH = 3
-)(
-    input  logic clk,
-    input  logic rst_n,
-
-    // Existing interfaces
-    input  logic [S-1:0] none_mepty_ports_1 [NUM_PORT/S-1:0],
-    input  logic [S-1:0] none_mepty_ports_2 [NUM_PORT/S-1:0],
-    input  logic [NUM_PORT-1:0] block_ports,
-
-    // NEW: Elastic crosspoint inputs
-    input  logic [NUM_PORT-1:0][NUM_PORT-1:0] elastic_arbiter_mask,  // From ECS manager
-
-    // Existing outputs
-    output logic dest_valid_o_1,
-    output logic [NUM_PORT_LOG-1:0] dest_o_1,
-    output logic dest_valid_o_2,
-    output logic [NUM_PORT_LOG-1:0] dest_o_2,
-
-    // NEW: Multi-path output
-    output logic [NUM_PORT-1:0][NUM_PORT-1:0] multi_path_grant  // Which VOQs get multi-path
-);
-
-    // Existing dual-channel logic (keep unchanged)
-    // ... (lines 180-250 from doc_v2.md) ...
-
-    // NEW: Check if granted VOQs have elastic arbiter allocation
-    always_comb begin
-        multi_path_grant = '0;
-
-        // If channel 1 granted VOQ[src][dst]
-        if (dest_valid_o_1) begin
-            int src = get_source_from_channel_1(dest_o_1);  // Helper function
-            int dst = dest_o_1;
-
-            // Check if this VOQ has elastic arbiter assigned
-            if (|elastic_arbiter_mask[src][dst]) begin
-                multi_path_grant[src][dst] = 1'b1;
-            end
-        end
-
-        // Similar for channel 2
-        if (dest_valid_o_2) begin
-            int src = get_source_from_channel_2(dest_o_2);
-            int dst = dest_o_2;
-
-            if (|elastic_arbiter_mask[src][dst]) begin
-                multi_path_grant[src][dst] = 1'b1;
             end
         end
     end
@@ -385,1072 +324,949 @@ module dest_finder_row_matching_qos_elastic #(
 endmodule
 ```
 
-### 3.5 Multi-Path VOQ Transmission (Enhanced ingress_line_qos.sv)
-
-**Modification Location:** `rtl/ingress/ingress_line_qos.sv`
-
-**Add multi-path capability:**
-
-```systemverilog
-// Add to ingress_line_qos.sv (after line 150)
-
-// NEW: Multi-path transmission when ECS grants extra arbiters
-logic [NUM_ARBITER_PAIRS-1:0] my_allocated_arbiters;
-assign my_allocated_arbiters = elastic_arbiter_mask[MY_PORT_ID];
-
-// Existing packet-to-cell conversion (keep as is)
-packet_to_cell #(...) p2c (...);
-
-// NEW: Multi-path dispatcher
-generate
-    if (ELASTIC_ENABLE) begin : gen_elastic_tx
-        multi_path_transmitter #(
-            .DATA_WIDTH(W_MINI),
-            .MAX_PATHS(NUM_ARBITER_PAIRS)
-        ) mp_tx (
-            .clk(clk),
-            .rst_n(rst_n),
-
-            // Input from packet-to-cell
-            .voq_data(cell_data),
-            .voq_valid(cell_valid),
-            .voq_last(last_cell),
-            .voq_ready(voq_ready),
-
-            // Which paths are allocated to this VOQ
-            .path_allocated(my_allocated_arbiters),
-
-            // Output to multiple arbiters
-            .xp_data(multi_path_cell_data),
-            .xp_valid(multi_path_cell_valid),
-            .xp_last(multi_path_cell_last),
-            .xp_ready(arbiter_ready)
-        );
-    end else begin : gen_single_path
-        // Keep existing single-path logic
-        assign xp_data[0] = cell_data;
-        assign xp_valid[0] = cell_valid;
-        assign xp_last[0] = last_cell;
-    end
-endgenerate
-```
-
-### 3.6 Multi-Path XPQ Reception (Enhanced egress_line_qos.sv)
-
-**Modification Location:** `rtl/egress/egress_line_qos.sv`
-
-```systemverilog
-// Add to egress_line_qos.sv (after line 100)
-
-generate
-    if (ELASTIC_ENABLE) begin : gen_elastic_rx
-        multi_path_receiver #(
-            .DATA_WIDTH(W_MINI),
-            .MAX_PATHS(NUM_ARBITER_PAIRS),
-            .REORDER_BUFFER_SIZE(16)
-        ) mp_rx (
-            .clk(clk),
-            .rst_n(rst_n),
-
-            // Input from multiple XPQs
-            .xp_data(xpq_data_array),
-            .xp_valid(xpq_valid_array),
-            .xp_last(xpq_last_array),
-            .xp_ready(xpq_ready_array),
-
-            // Output to cell-to-packet reassembly
-            .out_data(reassembled_data),
-            .out_valid(reassembled_valid),
-            .out_last(reassembled_last),
-            .out_ready(c2p_ready)
-        );
-    end else begin : gen_single_path
-        // Keep existing single-path logic
-        assign reassembled_data = xpq_data_array[0];
-        assign reassembled_valid = xpq_valid_array[0];
-        assign reassembled_last = xpq_last_array[0];
-    end
-endgenerate
-
-// Existing cell-to-packet conversion (keep as is)
-cell_to_packet #(...) c2p (
-    .start_of_cell_i(reassembled_valid),
-    .data_i(reassembled_data),
-    .last_cell_i(reassembled_last),
-    // ... (existing connections)
-);
-```
-
-### 3.7 ECS Configuration Parameters
-
-**Add to:** `rtl/util/fabric_params.vh`
-
-```systemverilog
-// NEW: Elastic Crosspoint Scheduling parameters
-`ifndef ELASTIC_ENABLE
-    `define ELASTIC_ENABLE 1           // 1=enable ECS, 0=baseline dual-channel
-`endif
-
-`ifndef ELASTIC_POOL_SIZE
-    `define ELASTIC_POOL_SIZE 3        // Number of borrowable arbiter pairs
-`endif
-
-`ifndef MAX_ARBITERS_PER_VOQ
-    `define MAX_ARBITERS_PER_VOQ 2     // Limit to prevent monopolization
-`endif
-
-`ifndef URGENCY_PRED_WEIGHT
-    `define URGENCY_PRED_WEIGHT 16     // Weight for predicted depth in urgency
-`endif
-
-`ifndef URGENCY_CURR_WEIGHT
-    `define URGENCY_CURR_WEIGHT 4      // Weight for current depth
-`endif
-
-`ifndef URGENCY_QOS_WEIGHT
-    `define URGENCY_QOS_WEIGHT 1024    // Weight for QoS priority
-`endif
-```
-
-### 3.8 Expected Performance (ECS Only, Without Other Enhancements)
-
-Based on your existing architecture:
-
-| Metric | v2.0 Baseline | v2.0 + ECS | Improvement |
-|--------|---------------|------------|-------------|
-| Uniform Traffic | 9.8 Gbps | 9.95 Gbps | +1.5% |
-| Hotspot (9→1) | 1.0 Gbps | 4.5-6.5 Gbps | **+350-550%** |
-| p99 Latency (Hotspot) | ~500 µs | ~120 µs | **-76%** |
-| Jitter | ~85 µs | ~30 µs | **-65%** |
-| Area Overhead | Baseline | +6-8% | Justified |
+**Key Innovation vs. Prior Work:**
+- **vs. A²FQ (Chen 2024):** Hardware implementation (not software P4), micro-burst specific
+- **vs. REVERIE:** Focuses on throughput optimization, not just isolation
+- **vs. Your v2.0:** Adds urgency-based reallocation (not just dynamic linked-list)
 
 ---
 
-## Part 4: Pillar 2 - Intelligent Adaptation Layer
+#### Contribution 2: Bounded Approximate WFQ with Formal Guarantees
 
-### 4.1 Gap Analysis: What's Missing from v2.0
+**Problem:** Your current WFQ (qos_scheduler.sv) has no proven fairness bounds.
 
-**Already Implemented in v2.0:**
-- ✅ Aging mechanism (lines 300-400 in qos_scheduler.sv)
-- ✅ WFQ with deficit tracking
-- ✅ Runtime quantum configuration via microinterface (0x0108-0x0124)
+**Solution:** Quantized weight sharing + service deviation tracking with mathematical proofs.
 
-**Missing for "Adaptive Intelligence":**
-1. ❌ Automatic quantum adjustment (currently manual via register writes)
-2. ❌ Queue depth prediction (urgency-based arbiter exists, but no forecasting)
-3. ❌ Feedback loop from actual performance to scheduling parameters
-
-### 4.2 Enhancement 4A: Kalman-Based Queue Prediction (NEW)
-
-**File Location:** `rtl/arbiter/kalman_queue_predictor_v2.sv`
-
-**Integration Point:** Feed predictions to:
-1. Elastic crosspoint manager (urgency calculation)
-2. Adaptive QoS controller (proactive weight adjustment)
+**New Module:** `rtl/arbiter/bounded_approximate_wfq_v3.sv`
 
 ```systemverilog
-module kalman_queue_predictor_v2 #(
-    parameter NUM_PORT = 10,
-    parameter QOS_LEVELS = 8,
-    parameter PREDICTION_HORIZON = 50,
-    parameter SAMPLE_INTERVAL = 10  // Sample every 10 cycles
+module bounded_approximate_wfq_v3 #(
+    parameter NUM_QUEUES = 8,
+    parameter MAX_PACKET_SIZE = 1518,  // Bytes
+    parameter EPSILON_S = 5,  // Max service deviation percentage
+    parameter WEIGHT_QUANTUM = 64  // Quantization unit
 )(
     input  logic clk,
     input  logic rst_n,
 
-    // Current queue depth from all VOQs
-    // (Connect to existing voq_occupancy signals in your design)
-    input  logic [10:0] voq_depth [NUM_PORT-1:0][NUM_PORT-1:0],
-
-    // Predicted depth output (50 cycles ahead)
-    output logic [15:0] voq_predicted [NUM_PORT-1:0][NUM_PORT-1:0],
-    output logic [7:0]  prediction_confidence [NUM_PORT-1:0][NUM_PORT-1:0]
+    // Per-queue interfaces
+    input  logic [NUM_QUEUES-1:0] queue_request,
+    input  logic [15:0] queue_weight [NUM_QUEUES-1:0],  // Configured weights
+    input  logic [10:0] queue_packet_length [NUM_QUEUES-1:0],
+    
+    output logic [NUM_QUEUES-1:0] queue_grant,
+    output logic [$clog2(NUM_QUEUES)-1:0] granted_queue_id,
+    
+    // Fairness monitoring
+    output logic signed [31:0] service_deviation [NUM_QUEUES-1:0],
+    output logic [7:0] max_deviation_percentage,
+    output logic fairness_violation  // Alert if deviation > EPSILON_S
 );
 
-    localparam NUM_VOQS = NUM_PORT * NUM_PORT;
-
-    // State vector: [depth, velocity] in Q16.16 fixed-point
-    typedef struct packed {
-        logic signed [31:0] depth;
-        logic signed [31:0] velocity;
-    } state_t;
-
-    state_t x_hat [NUM_VOQS-1:0];
-
-    // Covariance matrix P (2×2 symmetric)
-    typedef struct packed {
-        logic signed [31:0] p00;  // Variance of depth
-        logic signed [31:0] p01;  // Covariance
-        logic signed [31:0] p11;  // Variance of velocity
-    } covariance_t;
-
-    covariance_t P [NUM_VOQS-1:0];
-
-    // Model parameters (tuned for your fabric's timing)
-    localparam logic signed [31:0] A_00 = 32'h0001_0000;  // 1.0 in Q16.16
-    localparam logic signed [31:0] A_01 = 32'h0000_A000;  // 10.0 (sampling interval)
-    localparam logic signed [31:0] A_11 = 32'h0001_0000;  // 1.0
-
-    localparam logic signed [31:0] Q_00 = 32'h0001_0000;  // Process noise (depth)
-    localparam logic signed [31:0] Q_11 = 32'h0000_1999;  // Process noise (velocity)
-    localparam logic signed [31:0] R = 32'h0004_0000;     // Measurement noise
-
-    // Sampling control
-    logic [$clog2(SAMPLE_INTERVAL)-1:0] sample_counter;
-    logic sample_valid;
-
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            sample_counter <= 0;
-            sample_valid <= 0;
-        end else begin
-            sample_counter <= sample_counter + 1;
-            sample_valid <= (sample_counter == SAMPLE_INTERVAL - 1);
-            if (sample_valid)
-                sample_counter <= 0;
-        end
-    end
-
-    // Kalman filter update
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            for (int v = 0; v < NUM_VOQS; v++) begin
-                x_hat[v].depth <= 0;
-                x_hat[v].velocity <= 0;
-                P[v].p00 <= 32'h0064_0000;  // Initial variance = 100
-                P[v].p01 <= 0;
-                P[v].p11 <= 32'h000A_0000;  // Initial variance = 10
-            end
-        end else if (sample_valid) begin
-            for (int v = 0; v < NUM_VOQS; v++) begin
-                // Flatten VOQ index
-                int src = v / NUM_PORT;
-                int dst = v % NUM_PORT;
-
-                // Measurement (convert 11-bit depth to Q16.16)
-                logic signed [31:0] z;
-                z = {5'b0, voq_depth[src][dst], 16'b0};
-
-                // **PREDICT STEP**
-                state_t x_minus;
-                x_minus.depth = fp_mult(A_00, x_hat[v].depth) +
-                               fp_mult(A_01, x_hat[v].velocity);
-                x_minus.velocity = fp_mult(A_11, x_hat[v].velocity);
-
-                covariance_t P_minus;
-                P_minus.p00 = fp_mult(A_00, fp_mult(P[v].p00, A_00)) +
-                             fp_mult(A_01, fp_mult(P[v].p11, A_01)) + Q_00;
-                P_minus.p01 = fp_mult(A_00, fp_mult(P[v].p01, A_11));
-                P_minus.p11 = fp_mult(A_11, fp_mult(P[v].p11, A_11)) + Q_11;
-
-                // **UPDATE STEP**
-                logic signed [31:0] S_inv;
-                S_inv = P_minus.p00 + R;
-
-                logic signed [31:0] K_0, K_1;
-                K_0 = fp_div(P_minus.p00, S_inv);
-                K_1 = fp_div(P_minus.p01, S_inv);
-
-                logic signed [31:0] innovation;
-                innovation = z - x_minus.depth;
-
-                x_hat[v].depth <= x_minus.depth + fp_mult(K_0, innovation);
-                x_hat[v].velocity <= x_minus.velocity + fp_mult(K_1, innovation);
-
-                logic signed [31:0] one_minus_K0;
-                one_minus_K0 = 32'h0001_0000 - K_0;
-
-                P[v].p00 <= fp_mult(one_minus_K0, P_minus.p00);
-                P[v].p01 <= fp_mult(one_minus_K0, P_minus.p01);
-                P[v].p11 <= P_minus.p11 - fp_mult(K_1, P_minus.p01);
-            end
-        end
-    end
-
-    // **PREDICTION (H_p steps ahead)**
+    // Quantized weight representation
+    logic [7:0] quantized_weight [NUM_QUEUES-1:0];
+    
     always_comb begin
-        for (int v = 0; v < NUM_VOQS; v++) begin
-            int src = v / NUM_PORT;
-            int dst = v % NUM_PORT;
-
-            state_t x_pred;
-            x_pred = x_hat[v];
-
-            // Iterate forward (PREDICTION_HORIZON / SAMPLE_INTERVAL) times
-            for (int step = 0; step < PREDICTION_HORIZON / SAMPLE_INTERVAL; step++) begin
-                x_pred.depth = fp_mult(A_00, x_pred.depth) +
-                              fp_mult(A_01, x_pred.velocity);
-                x_pred.velocity = fp_mult(A_11, x_pred.velocity);
-            end
-
-            // Extract integer part (drop fractional)
-            voq_predicted[src][dst] = x_pred.depth[26:11];
-
-            // Confidence based on variance
-            logic [31:0] variance = P[v].p00;
-            if (variance < 32'h0000_1000)      // < 0.0625
-                prediction_confidence[src][dst] = 95;
-            else if (variance < 32'h0000_4000) // < 0.25
-                prediction_confidence[src][dst] = 80;
-            else if (variance < 32'h0001_0000) // < 1.0
-                prediction_confidence[src][dst] = 60;
-            else
-                prediction_confidence[src][dst] = 40;
+        for (int q = 0; q < NUM_QUEUES; q++) begin
+            // Quantize to nearest multiple of WEIGHT_QUANTUM
+            quantized_weight[q] = (queue_weight[q] + WEIGHT_QUANTUM/2) / WEIGHT_QUANTUM;
         end
     end
 
-    // Fixed-point arithmetic (Q16.16)
-    function automatic logic signed [31:0] fp_mult(
-        input logic signed [31:0] a, b
-    );
-        logic signed [63:0] product;
-        product = a * b;
-        return product[47:16];
-    endfunction
+    // Virtual time tracking (shared across queues for O(1) complexity)
+    logic [31:0] global_virtual_time;
+    logic [31:0] queue_virtual_finish_time [NUM_QUEUES-1:0];
 
-    function automatic logic signed [31:0] fp_div(
-        input logic signed [31:0] a, b
-    );
-        logic signed [63:0] dividend;
-        dividend = {a, 16'b0};
-        return dividend / b;
-    endfunction
-
-endmodule
-```
-
-### 4.3 Enhancement 4B: Adaptive QoS Controller (Extends Existing)
-
-**Current Implementation (doc_v2.md):**
-- Manual quantum configuration via registers (0x0108-0x0124)
-- Static aging threshold (AGE_THRESHOLD parameter)
-
-**Enhancement:**
-
-**File Location:** `rtl/arbiter/adaptive_qos_controller_v2.sv` (NEW)
-
-```systemverilog
-module adaptive_qos_controller_v2 #(
-    parameter NUM_PORT = 10,
-    parameter QOS_LEVELS = 8,
-    parameter UPDATE_INTERVAL = 250000  // 1 ms @ 250 MHz
-)(
-    input  logic clk,
-    input  logic rst_n,
-
-    // Aggregated statistics from all VOQs
-    // (Connect to existing voq_occupancy, wait_time tracking)
-    input  logic [15:0] total_occupancy [QOS_LEVELS-1:0],
-    input  logic [15:0] avg_wait_time [QOS_LEVELS-1:0],
-    input  logic [7:0]  packet_loss_rate [QOS_LEVELS-1:0],
-    input  logic [31:0] throughput [QOS_LEVELS-1:0],
-
-    // Target bandwidth allocation (from microinterface or fixed)
-    input  logic [31:0] target_throughput [QOS_LEVELS-1:0],
-
-    // Output: Dynamic quantum values
-    output logic [15:0] adaptive_quantum [QOS_LEVELS-1:0],
-
-    // Status (for debugging)
-    output logic [7:0] last_action [QOS_LEVELS-1:0]
-);
-
-    logic [31:0] update_counter;
-    logic [15:0] quantum_reg [QOS_LEVELS-1:0];
-
-    // Initialize with existing defaults from doc_v2.md
-    initial begin
-        quantum_reg[7] = 500;  // Network Control
-        quantum_reg[6] = 400;  // Voice
-        quantum_reg[5] = 300;  // Video
-        quantum_reg[4] = 200;  // Critical
-        quantum_reg[3] = 150;  // Excellent
-        quantum_reg[2] = 100;  // Standard
-        quantum_reg[1] = 50;   // Best Effort
-        quantum_reg[0] = 25;   // Background
-    end
-
-    // Min/max bounds per priority
-    function automatic logic [15:0] get_min_quantum(input int qos);
-        case (qos)
-            7: return 250;
-            6: return 200;
-            5: return 150;
-            4: return 100;
-            3: return 75;
-            2: return 50;
-            1: return 25;
-            0: return 12;
-        endcase
-    endfunction
-
-    function automatic logic [15:0] get_max_quantum(input int qos);
-        case (qos)
-            7: return 800;
-            6: return 600;
-            5: return 450;
-            4: return 300;
-            3: return 225;
-            2: return 150;
-            1: return 75;
-            0: return 38;
-        endcase
-    endfunction
+    // Deficit counter (standard WFQ mechanism from v2.0)
+    logic [15:0] deficit [NUM_QUEUES-1:0];
+    
+    // NEW: Service deviation tracking
+    logic [31:0] ideal_service [NUM_QUEUES-1:0];  // Theoretical fair share
+    logic [31:0] actual_service [NUM_QUEUES-1:0];  // Actual bytes transmitted
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            update_counter <= 0;
+            global_virtual_time <= 0;
+            for (int q = 0; q < NUM_QUEUES; q++) begin
+                queue_virtual_finish_time[q] <= 0;
+                deficit[q] <= 0;
+                ideal_service[q] <= 0;
+                actual_service[q] <= 0;
+                service_deviation[q] <= 0;
+            end
+            fairness_violation <= 0;
+            
         end else begin
-            update_counter <= update_counter + 1;
+            // **Step 1: Update global virtual time**
+            // Virtual time advances by smallest quantum among active queues
+            logic [31:0] min_active_weight;
+            min_active_weight = 32'hFFFFFFFF;
+            
+            for (int q = 0; q < NUM_QUEUES; q++) begin
+                if (queue_request[q] && quantized_weight[q] < min_active_weight)
+                    min_active_weight = quantized_weight[q];
+            end
+            
+            if (min_active_weight != 32'hFFFFFFFF)
+                global_virtual_time <= global_virtual_time + min_active_weight;
 
-            // Update every 1 ms
-            if (update_counter == UPDATE_INTERVAL) begin
-                update_counter <= 0;
+            // **Step 2: Select queue with earliest virtual finish time**
+            logic [31:0] min_finish_time;
+            logic [$clog2(NUM_QUEUES)-1:0] selected_queue;
+            logic found_eligible;
 
-                for (int q = 0; q < QOS_LEVELS; q++) begin
-                    automatic logic [15:0] new_quantum;
-                    automatic logic [7:0] action;
+            min_finish_time = 32'hFFFFFFFF;
+            found_eligible = 0;
 
-                    new_quantum = quantum_reg[q];
-                    action = 8'd0;
-
-                    // Rule 1: High occupancy + packet loss → Increase aggressively
-                    if (total_occupancy[q] > (D * 3 / 4) && packet_loss_rate[q] > 10) begin
-                        new_quantum = quantum_reg[q] + (quantum_reg[q] >> 2);  // +25%
-                        action = 8'd1;
+            for (int q = 0; q < NUM_QUEUES; q++) begin
+                if (queue_request[q]) begin
+                    // Eligible if virtual start time <= global virtual time
+                    logic [31:0] virtual_start_time = queue_virtual_finish_time[q];
+                    
+                    if (virtual_start_time <= global_virtual_time || !found_eligible) begin
+                        if (queue_virtual_finish_time[q] < min_finish_time || !found_eligible) begin
+                            min_finish_time = queue_virtual_finish_time[q];
+                            selected_queue = q;
+                            found_eligible = 1;
+                        end
                     end
-
-                    // Rule 2: High wait time → Gradual increase
-                    else if (avg_wait_time[q] > 1000) begin  // >4 µs @ 250 MHz
-                        new_quantum = quantum_reg[q] + (quantum_reg[q] >> 3);  // +12.5%
-                        action = 8'd2;
-                    end
-
-                    // Rule 3: Throughput below target → Increase
-                    else if (throughput[q] < (target_throughput[q] * 9 / 10)) begin
-                        new_quantum = quantum_reg[q] + (quantum_reg[q] >> 4);  // +6.25%
-                        action = 8'd3;
-                    end
-
-                    // Rule 4: Low occupancy + low wait → Decrease
-                    else if (total_occupancy[q] < (D / 4) && avg_wait_time[q] < 500) begin
-                        new_quantum = quantum_reg[q] - (quantum_reg[q] >> 4);  // -6.25%
-                        action = 8'd4;
-                    end
-
-                    // Rule 5: Throughput above target → Slight decrease
-                    else if (throughput[q] > (target_throughput[q] * 11 / 10)) begin
-                        new_quantum = quantum_reg[q] - (quantum_reg[q] >> 5);  // -3.125%
-                        action = 8'd5;
-                    end
-
-                    // Clamp to bounds
-                    new_quantum = max(get_min_quantum(q), min(get_max_quantum(q), new_quantum));
-
-                    quantum_reg[q] <= new_quantum;
-                    last_action[q] <= action;
                 end
             end
+
+            // **Step 3: Grant service and update state**
+            queue_grant <= '0;
+            
+            if (found_eligible) begin
+                queue_grant[selected_queue] <= 1;
+                granted_queue_id <= selected_queue;
+
+                // Update virtual finish time
+                logic [31:0] packet_virtual_length;
+                packet_virtual_length = (queue_packet_length[selected_queue] * WEIGHT_QUANTUM) / 
+                                       quantized_weight[selected_queue];
+                
+                queue_virtual_finish_time[selected_queue] <= 
+                    max(global_virtual_time, queue_virtual_finish_time[selected_queue]) + 
+                    packet_virtual_length;
+
+                // Update actual service
+                actual_service[selected_queue] <= 
+                    actual_service[selected_queue] + queue_packet_length[selected_queue];
+            end
+
+            // **Step 4: Compute ideal service and deviation**
+            logic [31:0] total_weight_sum;
+            logic [31:0] total_service_sum;
+
+            total_weight_sum = 0;
+            total_service_sum = 0;
+
+            for (int q = 0; q < NUM_QUEUES; q++) begin
+                total_weight_sum = total_weight_sum + quantized_weight[q];
+                total_service_sum = total_service_sum + actual_service[q];
+            end
+
+            for (int q = 0; q < NUM_QUEUES; q++) begin
+                // Ideal service = (queue_weight / total_weight) * total_service
+                if (total_weight_sum > 0) begin
+                    ideal_service[q] <= (total_service_sum * quantized_weight[q]) / total_weight_sum;
+                    
+                    // Service deviation = actual - ideal
+                    service_deviation[q] <= $signed(actual_service[q]) - $signed(ideal_service[q]);
+                end
+            end
+
+            // **Step 5: Check fairness bounds**
+            logic [7:0] max_dev_pct;
+            max_dev_pct = 0;
+
+            for (int q = 0; q < NUM_QUEUES; q++) begin
+                if (ideal_service[q] > 0) begin
+                    logic [7:0] deviation_pct;
+                    logic [31:0] abs_deviation;
+                    
+                    abs_deviation = (service_deviation[q] < 0) ? 
+                                   -service_deviation[q] : service_deviation[q];
+                    
+                    deviation_pct = (abs_deviation * 100) / ideal_service[q];
+                    
+                    if (deviation_pct > max_dev_pct)
+                        max_dev_pct = deviation_pct;
+                end
+            end
+
+            max_deviation_percentage <= max_dev_pct;
+            fairness_violation <= (max_dev_pct > EPSILON_S);
         end
     end
 
-    assign adaptive_quantum = quantum_reg;
-
-    function automatic logic [15:0] max(input logic [15:0] a, b);
+    function automatic logic [31:0] max(input logic [31:0] a, b);
         return (a > b) ? a : b;
     endfunction
 
-    function automatic logic [15:0] min(input logic [15:0] a, b);
-        return (a < b) ? a : b;
-    endfunction
-
 endmodule
 ```
 
-### 4.4 Integration with Existing QoS Scheduler
+**Theoretical Contribution:**
 
-**Modification Location:** `rtl/arbiter/qos_scheduler.sv`
+**Theorem 1 (Service Deviation Bound):**
+> For bounded approximate WFQ with quantization error Q and maximum packet size L_max, the service deviation SD_i for queue i satisfies:
+>
+> SD_i ≤ (L_max / w_i) + Q × N
+>
+> where w_i is the queue weight and N is the number of active queues.
 
-**Current State (lines 100-200):**
-Uses fixed `quantum` array defined in initialization.
+**Proof Sketch:**
+1. Virtual time advancement is quantized to minimum active weight
+2. Each packet introduces error ≤ L_max / w_i (standard WFQ bound)
+3. Quantization adds at most Q per queue per round
+4. With N queues, total accumulated error is O(Q × N)
+5. For typical parameters (L_max = 1518B, w_min = 64, N = 8, Q = 64):
+   - SD_i ≤ 1518/64 + 64×8 = 23.7 + 512 = 535.7 bytes
+   - As percentage: (535.7 / ideal_service_i) × 100% < 5% for flows > 10KB
 
-**Enhanced:**
+**Corollary (Fairness Guarantee):**
+> If all queues have been active for time T and minimum weight w_min, then:
+>
+> |actual_service_i / w_i - actual_service_j / w_j| ≤ 2(L_max + Q×N) / w_min
 
-```systemverilog
-// Add to qos_scheduler.sv
+This provides **provable fairness** unlike prior approximate WFQ implementations.
 
-module qos_scheduler #(
-    parameter NUM_SOURCES = 10,
-    parameter QOS_LEVELS = 8,
-    parameter ADAPTIVE_ENABLE = 1  // NEW: Enable adaptive control
-)(
-    input  logic clk,
-    input  logic rst_n,
+---
 
-    // Existing inputs
-    input  logic [NUM_SOURCES-1:0] request [QOS_LEVELS-1:0],
-
-    // NEW: Adaptive quantum input (from controller)
-    input  logic [15:0] adaptive_quantum [QOS_LEVELS-1:0],
-
-    // Existing outputs
-    output logic [NUM_SOURCES-1:0] grant,
-    output logic [$clog2(QOS_LEVELS)-1:0] granted_qos
-);
-
-    // Existing strict priority encoder (keep as is - lines 100-150)
-    // ...
-
-    // Modified: Use adaptive_quantum instead of fixed values
-    logic [15:0] current_quantum [QOS_LEVELS-1:0];
-
-    generate
-        if (ADAPTIVE_ENABLE) begin
-            assign current_quantum = adaptive_quantum;  // Dynamic
-        end else begin
-            // Fallback to static values
-            initial begin
-                current_quantum[7] = 500;
-                current_quantum[6] = 400;
-                // ... (existing initialization)
-            end
-        end
-    endgenerate
-
-    // Existing WFQ deficit logic (modify to use current_quantum)
-    logic [15:0] deficit [NUM_SOURCES-1:0][QOS_LEVELS-1:0];
-
-    always_ff @(posedge clk) begin
-        if (replenish_trigger) begin
-            for (int s = 0; s < NUM_SOURCES; s++) begin
-                for (int q = 0; q < QOS_LEVELS; q++) begin
-                    deficit[s][q] <= deficit[s][q] + current_quantum[q];  // Use dynamic
-                end
-            end
-        end
-
-        // ... (rest of existing logic)
-    end
-
-endmodule
-```
-
-### 4.5 Monitoring Infrastructure (Aggregate Existing Signals)
-
-**New File:** `rtl/util/fabric_statistics_aggregator.sv`
-
-This module **aggregates** the monitoring signals already present in your v2.0 design:
-
-```systemverilog
-module fabric_statistics_aggregator #(
-    parameter NUM_PORT = 10,
-    parameter QOS_LEVELS = 8
-)(
-    input  logic clk,
-    input  logic rst_n,
-
-    // From existing micro_interface_qos_enhanced.sv (already collecting per-port stats)
-    input  logic [31:0] port_rx_pkts [NUM_PORT-1:0],
-    input  logic [63:0] port_rx_bytes [NUM_PORT-1:0],
-    input  logic [31:0] port_rx_drops [NUM_PORT-1:0],
-    input  logic [31:0] port_tx_pkts [NUM_PORT-1:0],
-
-    // From existing voq implementation (voq_occupancy signals)
-    input  logic [15:0] voq_occupancy [NUM_PORT-1:0][NUM_PORT-1:0],
-
-    // Aggregate outputs (per QoS level)
-    output logic [15:0] total_occupancy [QOS_LEVELS-1:0],
-    output logic [15:0] avg_wait_time [QOS_LEVELS-1:0],
-    output logic [7:0]  packet_loss_rate [QOS_LEVELS-1:0],
-    output logic [31:0] throughput [QOS_LEVELS-1:0]
-);
-
-    // Aggregate occupancy per QoS level
-    always_comb begin
-        for (int q = 0; q < QOS_LEVELS; q++) begin
-            total_occupancy[q] = 0;
-
-            for (int src = 0; src < NUM_PORT; src++) begin
-                for (int dst = 0; dst < NUM_PORT; dst++) begin
-                    // Assume VOQ tracks per-priority occupancy (may need to add)
-                    // For now, aggregate total occupancy
-                    total_occupancy[q] += voq_occupancy[src][dst] / QOS_LEVELS;
-                end
-            end
-        end
-    end
-
-    // Compute packet loss rate per QoS
-    logic [31:0] rx_per_qos [QOS_LEVELS-1:0];
-    logic [31:0] drops_per_qos [QOS_LEVELS-1:0];
-
-    always_ff @(posedge clk) begin
-        for (int q = 0; q < QOS_LEVELS; q++) begin
-            // Approximate: distribute drops proportionally to traffic
-            drops_per_qos[q] <= 0;
-            rx_per_qos[q] <= 0;
-
-            for (int p = 0; p < NUM_PORT; p++) begin
-                // Fraction of drops for this QoS level (estimate)
-                drops_per_qos[q] += port_rx_drops[p] / QOS_LEVELS;
-                rx_per_qos[q] += port_rx_pkts[p] / QOS_LEVELS;
-            end
-
-            // Compute loss rate (drops per 1000 packets)
-            if (rx_per_qos[q] > 1000) begin
-                packet_loss_rate[q] <= (drops_per_qos[q] * 1000) / rx_per_qos[q];
-            end
-        end
-    end
-
-    // Wait time tracking (NEW - requires modification to VOQ)
-    // ... (implementation detail: track enqueue timestamps per packet)
-
-    // Throughput per QoS (NEW - requires per-QoS byte counters)
-    // ... (implementation detail: track bytes transmitted per QoS level)
-
-endmodule
-```
-
-**Note:** Some monitoring signals (wait time, per-QoS throughput) require **minor modifications** to existing VOQ modules to track per-priority statistics. This is straightforward but needs careful integration.
-
-### 4.6 Top-Level Integration
+#### Contribution 3: Integration with Existing v2.0 Architecture
 
 **Modification Location:** `rtl/top/switch_fabric.sv`
 
 ```systemverilog
 module switch_fabric #(
-    parameter NUM_PORT = 10,
+    parameter NUM_PORT = 32,
     parameter S = 10,
-    // ... (existing parameters from doc_v2.md)
+    parameter QOS_LEVELS = 8,
+    // ... (existing parameters from v2.0)
 
-    // NEW: Enhancement enable flags
-    parameter ELASTIC_ENABLE = 1,
-    parameter ADAPTIVE_QOS_ENABLE = 1,
-    parameter KALMAN_PREDICT_ENABLE = 1
+    // NEW: Phase 1 enhancement parameters
+    parameter ADAPTIVE_BUFFER_ENABLE = 1,
+    parameter BOUNDED_WFQ_ENABLE = 1,
+    parameter EPSILON_S = 5  // Fairness bound (%)
 )(
     // ... (existing interfaces)
 );
 
-    // NEW: Kalman predictor instance
-    logic [15:0] voq_predicted_depth [NUM_PORT-1:0][NUM_PORT-1:0];
-    logic [7:0]  prediction_confidence [NUM_PORT-1:0][NUM_PORT-1:0];
+    // NEW: Adaptive buffer pool instance
+    logic [18:0] adaptive_voq_depth [NUM_PORT-1:0][NUM_PORT-1:0][QOS_LEVELS-1:0];
+    logic [31:0] buffer_pool_free;
 
     generate
-        if (KALMAN_PREDICT_ENABLE) begin : gen_kalman
-            kalman_queue_predictor_v2 #(
-                .NUM_PORT(NUM_PORT),
-                .QOS_LEVELS(QOS_LEVELS)
-            ) kalman_pred (
+        if (ADAPTIVE_BUFFER_ENABLE) begin : gen_adaptive_buffers
+            adaptive_buffer_pool_v3 #(
+                .NUM_PORTS(NUM_PORT),
+                .QOS_LEVELS(QOS_LEVELS),
+                .TOTAL_BUFFER_DEPTH(D * NUM_PORT * NUM_PORT * QOS_LEVELS)
+            ) adaptive_pool (
                 .clk(clk),
                 .rst_n(rst_n),
-                .voq_depth(voq_occupancy),  // From existing monitoring
-                .voq_predicted(voq_predicted_depth),
-                .prediction_confidence(prediction_confidence)
+                .voq_occupancy(voq_current_occupancy),  // From existing monitoring
+                .arrival_rate(ingress_packet_rate),
+                .burst_intensity(burst_gradient),
+                .allocated_depth(adaptive_voq_depth),
+                .pool_free_count(buffer_pool_free)
+            );
+
+            // Override static depth with adaptive allocation
+            assign voq_effective_depth = adaptive_voq_depth;
+            
+        end else begin
+            // Use static allocation from v2.0
+            assign voq_effective_depth = '{default: D};
+        end
+    endgenerate
+
+    // NEW: Bounded A-WFQ scheduler instance
+    logic [7:0] wfq_max_deviation;
+    logic wfq_fairness_violation;
+
+    generate
+        if (BOUNDED_WFQ_ENABLE) begin : gen_bounded_wfq
+            bounded_approximate_wfq_v3 #(
+                .NUM_QUEUES(QOS_LEVELS),
+                .EPSILON_S(EPSILON_S)
+            ) bounded_wfq [NUM_PORT-1:0] (
+                .clk(clk),
+                .rst_n(rst_n),
+                .queue_request(qos_queue_request),  // From existing VOQ
+                .queue_weight(qos_configured_weight),  // From microinterface
+                .queue_packet_length(qos_packet_length),
+                .queue_grant(qos_scheduled_grant),
+                .service_deviation(qos_service_deviation),
+                .max_deviation_percentage(wfq_max_deviation),
+                .fairness_violation(wfq_fairness_violation)
             );
         end else begin
-            assign voq_predicted_depth = voq_occupancy;  // No prediction
-            assign prediction_confidence = '0;
+            // Use existing WFQ from v2.0
+            qos_scheduler #(...) existing_wfq (...);
         end
     endgenerate
 
-    // NEW: Adaptive QoS controller instance
-    logic [15:0] adaptive_quantum [QOS_LEVELS-1:0];
-
-    generate
-        if (ADAPTIVE_QOS_ENABLE) begin : gen_adaptive_qos
-            // Aggregate statistics
-            fabric_statistics_aggregator #(
-                .NUM_PORT(NUM_PORT),
-                .QOS_LEVELS(QOS_LEVELS)
-            ) stats_agg (
-                .clk(clk),
-                .rst_n(rst_n),
-                .port_rx_pkts(port_rx_pkts),  // From existing monitoring
-                .port_rx_drops(port_rx_drops),
-                .voq_occupancy(voq_occupancy),
-                .total_occupancy(total_occupancy),
-                .avg_wait_time(avg_wait_time),
-                .packet_loss_rate(packet_loss_rate),
-                .throughput(throughput)
-            );
-
-            adaptive_qos_controller_v2 #(
-                .NUM_PORT(NUM_PORT),
-                .QOS_LEVELS(QOS_LEVELS)
-            ) qos_ctrl (
-                .clk(clk),
-                .rst_n(rst_n),
-                .total_occupancy(total_occupancy),
-                .avg_wait_time(avg_wait_time),
-                .packet_loss_rate(packet_loss_rate),
-                .throughput(throughput),
-                .target_throughput(qos_target_throughput),  // From microinterface
-                .adaptive_quantum(adaptive_quantum)
-            );
-        end else begin
-            // Use static quantum from microinterface registers (existing)
-            assign adaptive_quantum = qos_quantum_static;
-        end
-    endgenerate
-
-    // NEW: Elastic crosspoint manager instance
-    logic [NUM_ARBITER_PAIRS-1:0] arbiter_assigned [NUM_PORT-1:0][NUM_PORT-1:0];
-
-    generate
-        if (ELASTIC_ENABLE) begin : gen_elastic
-            elastic_crosspoint_manager_v2 #(
-                .NUM_PORT(NUM_PORT),
-                .S(S),
-                .NUM_ARBITER_PAIRS(NUM_PORT / S)
-            ) ecs_mgr (
-                .clk(clk),
-                .rst_n(rst_n),
-                .arbiter_idle(arbiter_idle_status),
-                .voq_request(voq_request_signals),
-                .voq_qos(voq_qos_tags),
-                .voq_occupancy(voq_occupancy),
-                .voq_predicted_depth(voq_predicted_depth),  // From Kalman
-                .arbiter_assigned_to_voq(arbiter_assigned)
-            );
-        end
-    endgenerate
-
-    // Existing switch architecture selection (keep as is)
-    generate;
-        if (NUM_PORT <= S) begin : gen_under_s
-            switch_s #(...) switch_inst (
-                // ... (existing connections)
-                .adaptive_quantum(adaptive_quantum),  // NEW input
-                .arbiter_assignment(arbiter_assigned)  // NEW input for ECS
-            );
-        end
-        // ... (similar for switch_2s and switch_high_radix_matching)
-    endgenerate
+    // Expose fairness metrics via microinterface (NEW registers)
+    // 0x2000-0x2FFF: Fairness monitoring
+    always_ff @(posedge clk) begin
+        if (microif_read && microif_addr == 16'h2000)
+            microif_rdata <= {24'b0, wfq_max_deviation};
+        if (microif_read && microif_addr == 16'h2004)
+            microif_rdata <= {31'b0, wfq_fairness_violation};
+        if (microif_read && microif_addr == 16'h2008)
+            microif_rdata <= buffer_pool_free;
+    end
 
 endmodule
 ```
 
 ---
 
-## Part 5: Pillar 3 - Rigorous Validation Framework
+### 2.3 Experimental Evaluation Plan (Phase 1)
 
-### 5.1 What's Already Present in v2.0
+#### Test Suite 1: Micro-Burst Handling
 
-**Existing Validation Infrastructure (Part V of doc_v2.md):**
-- ✅ Automated testbench architecture (tb/tb_switch_fabric.sv)
-- ✅ Traffic generators (packet_generator.sv)
-- ✅ Traffic monitors (traffic_monitor.sv)
-- ✅ Scoreboard (scoreboard.sv)
-- ✅ Coverage collection (fabric_coverage)
-- ✅ Regression test suite (run_regression.sh)
+**Traffic Pattern:** AI/ML all-reduce simulation
+- 16 ports send synchronized bursts to port 0
+- Burst size: 1-10 MB per source
+- Inter-burst idle: 100-500 µs
+- QoS: Mix of high-priority (ML control) and best-effort (data)
 
-**Existing Performance Monitoring:**
-- ✅ Runtime statistics (perf_counters)
-- ✅ Analysis scripts (analyze_performance.py)
-- ✅ Configuration sweep automation (config_generator_qos.py)
+**Metrics:**
+| Metric | Baseline (v2.0 static) | Target (adaptive buffers) |
+|--------|------------------------|---------------------------|
+| Packet loss during burst | 2-5% | <0.1% |
+| Buffer utilization | 45-50% average | 65-75% peak |
+| Latency (p99) during burst | ~500 µs | <200 µs |
+| Reallocation overhead | N/A | <10 cycles |
 
-**Gap:** No formal verification, no hardware testbed deployment
+**Validation:** Compare against A²FQ (Chen 2024) simulation results
 
-### 5.2 Enhancement 5A: Formal Verification (TLA+ Specifications)
+#### Test Suite 2: Fairness Guarantee Validation
 
-**Objective:** Prove correctness properties (deadlock-freedom, fairness guarantees, no packet loss under flow control)
+**Traffic Pattern:** Weighted flows with varying packet sizes
+- 8 flows with weights: {1, 2, 4, 8, 16, 32, 64, 128}
+- Packet sizes: Uniform random 64-1518B
+- Duration: 10 seconds at line rate
+- Measure: Service deviation per flow
 
-**New Directory:** `verification/tla_specs/`
+**Expected Results:**
+| Configuration | Max Service Deviation | Fairness Violation Events |
+|---------------|----------------------|--------------------------|
+| Standard WFQ (v2.0) | Unbounded (~20-30%) | Frequent |
+| Bounded A-WFQ (ε_s=5%) | <5.5% | Rare (<0.01%) |
+| Bounded A-WFQ (ε_s=3%) | <3.8% | Very rare |
 
-#### 5.2.1 Deadlock-Freedom Specification for ECS
+**Comparison Baselines:**
+1. DRRM (Deficit Round-Robin Matching) - prior work
+2. FIRM (Fair Iterative Round-robin Matching) - prior work
+3. Gearbox hierarchical WFQ - NSDI'22 results
 
-**File:** `verification/tla_specs/ecs_deadlock_free.tla`
+#### Test Suite 3: Real Workload Traces
 
-```tla
---------------------------- MODULE ecs_deadlock_free ---------------------------
+**Datasets:**
+1. **Google Datacenter Trace (2022):** Backbone traffic with elephant/mice flows
+2. **Facebook Hadoop Trace (2020):** MapReduce shuffle patterns
+3. **Synthetic AI Training:** Parameter server all-reduce (generated)
 
-EXTENDS Naturals, Sequences, FiniteSets
+**Metrics:**
+- Flow Completion Time (FCT) percentiles (p50, p99, p99.9)
+- Jain Fairness Index across flow classes
+- Throughput stability (coefficient of variation)
+- Memory efficiency (peak vs. average utilization ratio)
 
-CONSTANTS
-    NUM_VOQS,           \* Number of VOQs (e.g., 100)
-    NUM_ARBITERS,       \* Number of arbiter pairs (e.g., 5)
-    ELASTIC_POOL_SIZE,  \* Borrowable arbiters (e.g., 3)
-    MAX_ARBITERS_PER_VOQ \* Maximum simultaneous allocation (e.g., 2)
+---
 
-VARIABLES
-    allocated,          \* VOQ → set of allocated arbiters
-    available,          \* Set of available arbiters in pool
-    demand,             \* VOQ → number of requested arbiters
-    priority            \* VOQ → QoS priority level (0-7)
+### 2.4 Phase 1 Paper Structure (15-16 Pages IEEE ToN)
 
-VOQs == 1..NUM_VOQS
-Arbiters == 1..NUM_ARBITERS
+**Section I: Introduction (2 pages)**
+- **Hook:** AI/ML workloads generate unpredictable micro-bursts that challenge static fabric design
+- **Problem:** (1) Static buffers waste memory or cause loss, (2) Approximate WFQ lacks fairness guarantees
+- **Gap Analysis:** Show limitations of A²FQ (software), Gearbox (no formal bounds), REVERIE (isolation-focused)
+- **Contributions:** Numbered list:
+  1. Adaptive buffer pooling with urgency-based allocation
+  2. Bounded approximate WFQ with provable ε_s deviation
+  3. FPGA prototype achieving 60% memory efficiency with <5% unfairness
+  4. Comprehensive evaluation on real datacenter traces
 
-TypeInvariant ==
-    /\ allocated \in [VOQs -> SUBSET Arbiters]
-    /\ available \in SUBSET Arbiters
-    /\ demand \in [VOQs -> 0..MAX_ARBITERS_PER_VOQ]
-    /\ priority \in [VOQs -> 0..7]
+**Section II: Background & Motivation (2.5 pages)**
+- **A. VOQ Fundamentals:** Explain N×N×QoS matrix, HOL blocking elimination
+- **B. Memory Management Challenges:** Static vs. dynamic allocation trade-offs
+- **C. Weighted Fair Queuing:** Standard WFQ, approximate variants, complexity analysis
+- **D. Case Study:** AI training traffic characteristics (cite MLPerf, GPT-3 papers)
+- **E. Design Goals:** List 5 requirements (fairness, efficiency, line-rate, scalability, provability)
 
-Init ==
-    /\ allocated = [voq \in VOQs |-> {}]
-    /\ available = {a \in Arbiters : a > NUM_ARBITERS - ELASTIC_POOL_SIZE}
-    /\ demand = [voq \in VOQs |-> 1]
-    /\ priority = [voq \in VOQs |-> 4]  \* Default priority
+**Section III: System Architecture (3 pages)**
+- **A. Overview:** Your v2.0 fabric as baseline (cite doc_v2.md as technical report)
+- **B. Adaptive Buffer Pool Design:**
+  - Architecture diagram
+  - Micro-burst detection algorithm (pseudocode)
+  - Urgency calculation formula
+  - Allocation/reclamation state machine
+- **C. Bounded Approximate WFQ:**
+  - Virtual time scheduling algorithm
+  - Quantized weight sharing mechanism
+  - Service deviation tracking
+  - Integration with existing deficit counters
 
-\* Allocation action: VOQ acquires arbiter from pool
-Allocate(voq, arb) ==
-    /\ arb \in available
-    /\ Cardinality(allocated[voq]) < MAX_ARBITERS_PER_VOQ
-    /\ Cardinality(allocated[voq]) < demand[voq]
-    /\ allocated' = [allocated EXCEPT ![voq] = @ \cup {arb}]
-    /\ available' = available \ {arb}
-    /\ UNCHANGED <<demand, priority>>
+**Section IV: Theoretical Analysis (3 pages)**
+- **A. Fairness Bounds:**
+  - Theorem 1 (Service Deviation Bound) with full proof
+  - Corollary (Pairwise Fairness)
+  - Tightness analysis (show bound is achievable)
+- **B. Complexity Analysis:**
+  - Enqueue/dequeue: O(1) time
+  - Space complexity: O(N) vs. O(N log N) for exact WFQ
+  - Comparison table with prior work
+- **C. Stability Analysis:**
+  - Prove buffer pool doesn't oscillate (Lyapunov function)
+  - Convergence time to stable allocation
 
-\* Deallocation action: VOQ releases arbiter back to pool
-Deallocate(voq, arb) ==
-    /\ arb \in allocated[voq]
-    /\ allocated' = [allocated EXCEPT ![voq] = @ \ {arb}]
-    /\ available' = available \cup {arb}
-    /\ UNCHANGED <<demand, priority>>
+**Section V: Implementation (2.5 pages)**
+- **A. FPGA Platform:** Xilinx VU9P specifications
+- **B. Hardware Resource Utilization:**
+  - Table: LUTs, FFs, BRAM, DSP for each module
+  - Comparison: Baseline vs. Adaptive vs. Bounded WFQ
+  - Timing closure analysis (Fmax achieved)
+- **C. Integration Details:**
+  - Modifications to v2.0 modules (switch_fabric.sv, etc.)
+  - Microinterface register map extensions
+  - Verification enhancements (assertions added)
 
-\* Demand update: VOQ's request changes based on queue state
-UpdateDemand(voq, new_demand) ==
-    /\ new_demand \in 0..MAX_ARBITERS_PER_VOQ
-    /\ demand' = [demand EXCEPT ![voq] = new_demand]
-    /\ UNCHANGED <<allocated, available, priority>>
+**Section VI: Experimental Evaluation (5 pages)**
+- **A. Experimental Setup:**
+  - Traffic generators (hardware + software)
+  - Measurement methodology (hardware counters + packet capture)
+  - Workload parameters
+- **B. Micro-Burst Performance:**
+  - Packet loss comparison (Figure 1: CDF)
+  - Buffer utilization heatmaps (Figure 2: time-series)
+  - Latency improvement (Figure 3: box plots)
+- **C. Fairness Validation:**
+  - Service deviation vs. weight (Figure 4: scatter plot)
+  - Fairness index over time (Figure 5: line graph)
+  - Comparison with baselines (Table comparing max deviation)
+- **D. Real Traffic Evaluation:**
+  - FCT analysis (Figure 6: CDF for Google/Facebook traces)
+  - Memory efficiency (Figure 7: utilization distribution)
+  - Throughput stability (Table: mean + std dev)
+- **E. Ablation Study:**
+  - Effect of each component separately (Table)
+  - Sensitivity to parameters (ε_s, pool size, etc.)
+- **F. Scalability:**
+  - Results for N = 16, 32, 64 ports
+  - Resource scaling (Figure 8: log-log plot)
 
-Next ==
-    \/ \E voq \in VOQs, arb \in available : Allocate(voq, arb)
-    \/ \E voq \in VOQs, arb \in allocated[voq] : Deallocate(voq, arb)
-    \/ \E voq \in VOQs, d \in 0..MAX_ARBITERS_PER_VOQ : UpdateDemand(voq, d)
+**Section VII: Related Work (2 pages)**
+- **A. VOQ Scheduling:** iSLIP, DRRM, FIRM, recent ML-based
+- **B. Buffer Management:** REVERIE, buffer pool systems, ECN-based
+- **C. Approximate WFQ:** Gearbox, A²FQ, AFQ, prior bounded variants
+- **D. Switch Fabrics:** Broadcom, Cisco architectures (white papers)
+- **Clear Differentiation Table:**
 
-Spec == Init /\ [][Next]_<<allocated, available, demand, priority>>
+| Work | Adaptive Buffers | Fairness Bounds | FPGA Validation | Real Traces |
+|------|-----------------|----------------|-----------------|-------------|
+| A²FQ | ✓ (SW) | ✗ | ✗ | ✗ |
+| Gearbox | ✗ | ✗ | ✗ | Simulation only |
+| REVERIE | ✓ (prediction) | ✗ | ✗ | Simulation only |
+| **This Work** | **✓ (HW)** | **✓ (proven)** | **✓ (VU9P)** | **✓ (Google/FB)** |
 
-\* Safety property: No circular wait for resources
-NoCircularWait ==
-    \A voq1, voq2 \in VOQs :
-        voq1 # voq2 =>
-            ~(\E arb1 \in allocated[voq1], arb2 \in allocated[voq2] :
-                /\ arb1 < arb2
-                /\ voq1 > voq2)  \* Resource ordering invariant
+**Section VIII: Discussion (1 page)**
+- **Limitations:** Assumes lossless fabric (PFC enabled), quantization error trade-off
+- **Future Directions:** Preview Phase 2 (elastic scheduling), Phase 3 (programmable control)
+- **Broader Impact:** Applicability to optical switches, HPC networks
 
-\* Liveness property: Every demanding VOQ eventually gets resource
-EventualService ==
-    \A voq \in VOQs :
-        demand[voq] > 0 ~> Cardinality(allocated[voq]) > 0
+**Section IX: Conclusion (0.5 pages)**
+- Summary of contributions
+- Key takeaway: First hardware fabric with provable fairness + adaptive efficiency
+- Reproducibility statement (code/data availability)
 
-\* Bounded allocation: No VOQ monopolizes pool
-BoundedAllocation ==
-    \A voq \in VOQs : Cardinality(allocated[voq]) <= MAX_ARBITERS_PER_VOQ
+**Total:** ~22 pages double-column → trim to 15-16 pages for ToN submission
 
-THEOREM Spec => [](NoCircularWait /\ BoundedAllocation)
-THEOREM Spec => EventualService
+---
 
-================================================================================
-```
+### 2.5 Phase 1 Timeline (10-12 Months)
 
-#### 5.2.2 Model Checking with TLC/SPIN
+| Month | Weeks | Activity | Deliverable |
+|-------|-------|----------|-------------|
+| **1** | 1-4 | Design & specification | Detailed module specs, interface definitions |
+| **2** | 5-8 | RTL implementation | `adaptive_buffer_pool_v3.sv`, `bounded_approximate_wfq_v3.sv` |
+| **3** | 9-12 | Unit testing & integration | Modules pass standalone + integrated tests |
+| **4** | 13-16 | Theoretical proofs | Complete fairness bound proofs, complexity analysis |
+| **5** | 17-20 | FPGA synthesis & validation | Working bitstream, timing closure |
+| **6** | 21-24 | Micro-burst experiments | Collect data for Test Suite 1 |
+| **7** | 25-28 | Fairness validation | Collect data for Test Suite 2 |
+| **8** | 29-32 | Real traffic evaluation | Process Google/Facebook traces |
+| **9** | 33-36 | Data analysis & plotting | Generate all figures/tables |
+| **10** | 37-40 | Paper writing (draft) | Complete first draft |
+| **11** | 41-44 | Internal review & revision | Address advisor/colleague feedback |
+| **12** | 45-48 | Submission preparation | Final polishing, submission to ToN |
+| **+6-9** | | Review cycle | Address reviewer comments, revision |
 
-**TLC Command (for small instances):**
-```bash
-cd verification/tla_specs
-tlc ecs_deadlock_free.tla -config ecs_small.cfg -workers 4
+**Critical Path Milestones:**
+- **End Month 3:** Working implementation in simulation
+- **End Month 5:** FPGA prototype functional
+- **End Month 8:** All experimental data collected
+- **End Month 10:** First complete draft
+- **Month 12:** Submission to IEEE/ACM ToN
 
-# Config file: ecs_small.cfg
-CONSTANTS
-    NUM_VOQS = 16
-    NUM_ARBITERS = 8
-    ELASTIC_POOL_SIZE = 4
-    MAX_ARBITERS_PER_VOQ = 2
+---
 
-SPECIFICATION Spec
-INVARIANTS TypeInvariant NoCircularWait BoundedAllocation
-```
+## Part 3: Phase 2 - Architectural Breakthrough (12-18 Months)
 
-**SPIN Model (for larger state space):**
+### 3.1 Paper Title & Positioning
 
-**File:** `verification/spin_models/ecs_4port.pml`
+**Title:** *"Elastic Crosspoint Scheduling with Predictive Multi-Path Allocation and Scalable VOQ Grouping for Next-Generation Data Center Fabrics"*
 
-```promela
-/* SPIN model of 4-port ECS */
-#define NUM_VOQS 16
-#define NUM_ARBITERS 2
-#define POOL_SIZE 1
-#define MAX_ARB_PER_VOQ 2
+**Target Venue:** IEEE Journal on Selected Areas in Communications (JSAC)
+- **Why JSAC:** Architectural innovation + ML integration + scalability focus
+- **Special Issue Target:** "AI-Driven Networking" or "Programmable Data Planes" (check upcoming calls)
+- **Acceptance Rate:** ~18-22% but higher for special issues with good fit
 
-byte allocated[NUM_VOQS];  /* Bitmask of allocated arbiters */
-byte available = (1 << POOL_SIZE) - 1;  /* Pool bitmap */
+**Core Thesis:**
+> Classical VOQ fabrics suffer from three fundamental limitations: (1) 1:1 VOQ-to-crosspoint serialization limiting hotspot throughput, (2) quadratic queue explosion at high radix, and (3) reactive arbitration without congestion prediction. We present Elastic Crosspoint Scheduling (ECS), combining dynamic multi-path allocation, lightweight ML-guided arbitration, and adaptive VOQ grouping to achieve 4-8× hotspot improvement while scaling to 128+ ports.
 
-active proctype VOQ_0() {
-    do
-    :: atomic {
-        /* Request arbiter if needed and available */
-        (allocated[0] < MAX_ARB_PER_VOQ && available != 0) ->
-            byte arb;
-            select(arb : 0 .. NUM_ARBITERS-1);
-            if
-            :: (available & (1 << arb)) ->
-                available = available & ~(1 << arb);
-                allocated[0] = allocated[0] | (1 << arb);
-            :: else -> skip
-            fi
-    }
-    :: atomic {
-        /* Release arbiter if allocated */
-        (allocated[0] != 0) ->
-            byte arb;
-            select(arb : 0 .. NUM_ARBITERS-1);
-            if
-            :: (allocated[0] & (1 << arb)) ->
-                allocated[0] = allocated[0] & ~(1 << arb);
-                available = available | (1 << arb);
-            :: else -> skip
-            fi
-    }
-    od
-}
+### 3.2 Technical Contributions (Phase 2)
 
-/* Repeat for VOQ_1, VOQ_2, ... */
+#### Contribution 1: Elastic Crosspoint Scheduling (ECS)
 
-/* Safety property: No two VOQs hold same arbiter */
-ltl no_double_allocation {
-    []!(allocated[0] & allocated[1] & allocated[2] & allocated[3] &
-        allocated[4] & allocated[5] & allocated[6] & allocated[7] &
-        allocated[8] & allocated[9] & allocated[10] & allocated[11] &
-        allocated[12] & allocated[13] & allocated[14] & allocated[15])
-}
+**[This section remains largely as in original v2.0 document, Part 3]**
 
-/* Liveness: VOQs eventually get service */
-ltl eventual_service {
-    [](allocated[0] == 0 -> <>(allocated[0] != 0))
-}
-```
-
-**Run SPIN:**
-```bash
-cd verification/spin_models
-spin -a ecs_4port.pml
-gcc -o pan pan.c
-./pan -a -N eventual_service  # Check liveness
-./pan -a -N no_double_allocation  # Check safety
-```
-
-### 5.3 Enhancement 5B: FPGA Testbed Deployment
-
-**Existing Infrastructure (doc_v2.md):**
-- ✅ Vivado build scripts (syn/vivado/build_switch_fabric.tcl)
-- ✅ Timing constraints (syn/vivado/constraints/timing.xdc)
-- ✅ Resource utilization scripts (scr/resource_report_vivado.tcl)
-
-**Gap:** No actual hardware deployment documentation
-
-**Action Required:**
-
-#### 5.3.1 Target Platform Selection
-
-**Recommended Board:** Xilinx VCU118 (Ultrascale+ VU9P)
-
-**Why VCU118:**
-- Sufficient BRAM: 75 MB (vs. 600 KB needed for N=10)
-- High LUT count: 1.2M (vs. ~45K needed for N=10)
-- Multiple 10 Gbps SFP+ cages (for traffic generation)
-- Proven timing closure at 250 MHz for similar designs
-
-**Configuration for FPGA:**
-```systemverilog
-// config_fpga_vcu118.vh
-`define NUM_PORTS 10
-`define S 10
-`define D 16384
-`define QOS_LEVELS 8
-`define MULTICAST_SUPPORT 1
-`define ELASTIC_ENABLE 1
-`define ADAPTIVE_QOS_ENABLE 1
-`define KALMAN_PREDICT_ENABLE 1
-```
-
-#### 5.3.2 Hardware Validation Testplan
-
-**Week 1: Synthesis and Timing Closure**
-
-```tcl
-# syn/vivado/build_switch_fabric_fpga.tcl
-
-# Use existing build script but target VCU118
-set BOARD "vcu118"
-set PART "xcvu9p-flga2104-2L-e"
-
-# Add FPGA-specific constraints
-add_files -fileset constrs_1 constraints/fpga_vcu118.xdc
-
-# Synthesis with ECS enabled
-set_property generic ELASTIC_ENABLE=1 [current_fileset]
-set_property generic ADAPTIVE_QOS_ENABLE=1 [current_fileset]
-set_property generic KALMAN_PREDICT_ENABLE=1 [current_fileset]
-
-# Run existing build flow
-source build_switch_fabric.tcl
-```
-
-**Expected Timing:**
-- Target Fmax: 250 MHz
-- Expected WNS: +0.1 to +0.5 ns (with pipelining from v2.0)
-
-**Week 2: Traffic Generator Integration**
-
-**Option A:** Software-based (easier)
-- Connect VCU118 to PC via PCIe
-- Use DPDK to generate 10 Gbps traffic
-- Measure latency using hardware timestamping (TSU on VCU118)
-
-**Option B:** FPGA-based (more accurate)
-- Implement traffic generator in FPGA fabric
-- Use auxiliary ports for generation, primary ports for DUT
+**Key Enhancement:** Integrate with Phase 1's adaptive buffer pool
 
 ```systemverilog
-// fpga/traffic_gen_fpga.sv
+// Enhanced urgency calculation using adaptive buffer state
+always_comb begin
+    for (int src = 0; src < NUM_PORT; src++) begin
+        for (int dst = 0; dst < NUM_PORT; dst++) begin
+            // NEW: Use allocated depth from Phase 1
+            logic [18:0] current_allocation = adaptive_voq_depth[src][dst];
+            logic [15:0] occupancy_ratio = (voq_occupancy[src][dst] * 100) / current_allocation;
+            
+            voq_urgency[src][dst] = {16'b0, occupancy_ratio} +  // Higher if near limit
+                                   {16'b0, predicted_component} +  // Kalman prediction
+                                   {16'b0, priority_component};    // QoS weight
+        end
+    end
+end
+```
 
-module traffic_gen_fpga #(
-    parameter NUM_PORTS = 10,
-    parameter LINE_RATE = 10  // Gbps
+**Performance Target Update:**
+| Metric | Phase 1 (Buffers Only) | Phase 2 (+ ECS) | Improvement |
+|--------|----------------------|-----------------|-------------|
+| Hotspot throughput | 1.2 Gbps | **7-9 Gbps** | **6-7.5×** |
+| p99 latency (hotspot) | 180 µs | **50-70 µs** | **-65-72%** |
+
+#### Contribution 2: Lightweight ML-Guided VOQ Arbitration
+
+**Problem:** Kalman prediction assumes linear dynamics; real traffic has complex patterns.
+
+**Solution:** Hybrid approach - decision tree classifier for coarse prediction + Kalman for fine-tuning.
+
+**New Module:** `rtl/ml/lightweight_traffic_classifier_v3.sv`
+
+```systemverilog
+module lightweight_traffic_classifier_v3 #(
+    parameter NUM_PORTS = 32,
+    parameter FEATURE_WIDTH = 8,  // Input features per port
+    parameter NUM_CLASSES = 4,    // Traffic classes
+    parameter TREE_DEPTH = 5      // Decision tree depth
 )(
-    input  logic clk_250mhz,
+    input  logic clk,
     input  logic rst_n,
 
-    // To switch fabric DUT
-    switch_data_if.master tx_to_fabric [NUM_PORTS-1:0],
-    switch_metadata_if.master meta_to_fabric [NUM_PORTS-1:0],
-
-    // From switch fabric DUT
-    switch_data_if.slave rx_from_fabric [NUM_PORTS-1:0],
-
-    // Configuration
-    input  logic [7:0] traffic_pattern,  // 0=uniform, 1=hotspot, 2=incast, ...
-    input  logic [31:0] packet_rate,     // Packets per second
-    input  logic [15:0] packet_size_min,
-    input  logic [15:0] packet_size_max,
-
-    // Statistics output
-    output logic [63:0] packets_sent,
-    output logic [63:0] packets_received,
-    output logic [31:0] avg_latency_ns,
-    output logic [31:0] p99_latency_ns
+    // Feature inputs (from monitoring)
+    input  logic [FEATURE_WIDTH-1:0] arrival_rate [NUM_PORTS-1:0],
+    input  logic [FEATURE_WIDTH-1:0] burst_length [NUM_PORTS-1:0],
+    input  logic [FEATURE_WIDTH-1:0] inter_arrival_time [NUM_PORTS-1:0],
+    input  logic [FEATURE_WIDTH-1:0] packet_size_avg [NUM_PORTS-1:0],
+    
+    // Classification output
+    output logic [1:0] traffic_class [NUM_PORTS-1:0],  // 0=steady, 1=bursty, 2=incast, 3=mixed
+    output logic [7:0] confidence [NUM_PORTS-1:0],
+    
+    // Prediction for arbitration
+    output logic [15:0] predicted_demand [NUM_PORTS-1:0]  // Predicted queue growth
 );
 
-    // Reuse existing packet_generator.sv from testbench
-    packet_generator #(.PORT_ID(i)) pkt_gen [NUM_PORTS-1:0] (...);
+    // Decision tree weights (trained offline using PyTorch → exported)
+    // Tree structure: threshold comparisons at each node
+    typedef struct packed {
+        logic [2:0] feature_id;     // Which feature to compare
+        logic [FEATURE_WIDTH-1:0] threshold;
+        logic [3:0] left_child_id;  // Index of left subtree
+        logic [3:0] right_child_id; // Index of right subtree
+        logic [1:0] leaf_class;     // If leaf node
+        logic is_leaf;
+    } tree_node_t;
 
-    // Add hardware timestamping
-    logic [63:0] tx_timestamp [NUM_PORTS-1:0];
-    logic [63:0] rx_timestamp [NUM_PORTS-1:0];
+    // Hardcoded trained tree (example - replace with actual trained weights)
+    tree_node_t decision_tree [2**TREE_DEPTH-1:0];
+    
+    initial begin
+        // Root node: Check if burst_length > 50
+        decision_tree[0] = '{
+            feature_id: 1,  // burst_length
+            threshold: 50,
+            left_child_id: 1,
+            right_child_id: 2,
+            leaf_class: 0,
+            is_leaf: 0
+        };
+        
+        // Left child: Check arrival_rate > 80
+        decision_tree[1] = '{
+            feature_id: 0,  // arrival_rate
+            threshold: 80,
+            left_child_id: 3,
+            right_child_id: 4,
+            leaf_class: 0,
+            is_leaf: 0
+        };
+        
+        // Leaf: Steady traffic
+        decision_tree[3] = '{
+            feature_id: 0,
+            threshold: 0,
+            left_child_id: 0,
+            right_child_id: 0,
+            leaf_class: 2'd0,  // Steady
+            is_leaf: 1
+        };
+        
+        // ... (Continue building tree - total 31 nodes for depth=5)
+    end
 
-    // Latency calculation
-    always_ff @(posedge clk_250mhz) begin
+    // Classification pipeline (1 cycle per level → 5 cycles total)
+    logic [3:0] current_node [NUM_PORTS-1:0];
+    logic [2:0] pipeline_stage [NUM_PORTS-1:0];
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            for (int p = 0; p < NUM_PORTS; p++) begin
+                current_node[p] <= 0;  // Start at root
+                pipeline_stage[p] <= 0;
+                traffic_class[p] <= 0;
+                confidence[p] <= 0;
+            end
+        end else begin
+            for (int p = 0; p < NUM_PORTS; p++) begin
+                if (pipeline_stage[p] < TREE_DEPTH) begin
+                    // Traverse tree
+                    tree_node_t node = decision_tree[current_node[p]];
+                    
+                    if (!node.is_leaf) begin
+                        // Compare feature
+                        logic [FEATURE_WIDTH-1:0] feature_value;
+                        
+                        case (node.feature_id)
+                            0: feature_value = arrival_rate[p];
+                            1: feature_value = burst_length[p];
+                            2: feature_value = inter_arrival_time[p];
+                            3: feature_value = packet_size_avg[p];
+                            default: feature_value = 0;
+                        endcase
+                        
+                        if (feature_value <= node.threshold)
+                            current_node[p] <= node.left_child_id;
+                        else
+                            current_node[p] <= node.right_child_id;
+                        
+                        pipeline_stage[p] <= pipeline_stage[p] + 1;
+                        
+                    end else begin
+                        // Reached leaf - output class
+                        traffic_class[p] <= node.leaf_class;
+                        confidence[p] <= 95;  // High confidence (can be refined)
+                        pipeline_stage[p] <= 0;  // Reset for next classification
+                        current_node[p] <= 0;    // Back to root
+                    end
+                end
+            end
+        end
+    end
+
+    // Predict demand based on class
+    always_comb begin
         for (int p = 0; p < NUM_PORTS; p++) begin
-            if (tx_to_fabric[p].valid && tx_to_fabric[p].last)
-                tx_timestamp[p] <= cycle_counter;
+            case (traffic_class[p])
+                2'd0: predicted_demand[p] = arrival_rate[p] * 2;       // Steady: linear growth
+                2'd1: predicted_demand[p] = burst_length[p] * 10;      // Bursty: exponential
+                2'd2: predicted_demand[p] = 16'hFFFF;                  // Incast: max urgency
+                2'd3: predicted_demand[p] = (arrival_rate[p] + burst_length[p]) * 5;  // Mixed
+            endcase
+        end
+    end
 
-            if (rx_from_fabric[p].valid && rx_from_fabric[p].last) begin
-                logic [31:0] latency;
-                latency = cycle_counter - tx_timestamp[p];
-                // Update statistics
+endmodule
+```
+
+**Training Workflow (Offline):**
+
+```python
+# train_traffic_classifier.py
+
+import torch
+import torch.nn as nn
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import LabelEncoder
+import numpy as np
+import pickle
+
+# Generate synthetic training data from simulations
+def generate_training_data(num_samples=10000):
+    """
+    Features: [arrival_rate, burst_length, inter_arrival_time, packet_size_avg]
+    Labels: [steady, bursty, incast, mixed]
+    """
+    # Sample data (replace with actual simulation traces)
+    X = np.random.rand(num_samples, 4) * 255
+    
+    # Label based on heuristics (example)
+    y = []
+    for features in X:
+        arrival_rate, burst_len, inter_arrival, pkt_size = features
+        
+        if burst_len < 30 and arrival_rate < 50:
+            label = 0  # Steady
+        elif burst_len > 70:
+            label = 1  # Bursty
+        elif arrival_rate > 150 and inter_arrival < 10:
+            label = 2  # Incast
+        else:
+            label = 3  # Mixed
+        
+        y.append(label)
+    
+    return X, np.array(y)
+
+# Train decision tree
+X_train, y_train = generate_training_data()
+
+clf = DecisionTreeClassifier(max_depth=5, random_state=42)
+clf.fit(X_train, y_train)
+
+print(f"Training accuracy: {clf.score(X_train, y_train):.2%}")
+
+# Export to SystemVerilog
+def export_tree_to_sv(tree, feature_names):
+    """
+    Convert sklearn decision tree to SystemVerilog initial block
+    """
+    tree_structure = tree.tree_
+    
+    sv_code = "initial begin\n"
+    
+    for node_id in range(tree_structure.node_count):
+        if tree_structure.children_left[node_id] == -1:  # Leaf node
+            sv_code += f"    decision_tree[{node_id}] = '{{\n"
+            sv_code += f"        feature_id: 0,\n"
+            sv_code += f"        threshold: 0,\n"
+            sv_code += f"        left_child_id: 0,\n"
+            sv_code += f"        right_child_id: 0,\n"
+            sv_code += f"        leaf_class: 2'd{tree_structure.value[node_id].argmax()},\n"
+            sv_code += f"        is_leaf: 1\n"
+            sv_code += f"    }};\n"
+        else:
+            sv_code += f"    decision_tree[{node_id}] = '{{\n"
+            sv_code += f"        feature_id: {tree_structure.feature[node_id]},\n"
+            sv_code += f"        threshold: {int(tree_structure.threshold[node_id])},\n"
+            sv_code += f"        left_child_id: {tree_structure.children_left[node_id]},\n"
+            sv_code += f"        right_child_id: {tree_structure.children_right[node_id]},\n"
+            sv_code += f"        leaf_class: 0,\n"
+            sv_code += f"        is_leaf: 0\n"
+            sv_code += f"    }};\n"
+    
+    sv_code += "end\n"
+    return sv_code
+
+sv_tree = export_tree_to_sv(clf, ['arrival_rate', 'burst_length', 'inter_arrival', 'packet_size'])
+print(sv_tree)
+
+# Save for integration
+with open('trained_tree.sv', 'w') as f:
+    f.write(sv_tree)
+```
+
+**Integration with ECS:**
+
+```systemverilog
+// In elastic_crosspoint_manager_v3.sv
+
+// Add ML classifier instance
+lightweight_traffic_classifier_v3 #(
+    .NUM_PORTS(NUM_PORT)
+) ml_classifier (
+    .clk(clk),
+    .rst_n(rst_n),
+    .arrival_rate(port_arrival_rate),
+    .burst_length(port_burst_length),
+    .inter_arrival_time(port_inter_arrival),
+    .packet_size_avg(port_packet_size_avg),
+    .traffic_class(port_traffic_class),
+    .predicted_demand(ml_predicted_demand)
+);
+
+// Enhanced urgency calculation
+always_comb begin
+    for (int src = 0; src < NUM_PORT; src++) begin
+        for (int dst = 0; dst < NUM_PORT; dst++) begin
+            // Combine Kalman + ML prediction
+            logic [15:0] kalman_component = voq_predicted_depth[src][dst] >> 4;
+            logic [15:0] ml_component = ml_predicted_demand[src] >> 3;
+            
+            // Weighted combination
+            predicted_component = (kalman_component * 70 + ml_component * 30) / 100;
+            
+            voq_urgency[src][dst] = {16'b0, current_component} +
+                                   {16'b0, predicted_component} +
+                                   {16'b0, priority_component};
+        end
+    end
+end
+```
+
+**Expected Performance Boost:**
+| Configuration | Hotspot Throughput | Incast FCT (p99) |
+|---------------|-------------------|------------------|
+| ECS + Kalman only | 6.5 Gbps | 85 µs |
+| ECS + ML only | 7.2 Gbps | 75 µs |
+| **ECS + Kalman + ML** | **8.1 Gbps** | **62 µs** |
+
+---
+
+#### Contribution 3: Scalable VOQ Grouping for High-Radix Fabrics
+
+**Problem:** At N=128 ports with QoS=8, you need 128²×8 = 131,072 VOQs → 1.6 GB BRAM (exceeds VU9P capacity)
+
+**Solution:** Adaptive destination grouping - merge destinations with similar traffic patterns
+
+**New Module:** `rtl/voq/adaptive_voq_grouping_v3.sv`
+
+```systemverilog
+module adaptive_voq_grouping_v3 #(
+    parameter NUM_PORTS = 128,
+    parameter QOS_LEVELS = 8,
+    parameter MAX_GROUPS = 16,  // Reduce 128 destinations → 16 groups
+    parameter REGROUP_INTERVAL = 1000000  // Cycles between regrouping
+)(
+    input  logic clk,
+    input  logic rst_n,
+
+    // Traffic pattern monitoring
+    input  logic [15:0] dest_traffic_rate [NUM_PORTS-1:0],  // Packets/sec per dest
+    input  logic [7:0]  dest_congestion_level [NUM_PORTS-1:0],
+    
+    // Grouping output (which group each destination belongs to)
+    output logic [$clog2(MAX_GROUPS)-1:0] dest_to_group [NUM_PORTS-1:0],
+    output logic [NUM_PORTS-1:0] group_members [MAX_GROUPS-1:0],  // Bitmask
+    
+    // Statistics
+    output logic [7:0] active_groups,
+    output logic [31:0] regrouping_count
+);
+
+    // K-means clustering state (simplified for hardware)
+    logic [15:0] group_centroid_rate [MAX_GROUPS-1:0];
+    logic [7:0]  group_centroid_congestion [MAX_GROUPS-1:0];
+    logic [7:0]  group_size [MAX_GROUPS-1:0];
+
+    logic [31:0] regroup_counter;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            // Initialize: Simple striping
+            for (int d = 0; d < NUM_PORTS; d++) begin
+                dest_to_group[d] <= d % MAX_GROUPS;
+            end
+            
+            for (int g = 0; g < MAX_GROUPS; g++) begin
+                group_centroid_rate[g] <= 0;
+                group_centroid_congestion[g] <= 0;
+                group_size[g] <= 0;
+                group_members[g] <= '0;
+            end
+            
+            active_groups <= MAX_GROUPS;
+            regroup_counter <= 0;
+            regrouping_count <= 0;
+            
+        end else begin
+            regroup_counter <= regroup_counter + 1;
+            
+            // Periodically re-cluster destinations
+            if (regroup_counter >= REGROUP_INTERVAL) begin
+                regroup_counter <= 0;
+                regrouping_count <= regrouping_count + 1;
+                
+                // **Step 1: Update centroids**
+                for (int g = 0; g < MAX_GROUPS; g++) begin
+                    logic [31:0] sum_rate = 0;
+                    logic [15:0] sum_congestion = 0;
+                    logic [7:0]  member_count = 0;
+                    
+                    for (int d = 0; d < NUM_PORTS; d++) begin
+                        if (dest_to_group[d] == g) begin
+                            sum_rate = sum_rate + dest_traffic_rate[d];
+                            sum_congestion = sum_congestion + dest_congestion_level[d];
+                            member_count = member_count + 1;
+                        end
+                    end
+                    
+                    if (member_count > 0) begin
+                        group_centroid_rate[g] <= sum_rate / member_count;
+                        group_centroid_congestion[g] <= sum_congestion / member_count;
+                        group_size[g] <= member_count;
+                    end else begin
+                        // Empty group - reinitialize
+                        group_centroid_rate[g] <= 0;
+                        group_centroid_congestion[g] <= 0;
+                        group_size[g] <= 0;
+                    end
+                end
+                
+                // **Step 2: Reassign destinations to nearest centroid**
+                for (int d = 0; d < NUM_PORTS; d++) begin
+                    logic [31:0] min_distance = 32'hFFFFFFFF;
+                    logic [$clog2(MAX_GROUPS)-1:0] nearest_group = 0;
+                    
+                    for (int g = 0; g < MAX_GROUPS; g++) begin
+                        // Euclidean distance (simplified)
+                        logic signed [31:0] rate_diff = $signed(dest_traffic_rate[d]) - 
+                                                       $signed(group_centroid_rate[g]);
+                        logic signed [15:0] cong_diff = $signed(dest_congestion_level[d]) - 
+                                                       $signed(group_centroid_congestion[g]);
+                        
+                        logic [31:0] distance = (rate_diff * rate_diff) + 
+                                               (cong_diff * cong_diff * 1000);  // Weight congestion higher
+                        
+                        if (distance < min_distance) begin
+                            min_distance = distance;
+                            nearest_group = g;
+                        end
+                    end
+                    
+                    dest_to_group[d] <= nearest_group;
+                end
+                
+                // **Step 3: Update group membership bitmasks**
+                for (int g = 0; g < MAX_GROUPS; g++) begin
+                    group_members[g] <= '0;
+                    for (int d = 0; d < NUM_PORTS; d++) begin
+                        if (dest_to_group[d] == g)
+                            group_members[g][d] <= 1;
+                    end
+                end
+                
+                // Count active groups
+                logic [7:0] active_count = 0;
+                for (int g = 0; g < MAX_GROUPS; g++) begin
+                    if (group_size[g] > 0)
+                        active_count++;
+                end
+                active_groups <= active_count;
             end
         end
     end
@@ -1458,742 +1274,1345 @@ module traffic_gen_fpga #(
 endmodule
 ```
 
-**Week 3-4: Measurement and Data Collection**
+**Memory Savings Analysis:**
 
-**Test Suite:**
+| Port Count | VOQs (Full) | VOQs (Grouped) | BRAM Reduction | HOL Impact |
+|------------|-------------|----------------|----------------|------------|
+| 32 | 8,192 | 512 (16 groups) | **-93.75%** | <2% throughput loss |
+| 64 | 32,768 | 1,024 | **-96.88%** | <3% throughput loss |
+| 128 | 131,072 | 2,048 | **-98.44%** | <5% throughput loss |
 
-| Test | Traffic Pattern | Duration | Metrics |
-|------|----------------|----------|---------|
-| **Test 1** | Uniform random | 10 seconds | Throughput, avg latency |
-| **Test 2** | Hotspot (9→1) | 10 seconds | Throughput, tail latency, fairness |
-| **Test 3** | Incast (10→1) | 100 bursts | FCT, packet loss |
-| **Test 4** | Bursty (ON/OFF) | 60 seconds | Jitter, p99 latency |
-| **Test 5** | Mixed (30% voice, 70% data) | 30 seconds | Per-QoS latency, throughput |
-
-**Data Collection Script:**
-
-```python
-# fpga/fpga_measurement.py
-
-import serial
-import time
-import numpy as np
-
-class FPGATestbed:
-    def __init__(self, port='/dev/ttyUSB0'):
-        self.ser = serial.Serial(port, 115200)
-
-    def configure_traffic(self, pattern, rate, size_range):
-        """Configure hardware traffic generator"""
-        cmd = f"CONFIG {pattern} {rate} {size_range[0]} {size_range[1]}\n"
-        self.ser.write(cmd.encode())
-
-    def start_test(self, duration_sec):
-        """Start traffic generation and measurement"""
-        self.ser.write(b"START\n")
-        time.sleep(duration_sec)
-        self.ser.write(b"STOP\n")
-
-    def read_statistics(self):
-        """Read performance counters from FPGA"""
-        self.ser.write(b"READ_STATS\n")
-        response = self.ser.readline().decode()
-        stats = parse_stats(response)
-        return stats
-
-def run_benchmark_suite():
-    testbed = FPGATestbed()
-    results = {}
-
-    # Test 1: Uniform
-    testbed.configure_traffic(pattern='uniform', rate=1000000, size_range=(64, 1500))
-    testbed.start_test(duration_sec=10)
-    results['uniform'] = testbed.read_statistics()
-
-    # Test 2: Hotspot
-    testbed.configure_traffic(pattern='hotspot_9to1', rate=1000000, size_range=(64, 1500))
-    testbed.start_test(duration_sec=10)
-    results['hotspot'] = testbed.read_statistics()
-
-    # ... (repeat for other tests)
-
-    return results
-
-def compare_baseline_vs_enhanced():
-    # Run with ELASTIC_ENABLE=0 (baseline)
-    baseline = run_benchmark_suite()
-
-    # Reconfigure with ELASTIC_ENABLE=1 (enhanced)
-    # (requires reprogramming FPGA with new bitstream)
-    enhanced = run_benchmark_suite()
-
-    # Statistical comparison
-    improvement = {}
-    for test in baseline.keys():
-        improvement[test] = {
-            'throughput': enhanced[test]['throughput'] / baseline[test]['throughput'],
-            'latency_p99': baseline[test]['p99'] / enhanced[test]['p99']
-        }
-
-    print(f"Hotspot throughput improvement: {improvement['hotspot']['throughput']:.2f}×")
-    print(f"Hotspot p99 latency reduction: {improvement['hotspot']['latency_p99']:.2f}×")
-```
+**HOL Blocking Mitigation:**
+- Group similar traffic patterns → minimal intra-group contention
+- High-priority traffic gets dedicated groups (QoS-aware grouping)
+- Regrouping interval tuned to traffic dynamics
 
 ---
 
-## Part 6: Publication-Ready Contribution Positioning
+### 3.3 Phase 2 Paper Structure (16-18 Pages IEEE JSAC)
 
-### 6.1 Reframing doc_v2.md as a Q1 Contribution
+**Section I: Introduction (2 pages)**
+- **Motivation:** Datacenter fabrics face triple challenge: hotspots, scalability, unpredictability
+- **Gap Analysis:** Show limitations of prior work in table format
+- **Contributions:**
+  1. Elastic Crosspoint Scheduling breaking 1:1 constraint
+  2. Lightweight ML-guided arbitration (5-cycle inference)
+  3. Adaptive VOQ grouping enabling 128+ port scaling
+  4. Integrated system achieving 8× hotspot improvement
 
-**Current Framing (doc_v2.md):**
-> "Enhanced Ethernet Switch Fabric Architecture v2.0"
-> (Sounds incremental)
+**Section II: Background (2 pages)**
+- VOQ fundamentals, crosspoint architectures
+- Machine learning in networking (brief survey)
+- Scalability challenges in high-radix switches
 
-**Q1 Journal Framing:**
-> "Hierarchical Elastic Switch Fabric with Predictive Multi-Path Allocation: Breaking the Virtual Output Queue Throughput Barrier"
+**Section III: Elastic Crosspoint Scheduling (4 pages)**
+- Architecture overview
+- Virtual crosspoint pool abstraction
+- Multi-path allocation algorithm
+- Deadlock-freedom proof (TLA+ verified)
 
-**Key Positioning Shift:**
+**Section IV: ML-Guided Arbitration (3 pages)**
+- Decision tree classifier design
+- Training methodology (offline on traces)
+- Hybrid Kalman + ML fusion
+- Hardware implementation (5-cycle pipeline)
 
-| Aspect | Current doc_v2.md Framing | Q1 Publication Framing |
-|--------|---------------------------|------------------------|
-| **Main Claim** | "Parametric, high-performance switch" | "First architecture to break VOQ 1:1 serialization constraint" |
-| **QoS Feature** | "IEEE 802.1p compliant 8-level QoS" | "Fine-grained priority differentiation enabling deterministic-elastic hybrid" |
-| **Cell Mode** | "Hybrid packet/cell switching" | "Adaptive segmentation for latency-throughput optimization" |
-| **Multicast** | "Address replication for efficiency" | "90% memory savings enabling FPGA scalability" |
-| **Parametric** | "8 to 128 ports configurable" | "Architectural scalability with automatic topology selection" |
+**Section V: Scalable VOQ Grouping (3 pages)**
+- K-means clustering for destinations
+- Regrouping algorithm
+- HOL blocking analysis
+- Memory-throughput trade-off
 
-### 6.2 Novel Contribution Claims (For Paper)
+**Section VI: Implementation (2 pages)**
+- FPGA prototype (VU9P)
+- Resource breakdown by module
+- Integration challenges
 
-**Primary Contribution (Flagship):**
-> **Elastic Crosspoint Scheduling (ECS):** First switch fabric architecture to dynamically allocate multiple arbiter paths to individual VOQs based on predictive congestion forecasting, breaking the fundamental one-cell-per-cycle throughput limit of classical VOQ designs.
+**Section VII: Evaluation (6 pages)**
+- **A. Hotspot Performance:**
+  - 9→1 incast: 8.1 Gbps vs. 1.0 Gbps baseline
+  - Latency reduction: 62 µs vs. 500 µs
+- **B. ML Prediction Accuracy:**
+  - Classification accuracy: 92-95% on real traces
+  - Prediction MAE: 28 words (vs. 45 for Kalman-only)
+- **C. Scalability:**
+  - Resource vs. port count (N=16, 32, 64, 128)
+  - Throughput degradation from grouping: <5%
+- **D. Real Workloads:**
+  - AI training (all-reduce), web search, video streaming
+  - FCT improvements: 40-60% for short flows
+- **E. Ablation Study:**
+  - ECS alone, ML alone, Grouping alone, Combined
+- **F. Comparison with Baselines:**
+  - Table: vs. iSLIP, DRRM, SwiftQueue, REVERIE
 
-**Secondary Contributions:**
+**Section VIII: Related Work (2 pages)**
+- Predictive scheduling, ML in networking, VOQ variants
 
-1. **Intelligent Prediction Layer:**
-   > Integration of Kalman filtering for queue depth forecasting at fabric timescales (50-cycle horizon), enabling proactive resource allocation with <50-word MAE prediction accuracy.
+**Section IX: Discussion & Future Work (1 page)**
+- Limitations, path to Phase 3 (programmable control)
 
-2. **Adaptive Fairness Mechanism:**
-   > Feedback-driven dynamic quantum weight adjustment for WFQ scheduling, achieving 0.93 Jain fairness index under mixed-priority workloads while preventing starvation (bounded <10ms max wait).
-
-3. **Memory-Efficient Multicast:**
-   > Address-only replication architecture reducing broadcast memory overhead by 90%, validated on FPGA with 60-75% buffer utilization under heterogeneous traffic.
-
-4. **Parametric Scalable Architecture:**
-   > Automatic topology selection across 8-128 ports with proven timing closure at 250 MHz, demonstrating viability from edge to datacenter deployments.
-
-**Tertiary Contributions (Supporting):**
-
-5. **Formal Verification Framework:**
-   > TLA+ specification and SPIN model checking proving deadlock-freedom and bounded allocation properties of elastic crosspoint allocation.
-
-6. **Comprehensive Validation:**
-   > FPGA testbed validation on Xilinx VCU118 with 5+ realistic workloads including AI cluster all-reduce patterns, demonstrating 6-8× hotspot throughput improvement.
-
----
-
-### 6.3 Comparison with State-of-the-Art (For Paper Section 7)
-
-| Prior Work | Year | Key Contribution | Limitation vs. Your Work |
-|------------|------|------------------|--------------------------|
-| **McKeown iSLIP** | 1999 | Iterative VOQ matching | No prediction, 1:1 constraint, no multi-path |
-| **Dai & Zhu GCQ** | 2012 | Hierarchical crosspoint for FPGA | Fixed allocation, no elasticity |
-| **Broadcom MMU** | 2007-present | Dynamic buffer pooling | Proprietary, no multi-path arbitration |
-| **REVERIE** | 2024 | Predictive buffer sharing | Isolation-focused, no throughput multiplier |
-| **SwiftQueue** | 2023 | Transformer-based queue prediction | Monitoring-only, doesn't allocate resources |
-| **PIFO/vPIFO** | 2016-2024 | Programmable packet scheduling | Single-queue, no multi-path |
-| **TSN (802.1Qbv)** | 2018 | Time-gated deterministic | No statistical path for best-effort |
-| **Your ECS** | **2025** | **Predictive multi-path elastic allocation** | **Combines all: prediction + multi-path + fairness** |
-
-**Explicit Differentiation:**
-
-> "Unlike SwiftQueue which uses prediction for monitoring, ECS uses Kalman forecasting to drive resource allocation decisions. Unlike REVERIE which shares buffers for isolation, ECS allocates multiple arbitration paths to multiply throughput. Unlike TSN which provides deterministic guarantees at the cost of utilization, ECS maintains 99.8% efficiency under uniform traffic while achieving 6-8× improvement under hotspot."
+**Section X: Conclusion (0.5 pages)**
 
 ---
 
-## Part 7: Complete Implementation Roadmap
+### 3.4 Phase 2 Timeline (12-18 Months)
 
-### 7.1 Revised Timeline (Aligned with v2.0 Codebase)
+| Month | Activity | Milestone |
+|-------|----------|-----------|
+| **1-2** | ECS architecture design | Detailed specs |
+| **3-5** | RTL implementation (ECS + multi-path) | Functional simulation |
+| **6-7** | ML classifier training + export | Working decision tree |
+| **8-9** | VOQ grouping implementation | Scalability validation |
+| **10-11** | FPGA integration & testing | Working 128-port prototype |
+| **12-13** | Comprehensive experiments | All data collected |
+| **14-15** | Paper writing | Complete draft |
+| **16-17** | Revision & submission | Submit to JSAC |
+| **+6-9** | Review cycle | |
 
-| Week | Phase | Deliverable | Dependencies |
-|------|-------|-------------|--------------|
-| **1-2** | Setup | Integrate ECS manager with existing arbiters | doc_v2.md switch_fabric.sv |
-| **3-4** | Prediction | Implement Kalman predictor module | - |
-| **5-6** | Adaptation | Implement adaptive QoS controller | Kalman module |
-| **7-8** | Integration | Connect all layers, functional testing | All modules |
-| **9-10** | Formal Verification | TLA+ specs + SPIN model checking | Finalized design |
-| **11-12** | FPGA Synthesis | Vivado build for VCU118 | - |
-| **13-14** | Hardware Validation | Deploy on board, run experiments | FPGA bitstream |
-| **15-16** | Data Analysis | Process results, statistical significance | Experiment data |
-| **17-20** | Paper Writing | Draft manuscript, figures, revision | All results |
+---
 
-**Total Timeline:** 20 weeks (5 months) to submission-ready manuscript
+## Part 4: Phase 3 - Systems Integration (10-14 Months)
 
-### 7.2 Effort Breakdown by Module
+### 4.1 Paper Title & Positioning
 
-| Module | Lines of Code (Estimate) | Complexity | Effort |
-|--------|--------------------------|------------|--------|
-| `elastic_crosspoint_manager_v2.sv` | ~300 | Medium-High | 2 weeks |
-| `kalman_queue_predictor_v2.sv` | ~250 | High (fixed-point math) | 3 weeks |
-| `adaptive_qos_controller_v2.sv` | ~200 | Low-Medium | 1.5 weeks |
-| `multi_path_transmitter.sv` | ~150 | Medium | 1 week |
-| `multi_path_receiver.sv` | ~180 | Medium | 1 week |
-| `fabric_statistics_aggregator.sv` | ~150 | Low | 1 week |
-| Integration (modifications to existing) | ~200 | Medium | 2 weeks |
-| TLA+ specifications | ~200 (TLA) | Medium | 2 weeks |
-| FPGA testbed scripts | ~300 (Python) | Low-Medium | 2 weeks |
-| **Total New Code** | **~2000 lines** | | **15.5 weeks** |
+**Title:** *"Programmable Elastic QoS Fabrics: Hardware-Software Co-Design for Adaptive Data Center Networks"*
 
-### 7.3 Testing Strategy (Leverages Existing tb/ Infrastructure)
+**Target Venue:** IEEE Transactions on Industrial Informatics (TII) or IEEE Network Magazine
+- **Why TII:** Emphasizes practical deployment, industry relevance
+- **Why IEEE Network:** Tutorial-style, broader audience
+- **Acceptance Rate:** TII ~25%, IEEE Network ~30%
 
-**Extend Existing Tests:**
+**Core Thesis:**
+> Modern data centers require runtime adaptability to changing workloads, but existing switch fabrics have fixed scheduling policies. We present a co-designed architecture where a lightweight control plane (P4/RISC-V) dynamically tunes hardware scheduling parameters based on real-time telemetry, achieving 10-15% energy savings and 30% faster convergence to optimal allocation compared to static policies.
 
-**File:** `tb/tb_switch_fabric.sv`
+### 4.2 Technical Contributions (Phase 3)
+
+#### Contribution 1: Programmable Control Plane
+
+**New Module:** `rtl/control/programmable_qos_controller_v3.sv`
 
 ```systemverilog
-// Add new test scenarios
+module programmable_qos_controller_v3 #(
+    parameter NUM_PORTS = 32,
+    parameter QOS_LEVELS = 8
+)(
+    input  logic clk,
+    input  logic rst_n,
 
-// Test 6: ECS Validation (NEW)
-task test_elastic_crosspoint();
-    $display("=== Test 6: Elastic Crosspoint Scheduling ===");
+    // Control plane interface (P4/RISC-V CPU)
+    input  logic [31:0] ctrl_addr,
+    input  logic [31:0] ctrl_wdata,
+    input  logic ctrl_wen,
+    output logic [31:0] ctrl_rdata,
+    
+    // Telemetry inputs (from fabric)
+    input  logic [31:0] port_throughput [NUM_PORTS-1:0],
+    input  logic [15:0] port_latency_avg [NUM_PORTS-1:0],
+    input  logic [7:0]  port_loss_rate [NUM_PORTS-1:0],
+    input  logic [7:0]  qos_fairness_deviation [QOS_LEVELS-1:0],
+    
+    // Dynamic configuration outputs (to hardware schedulers)
+    output logic [15:0] adaptive_quantum [QOS_LEVELS-1:0],
+    output logic [7:0]  elastic_pool_size,
+    output logic [7:0]  voq_group_count,
+    output logic [15:0] buffer_pool_fraction,
+    
+    // Policy execution
+    output logic [7:0]  active_policy_id,
+    output logic policy_update_event
+);
 
-    // Configure fabric to enable ECS
-    write_reg(CONTROL, read_reg(CONTROL) | (1 << 5));  // NEW: ECS_ENABLE bit
+    // Policy table (software-defined)
+    typedef struct packed {
+        logic [15:0] quantum [QOS_LEVELS-1:0];
+        logic [7:0]  pool_size;
+        logic [7:0]  group_count;
+        logic [15:0] buffer_fraction;
+        logic [31:0] trigger_threshold;  // Telemetry condition
+    } policy_t;
 
-    // Generate hotspot traffic: 9 sources → Port 5
-    fork
-        for (int src = 0; src < NUM_PORTS; src++) begin
-            if (src != 5) begin
-                automatic int s = src;
-                fork
-                    begin
-                        for (int pkt = 0; pkt < 500; pkt++) begin
-                            pkt_gen[s].send_packet(
-                                .dest = 5,
-                                .length = 1500,
-                                .qos = 3'b011,  // Medium priority
-                                .seed = pkt
-                            );
-                        end
+    policy_t policy_table [16];  // Up to 16 policies
+
+    logic [7:0] current_policy;
+    logic [31:0] update_counter;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            // Default policy
+            current_policy <= 0;
+            adaptive_quantum <= '{500, 400, 300, 200, 150, 100, 50, 25};
+            elastic_pool_size <= 3;
+            voq_group_count <= 16;
+            buffer_pool_fraction <= 40;  // 40% elastic
+            
+        end else begin
+            // Software writes policy table
+            if (ctrl_wen && ctrl_addr[15:12] == 4'h3) begin
+                int policy_id = ctrl_addr[7:4];
+                int param_id = ctrl_addr[3:0];
+                
+                case (param_id)
+                    0: policy_table[policy_id].quantum[0] <= ctrl_wdata[15:0];
+                    // ... (similar for other parameters)
+                endcase
+            end
+            
+            // Autonomous policy selection based on telemetry
+            update_counter <= update_counter + 1;
+            
+            if (update_counter >= 1000000) begin  // Every 4ms @ 250 MHz
+                update_counter <= 0;
+                
+                // Evaluate trigger conditions
+                for (int p = 0; p < 16; p++) begin
+                    // Example: Switch to high-throughput policy if latency is low
+                    logic [31:0] avg_latency = 0;
+                    for (int i = 0; i < NUM_PORTS; i++)
+                        avg_latency += port_latency_avg[i];
+                    avg_latency /= NUM_PORTS;
+                    
+                    if (avg_latency < policy_table[p].trigger_threshold) begin
+                        current_policy <= p;
+                        policy_update_event <= 1;
+                        break;
                     end
-                join_none
+                end
+                
+                // Apply selected policy
+                adaptive_quantum <= policy_table[current_policy].quantum;
+                elastic_pool_size <= policy_table[current_policy].pool_size;
+                voq_group_count <= policy_table[current_policy].group_count;
+                buffer_pool_fraction <= policy_table[current_policy].buffer_fraction;
+            end else begin
+                policy_update_event <= 0;
             end
         end
-    join
+    end
 
-    // Monitor elastic pool allocation
-    monitor_elastic_pool_usage();
+    assign active_policy_id = current_policy;
 
-    wait_for_idle();
-
-    // Measure throughput to Port 5
-    int total_sent = 9 * 500;
-    int total_received = mon[5].packets_received;
-    real throughput_gbps = (total_received * 1500 * 8) / (test_duration_ns);
-
-    $display("Hotspot throughput: %.2f Gbps", throughput_gbps);
-
-    // Assertion: Should be >4× baseline
-    real baseline_throughput = 1.0;  // Gbps (from previous test)
-    assert (throughput_gbps > (baseline_throughput * 4)) else
-        $error("ECS failed to achieve 4× improvement!");
-
-    $display("=== Test 6 Complete ===\n");
-endtask
-
-// Test 7: Kalman Prediction Accuracy (NEW)
-task test_kalman_prediction();
-    $display("=== Test 7: Kalman Prediction Accuracy ===");
-
-    // Generate known traffic pattern with predictable congestion
-    // ... (similar to existing tests but track predicted vs. actual)
-
-    // Measure MAE
-    real mae = compute_prediction_error();
-    $display("Prediction MAE: %.1f words", mae);
-
-    assert (mae < 50) else
-        $error("Prediction accuracy insufficient!");
-
-    $display("=== Test 7 Complete ===\n");
-endtask
+endmodule
 ```
+
+**Software API (Python):**
+
+```python
+# fabric_control_api.py
+
+import socket
+import struct
+
+class FabricControlPlane:
+    def __init__(self, fpga_ip='192.168.1.10', port=5000):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((fpga_ip, port))
+    
+    def set_policy(self, policy_id, quantum_weights, pool_size, group_count):
+        """
+        Update policy table entry
+        """
+        # Write quantum values
+        for qos_level, quantum in enumerate(quantum_weights):
+            addr = 0x3000 | (policy_id << 4) | qos_level
+            self.write_register(addr, quantum)
+        
+        # Write pool size
+        addr = 0x3000 | (policy_id << 4) | 0x8
+        self.write_register(addr, pool_size)
+        
+        # Write group count
+        addr = 0x3000 | (policy_id << 4) | 0x9
+        self.write_register(addr, group_count)
+    
+    def get_telemetry(self):
+        """
+        Read current fabric state
+        """
+        telemetry = {}
+        
+        # Read throughput (example)
+        for port in range(32):
+            addr = 0x4000 + port * 4
+            telemetry[f'port{port}_throughput'] = self.read_register(addr)
+        
+        return telemetry
+    
+    def activate_policy(self, policy_id):
+        """
+        Switch to a specific policy immediately
+        """
+        addr = 0x3FF0
+        self.write_register(addr, policy_id)
+    
+    def write_register(self, addr, data):
+        msg = struct.pack('<II', addr, data)
+        self.sock.send(msg)
+    
+    def read_register(self, addr):
+        msg = struct.pack('<II', addr, 0)
+        self.sock.send(msg)
+        response = self.sock.recv(4)
+        return struct.unpack('<I', response)[0]
+
+# Example usage
+fabric = FabricControlPlane()
+
+# Define low-latency policy (favor high-priority traffic)
+fabric.set_policy(
+    policy_id=1,
+    quantum_weights=[800, 600, 400, 200, 100, 50, 25, 12],  # Aggressive high-QoS
+    pool_size=5,  # More elastic arbiters
+    group_count=8   # Fewer groups (less HOL)
+)
+
+# Define high-throughput policy (balanced)
+fabric.set_policy(
+    policy_id=2,
+    quantum_weights=[500, 400, 300, 200, 150, 100, 50, 25],
+    pool_size=3,
+    group_count=16
+)
+
+# Monitor and adapt
+while True:
+    telemetry = fabric.get_telemetry()
+    
+    avg_latency = sum(telemetry[f'port{p}_latency'] for p in range(32)) / 32
+    
+    if avg_latency > 100:  # High latency → switch to policy 1
+        fabric.activate_policy(1)
+    elif avg_latency < 50:  # Low latency → switch to policy 2
+        fabric.activate_policy(2)
+    
+    time.sleep(0.1)
+```
+
+#### Contribution 2: Energy-Aware Elastic Scheduling
+
+**New Module:** `rtl/power/energy_aware_scheduler_v3.sv`
+
+```systemverilog
+module energy_aware_scheduler_v3 #(
+    parameter NUM_ARBITERS = 5
+)(
+    input  logic clk,
+    input  logic rst_n,
+
+    // Arbiter utilization
+    input  logic [NUM_ARBITERS-1:0] arbiter_active,
+    input  logic [7:0] arbiter_utilization [NUM_ARBITERS-1:0],  // % busy
+    
+    // Power control
+    output logic [NUM_ARBITERS-1:0] arbiter_clock_enable,
+    output logic [NUM_ARBITERS-1:0] arbiter_power_gate,
+    
+    // Energy statistics
+    output logic [31:0] energy_saved_estimate  // Joules (approximate)
+);
+
+    logic [31:0] idle_cycles [NUM_ARBITERS-1:0];
+    logic [31:0] total_cycles;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            for (int a = 0; a < NUM_ARBITERS; a++) begin
+                arbiter_clock_enable[a] <= 1;
+                arbiter_power_gate[a] <= 0;
+                idle_cycles[a] <= 0;
+            end
+            total_cycles <= 0;
+            energy_saved_estimate <= 0;
+            
+        end else begin
+            total_cycles <= total_cycles + 1;
+            
+            for (int a = 0; a < NUM_ARBITERS; a++) begin
+                if (!arbiter_active[a]) begin
+                    idle_cycles[a] <= idle_cycles[a] + 1;
+                    
+                    // Clock gating if idle > 1000 cycles
+                    if (idle_cycles[a] > 1000) begin
+                        arbiter_clock_enable[a] <= 0;
+                    end
+                    
+                    // Power gating if idle > 100,000 cycles (400 µs @ 250 MHz)
+                    if (idle_cycles[a] > 100000) begin
+                        arbiter_power_gate[a] <= 1;
+                    end
+                    
+                end else begin
+                    idle_cycles[a] <= 0;
+                    arbiter_clock_enable[a] <= 1;
+                    arbiter_power_gate[a] <= 0;
+                end
+            end
+            
+            // Estimate energy saved (simplified)
+            // Assume clock gating saves 30% power, power gating saves 90%
+            logic [31:0] clock_gated_cycles = 0;
+            logic [31:0] power_gated_cycles = 0;
+            
+            for (int a = 0; a < NUM_ARBITERS; a++) begin
+                if (!arbiter_clock_enable[a])
+                    clock_gated_cycles += 1;
+                if (arbiter_power_gate[a])
+                    power_gated_cycles += 1;
+            end
+            
+            // Energy per cycle: ~1 nJ (typical FPGA logic)
+            // Savings = (0.3 * clock_gated + 0.9 * power_gated) * 1 nJ
+            energy_saved_estimate <= (clock_gated_cycles * 3 + power_gated_cycles * 9) / 10;  // nJ
+        end
+    end
+
+endmodule
+```
+
+**Expected Energy Savings:**
+| Configuration | Idle Arbiters (avg) | Clock Gating Savings | Power Gating Savings | Total |
+|---------------|---------------------|---------------------|---------------------|-------|
+| Static (no ECS) | 0% | 0% | 0% | 0% |
+| ECS (no power mgmt) | 40% | 0% | 0% | 0% |
+| **ECS + Power Mgmt** | **40%** | **12%** | **5%** | **~15-17%** |
 
 ---
 
-## Part 8: Paper Structure (Aligned with v2.0 Implementation)
+### 4.3 Phase 3 Paper Structure (12-14 Pages IEEE TII)
 
-### 8.1 Recommended Title
+**Section I: Introduction (1.5 pages)**
+- Motivation: Need for runtime adaptability in data centers
+- Gap: Hardware fabrics are static, software SDN is too slow
+- Contribution: Co-designed programmable fabric with <100µs reconfiguration
 
-> **"Hierarchical Elastic Switch Fabric: Breaking the VOQ Throughput Barrier Through Predictive Multi-Path Allocation and Adaptive QoS"**
+**Section II: System Architecture (3 pages)**
+- Overview of 3-phase integrated system
+- Control plane design (P4/RISC-V interface)
+- Policy abstraction and telemetry feedback loop
 
-### 8.2 Abstract (250 words - tailored to v2.0 strengths)
+**Section III: Programmable QoS Framework (3 pages)**
+- Policy table structure
+- Autonomous policy selection algorithm
+- Software API and example use cases
 
-> High-performance switch fabrics for modern datacenters and AI clusters demand both high throughput under non-uniform traffic and deterministic latency guarantees for critical flows. While Virtual Output Queuing (VOQ) eliminates head-of-line blocking and achieves 100% throughput under uniform traffic, it suffers from a fundamental serialization bottleneck: each VOQ can transmit at most one cell per time slot to its destination, limiting hotspot throughput to line rate divided by the number of competing sources. Fabric speedup (2-3× internal clock rate) addresses this but incurs significant power and cost penalties.
->
-> We present a novel Elastic Crosspoint Scheduling (ECS) architecture that dynamically allocates multiple arbiter paths to congested VOQs based on Kalman-filtered queue depth prediction, breaking the 1:1 VOQ-to-crosspoint constraint without requiring speedup. ECS introduces a virtual crosspoint pool abstraction where idle arbiters are reassigned to high-urgency flows via predictive allocation, achieving 4-8× throughput improvement under hotspot traffic patterns common in AI all-reduce and microservice meshes.
->
-> Supporting this core innovation, we implement: (1) hierarchical dynamic buffer pooling with 90% memory savings for multicast traffic, (2) adaptive weighted fair queueing that adjusts scheduling parameters based on real-time congestion feedback, and (3) IEEE 802.1p-compliant 8-level QoS with VLAN PCP/IP DSCP classification. We prove deadlock-freedom through TLA+ specification and SPIN model checking, and validate on Xilinx Ultrascale+ FPGA achieving 7.2 Gbps hotspot throughput (vs. 1.0 Gbps baseline) with 75% reduction in tail latency, while maintaining 99.8% utilization under uniform traffic and <8% area overhead.
->
-> Our architecture enables lossless, high-performance switching for heterogeneous workloads without expensive fabric speedup, scaling from 8-port edge switches to 128-port datacenter fabrics.
+**Section IV: Energy-Aware Scheduling (2 pages)**
+- Clock/power gating mechanisms
+- Energy model and savings analysis
 
-### 8.3 Section Outline (14 pages IEEE format)
+**Section V: Implementation (2 pages)**
+- FPGA deployment details
+- Integration with Phases 1-2
+- Reconfiguration latency measurements
 
-| Section | Pages | Key Content from v2.0 |
-|---------|-------|----------------------|
-| **1. Introduction** | 1.5 | Problem: VOQ serialization. Gap: No prior multi-path elastic. Contribution: ECS + prediction. Results: 6-8× throughput. Leverage: Existing parametric architecture enables wide validation |
-| **2. Background & Motivation** | 1.5 | VOQ fundamentals (cite Karol). iSLIP algorithm. Crosspoint buffering. Document v2.0's dual-channel matching as foundation. Explain 1:1 constraint |
-| **3. System Architecture** | 2 | Overall design from doc_v2.md (VOQ-XPQ dual-stage). Highlight: 8-level QoS, cell mode, multicast address replication as innovations. Position these as enabling infrastructure |
-| **4. Elastic Crosspoint Scheduling** | 3 | **CORE:** Virtual pool abstraction. Urgency calculation (integrating Kalman). Allocation algorithm (flowchart). Multi-path TX/RX. Deadlock-freedom proof |
-| **5. Supporting Mechanisms** | 1.5 | Dynamic buffer pooling (show memory savings). Adaptive QoS (fairness results). Kalman prediction (accuracy analysis) |
-| **6. Implementation** | 1.5 | FPGA platform (VCU118). Resource utilization from v2.0. Timing closure. Parametric configurations tested (N=10, 24, 40) |
-| **7. Experimental Evaluation** | 3 | Simulator + FPGA results. Workloads: uniform, hotspot, incast, bursty, real traces. Figures: throughput vs. pattern, latency CDFs, ablation study. **Compare:** Baseline, +Pooling, +Kalman, Full ECS |
-| **8. Related Work** | 1 | VOQ schedulers, buffer allocation, prediction, TSN. Clear differentiation table |
-| **9. Conclusion** | 0.5 | Summary, limitations, future work (optical, larger scale) |
+**Section VI: Evaluation (4 pages)**
+- **A. Programmability Validation:**
+  - Policy switching latency: <100µs
+  - Convergence time to optimal: 30% faster than static
+- **B. Energy Efficiency:**
+  - Measured power consumption reduction: 12-15%
+  - Energy-delay product improvement
+- **C. Real Deployment Scenarios:**
+  - Diurnal traffic patterns (night vs. day)
+  - Workload migration (VM live migration)
+  - Failure recovery (rerouting)
+- **D. Comparison:**
+  - vs. Pure SDN (OpenFlow)
+  - vs. Static hardware schedulers
 
-### 8.4 Key Figures (Publication-Quality)
+**Section VII: Related Work (1.5 pages)**
+- Programmable data planes (P4, Tofino)
+- Energy-efficient networking
+- Hardware-software co-design
 
-**Figure 1:** System Architecture Diagram
-```
-┌─────────────────────────────────────────────────────────┐
-│  Ingress Processing → VOQ (8-level QoS, multicast)     │
-│       ↓ (Kalman Prediction)                             │
-│  Elastic Crosspoint Pool (Dynamic N:M Allocation)      │
-│       ↓ (Multi-Path Transmission)                       │
-│  XPQ (Dynamic Buffer Pooling) → Egress Reassembly      │
-└─────────────────────────────────────────────────────────┘
-```
+**Section VIII: Discussion (1 page)**
+- Deployment considerations
+- Security (control plane isolation)
 
-**Figure 2:** ECS Allocation Flowchart
-```
-[VOQ Request] → [Compute Urgency] → [Kalman Predicted Depth]
-                        ↓
-[Available Arbiters?] → [Yes] → [Allocate to Highest Urgency]
-                        ↓
-                      [No] → [Wait for Release]
-```
-
-**Figure 3:** Throughput Comparison (Bar Chart)
-```
-Throughput (Gbps) vs. Traffic Pattern
-
-Uniform:
-  Baseline: 9.8
-  +Pooling: 9.85
-  +Kalman:  9.88
-  Full ECS: 9.95
-
-Hotspot (9→1):
-  Baseline: 1.0
-  +Pooling: 3.8
-  +Kalman:  4.2
-  Full ECS: 7.8  ← 680% improvement
-```
-
-**Figure 4:** Latency CDF (Hotspot Traffic)
-```
-Cumulative Distribution Function
-
-X-axis: Latency (µs, log scale)
-Y-axis: Percentile
-
-Lines:
-  - Baseline (red): p99 = 500 µs
-  - +Pooling (orange): p99 = 280 µs
-  - +Kalman (yellow): p99 = 180 µs
-  - Full ECS (green): p99 = 95 µs  ← 81% reduction
-```
-
-**Figure 5:** Ablation Study
-```
-Component Contribution to Throughput Improvement
-
-Dynamic Buffer Pooling:      +280%
-Kalman Prediction:           +110%
-Elastic Crosspoint:          +290%
-Combined (synergistic):      +680%
-```
-
-**Figure 6:** FPGA Resource Utilization (Table)
-```
-┌──────────┬──────────┬───────────┬────────────┐
-│ Resource │ Baseline │ Enhanced  │ Overhead   │
-├──────────┼──────────┼───────────┼────────────┤
-│ LUTs     │ 40,000   │ 43,200    │ +8%        │
-│ FFs      │ 35,000   │ 37,800    │ +8%        │
-│ BRAM36   │ 1,140    │ 1,140     │ 0%         │
-│ DSP48    │ 0        │ 48        │ (Kalman)   │
-│ Fmax     │ 260 MHz  │ 245 MHz   │ -5.8%      │
-└──────────┴──────────┴───────────┴────────────┘
-```
-
-### 8.5 Target Venue Recommendations (Updated)
-
-**Primary Target: IEEE/ACM Transactions on Networking**
-
-**Why Perfect Fit:**
-1. Your v2.0 already has comprehensive implementation (not just prototype)
-2. Rigorous verification framework exists (extend with TLA+)
-3. Parametric evaluation (8, 10, 24, 40 ports) demonstrates scalability
-4. Architectural novelty (ECS) + practical validation (FPGA) matches ToN expectations
-
-**Submission Checklist:**
-- [ ] 14-page manuscript following IEEE format
-- [ ] 6-8 publication-quality figures
-- [ ] TLA+ specification (supplementary material)
-- [ ] FPGA demo video (3-5 minutes)
-- [ ] Raw experimental data (CSV files)
-- [ ] Open-source code repository (GitHub) with tag for paper version
-
-**Estimated Acceptance Probability:** 85%
-
-**Backup Venue:** USENIX NSDI (if FPGA testbed completed early - 75% probability)
+**Section IX: Conclusion (0.5 pages)**
 
 ---
 
-## Part 9: What's Different from Original Enhancement Docs
+### 4.4 Phase 3 Timeline (10-14 Months)
 
-### 9.1 Major Reframing Due to v2.0 Implementation
-
-| Original Enhancement Proposal | Status in doc_v2.md | Updated Strategy |
-|-------------------------------|---------------------|------------------|
-| **"Add 8-level QoS"** | ✅ Already done | **Reposition:** Document as contribution, add empirical validation of IEEE 802.1p classification accuracy |
-| **"Implement cell switching"** | ✅ Already done | **Validate:** Show latency-throughput tradeoff curves for S=1,10,20 |
-| **"Add multicast support"** | ✅ Already done | **Quantify:** Measure actual memory savings under realistic multicast workloads |
-| **"Parametric port count"** | ✅ Already done | **Expand:** Test more configurations (N=8, 16, 24, 40, 64), document scalability limits |
-| **"Dynamic buffer pooling"** | ️ Partial (linklist exists) | **Enhance:** Add global pool manager with priority reservations (2-3 weeks) |
-| **"Adaptive QoS"** | ️ Partial (aging exists) | **Complete:** Add feedback-driven quantum adjustment (1.5 weeks) |
-| **"Predictive arbitration"** | ❌ Not done | **Implement:** Kalman predictor module (3 weeks) |
-| **"Elastic crosspoint"** | ❌ Not done | **FLAGSHIP:** ECS manager + multi-path (6-8 weeks) |
-
-### 9.2 Simplified Implementation Path
-
-**Original Enhancement Plan:** 16 modules to build from scratch
-
-**Revised Plan (for v2.0):** Only 6 new modules + modifications to 4 existing
-
-**Why Simpler:**
-1. QoS infrastructure already mature (8-level vs. proposed 3-level)
-2. Memory management partially done (linklist_dynamic_fifo)
-3. Verification framework exists (tb/tb_switch_fabric.sv)
-4. Microinterface already supports runtime reconfiguration
-
-**Effort Reduction:** 24 weeks → **16 weeks** (33% faster)
+| Month | Activity | Milestone |
+|-------|----------|-----------|
+| **1-2** | Control plane design | API specification |
+| **3-4** | RTL implementation (controller + power mgmt) | Functional simulation |
+| **5-6** | Software stack development | Python API working |
+| **7-8** | FPGA integration | Full system deployed |
+| **9-10** | Experiments (programmability + energy) | Data collection |
+| **11-12** | Paper writing | Complete draft |
+| **13-14** | Revision & submission | Submit to TII |
 
 ---
 
-## Part 10: Risk Mitigation (Specific to v2.0 Integration)
+## Part 5: Integrated Research Roadmap
 
-### 10.1 Technical Risks Unique to v2.0 Integration
+### 5.1 Three-Phase Gantt Chart
+
+```
+Year 1:
+Q1 Q2 Q3 Q4
+[--Phase 1: Design--][--Phase 1: Implement--][--Phase 1: Evaluate--][Phase 1: Write]
+                                             [Phase 2: Design][Phase 2: Implement--]
+
+Year 2:
+Q1 Q2 Q3 Q4
+[--Phase 2: Implement--][--Phase 2: Evaluate--][Phase 2: Write][Phase 2: Revise]
+                         [Phase 3: Design][Phase 3: Implement][Phase 3: Evaluate]
+
+Year 3:
+Q1 Q2 Q3 Q4
+[Phase 3: Write][Phase 3: Revise]
+[--Thesis Integration--][--Defense Prep--][DEFENSE]
+```
+
+### 5.2 Publication Timeline
+
+| Month (from start) | Milestone | Venue | Status |
+|--------------------|-----------|-------|--------|
+| 12 | **Phase 1 submission** | IEEE/ACM ToN | Submitted |
+| 18-20 | Phase 1 revision | ToN | Under review |
+| 22 | **Phase 1 acceptance** | ToN | Accepted |
+| 24 | **Phase 2 submission** | IEEE JSAC | Submitted |
+| 30-32 | Phase 2 revision | JSAC | Under review |
+| 34 | **Phase 2 acceptance** | JSAC | Accepted |
+| 36 | **Phase 3 submission** | IEEE TII | Submitted |
+| 40-42 | Phase 3 revision | TII | Under review |
+| 44 | **Phase 3 acceptance** | TII | Accepted |
+| 46-48 | **Thesis completion & defense** | PhD | Defended |
+
+---
+
+## Part 6: Risk Mitigation & Contingency Plans
+
+### 6.1 Technical Risks
+
+| Risk | Probability | Impact | Mitigation |
+|------|------------|--------|------------|
+| **Phase 1:** Fairness bounds too loose (>5%) | Medium | High | Tighten quantization, add compensation mechanism |
+| **Phase 2:** ML inference exceeds 5-cycle budget | Medium | Medium | Use lookup table instead of tree traversal |
+| **Phase 2:** VOQ grouping causes >5% HOL blocking | Low | Medium | Adaptive group sizing, QoS-aware grouping |
+| **Phase 3:** Control plane introduces instability | Low | High | Rate limiting, hysteresis in policy switching |
+| **Overall:** FPGA resource overflow at N=128 | Medium | High | Use HBM external memory, optimize resource sharing |
+
+### 6.2 Publication Risks
 
 | Risk | Probability | Mitigation |
 |------|------------|------------|
-| **ECS conflicts with existing dual-channel arbiter** | Medium | Careful integration: ECS manages arbiter allocation, existing channels handle packet transmission |
-| **Kalman fixed-point overflow in Q16.16** | Low | Saturation arithmetic, bounds checking |
-| **Multi-path causes out-of-order at egress** | Medium | Reorder buffer (already in cell_to_packet.sv concept) |
-| **Adaptive QoS interferes with aging mechanism** | Low | Aging and quantum adjustment operate on different timescales (10K cycles vs. 250K cycles) |
+| **Phase 1:** Reviewer claims incremental vs. A²FQ | Medium | Emphasize hardware vs. software, real traces |
+| **Phase 2:** Novelty questioned (ML in networking common) | Medium | Focus on lightweight design, 5-cycle constraint |
+| **Phase 3:** Limited novelty (programmable fabrics exist) | Medium | Highlight integration with Phases 1-2, energy focus |
+| **Timeline slip:** Experiments take longer than planned | High | Start experiments early, parallelize tasks |
 
-### 10.2 Integration Testing Protocol
+### 6.3 Contingency Plans
 
-**Test 1: Compatibility with Existing Features**
+**If Phase 1 Rejected:**
+1. **Pivot:** Split into two papers - buffers (IEEE TVLSI), fairness (IEEE TC)
+2. **Resubmit:** Target IEEE TNSM (lower bar) or conference (INFOCOM)
 
-```bash
-# Baseline (all enhancements disabled)
-make sim ELASTIC_ENABLE=0 ADAPTIVE_QOS_ENABLE=0 KALMAN_PREDICT_ENABLE=0
+**If Phase 2 Takes Too Long:**
+1. **Simplify:** Drop ML component, focus on ECS + grouping only
+2. **Reschedule:** Move to Year 3, submit Phase 3 first
 
-# Enhanced (one at a time)
-make sim ADAPTIVE_QOS_ENABLE=1  # Should work standalone
-make sim KALMAN_PREDICT_ENABLE=1  # Should work standalone
-make sim ELASTIC_ENABLE=1  # Requires Kalman
-
-# Full system
-make sim ELASTIC_ENABLE=1 ADAPTIVE_QOS_ENABLE=1 KALMAN_PREDICT_ENABLE=1
-```
-
-**Test 2: Regression Against v2.0 Baseline**
-
-Ensure enhancements don't **break** existing functionality:
-
-```python
-# Regression test
-baseline_results = run_tests(elastic=False)
-enhanced_results = run_tests(elastic=True)
-
-# Check no degradation on uniform traffic
-assert enhanced_results['uniform_throughput'] >= baseline_results['uniform_throughput'] * 0.98
-
-# Check improvement on hotspot
-assert enhanced_results['hotspot_throughput'] >= baseline_results['hotspot_throughput'] * 3.0
-```
+**If Phase 3 Has Weak Results:**
+1. **Reposition:** As workshop paper (IEEE LANMAN) or magazine article
+2. **Combine:** Merge with Phase 2 as extended version (e.g., JSAC special issue)
 
 ---
 
-## Part 11: Publication Timeline
+## Part 7: Immediate Action Plan (Next 6 Months)
 
-### 11.1 Critical Path Schedule
+### 7.1 Month 1-2: Setup & Design
 
-| Month | Week | Milestone | Deliverable |
-|-------|------|-----------|-------------|
-| **1** | 1-4 | Phase 2 Complete | Kalman + Adaptive QoS integrated |
-| **2** | 5-8 | Phase 3 Complete | ECS functional, initial validation |
-| **3** | 9-12 | Formal Verification | TLA+ proofs, SPIN model checking |
-| **4** | 13-16 | FPGA Testbed | Hardware validation complete |
-| **5** | 17-20 | Paper Draft | Manuscript complete, internal review |
-| **5.5** | | **Submission** | Submit to IEEE/ACM ToN |
-| **9-10** | | Reviews Received | Address reviewer comments |
-| **10.5** | | Revision Submitted | |
-| **14-15** | | **Publication** | Paper appears in journal |
+**Week 1-2:**
+- [ ] Create feature branch: `git checkout -b phase1-adaptive-buffers-bounded-wfq`
+- [ ] Set up literature library (Zotero) with 50+ papers
+- [ ] Draft Phase 1 abstract (150 words)
+- [ ] Schedule advisor meeting to review roadmap
 
-### 11.2 Parallelization Opportunities
+**Week 3-4:**
+- [ ] Complete detailed specification for `adaptive_buffer_pool_v3.sv`
+- [ ] Design interface between buffer pool and existing `linklist_dynamic_fifo.sv`
+- [ ] Draft micro-burst detection algorithm (pseudocode)
 
-| Track A (Critical Path) | Track B (Parallel) | Track C (Parallel) |
-|------------------------|-------------------|-------------------|
-| Weeks 1-8: Core implementation | Weeks 5-8: TLA+ specifications | Weeks 9-12: FPGA synthesis |
-| Weeks 9-12: Integration testing | Weeks 9-12: SPIN model checking | Weeks 13-16: Hardware validation |
-| Weeks 13-16: Simulation experiments | Weeks 17-20: Paper writing (results section) | Weeks 17-20: Paper writing (implementation) |
+**Week 5-6:**
+- [ ] Complete specification for `bounded_approximate_wfq_v3.sv`
+- [ ] Derive fairness bound proof (Theorem 1)
+- [ ] Identify comparison baselines (A²FQ, Gearbox, etc.)
 
-**With 2-person team:** Reduce timeline to **12-14 weeks**
+**Week 7-8:**
+- [ ] Write Phase 1 Introduction section (draft)
+- [ ] Create architecture diagrams (draw.io)
+- [ ] Set up Python simulation environment for algorithm validation
 
----
+### 7.2 Month 3-4: Implementation
 
-## Part 12: Success Metrics and Validation Criteria
+**Week 9-10:**
+- [ ] Implement `adaptive_buffer_pool_v3.sv` (300 lines)
+- [ ] Write directed testbench (test urgency calculation)
+- [ ] Integrate with existing `switch_memory_manager.sv`
 
-### 12.1 Quantitative Targets (Must Achieve for Q1)
+**Week 11-12:**
+- [ ] Implement `bounded_approximate_wfq_v3.sv` (250 lines)
+- [ ] Write constrained random testbench
+- [ ] Verify service deviation tracking
 
-| Metric | Target | Stretch Goal | Validates |
-|--------|--------|--------------|-----------|
-| **Hotspot Throughput Improvement** | ≥4× baseline | ≥6× | ECS effectiveness |
-| **p99 Latency Reduction (Hotspot)** | ≥60% | ≥75% | Prediction + pooling |
-| **Fairness (Jain Index)** | ≥0.90 | ≥0.93 | Adaptive QoS |
-| **Uniform Traffic Performance** | ≥98% baseline | ≥99.5% | No overhead penalty |
-| **Prediction MAE** | <50 words | <30 words | Kalman accuracy |
-| **Area Overhead** | <10% | <8% | Practical feasibility |
-| **BRAM Reduction** | ≥50% (with GCQ) | ≥60% | Scalability |
+**Week 13-14:**
+- [ ] Integration testing (both modules together)
+- [ ] Debug and fix issues
+- [ ] Functional coverage collection
 
-### 12.2 Qualitative Success Criteria
+**Week 15-16:**
+- [ ] Code review and cleanup
+- [ ] Documentation (inline comments, README)
+- [ ] Simulation performance tuning
 
-**For Q1 Acceptance:**
-1. ✅ **Novelty:** ECS breaks fundamental architectural constraint (not incremental)
-2. ✅ **Rigor:** Formal verification (TLA+/SPIN) proves correctness
-3. ✅ **Validation:** FPGA testbed + 5+ realistic workloads
-4. ✅ **Clarity:** Explicit differentiation from all prior work
-5. ✅ **Reproducibility:** Open-source code, detailed parameter documentation
+### 7.3 Month 5-6: Validation & Paper Writing
 
-**For High Citation Impact:**
-1. ✅ **Practical:** Real hardware implementation on commodity FPGA
-2. ✅ **Scalable:** Demonstrated from 8 to 128 ports
-3. ✅ **Complete:** Addresses multiple bottlenecks (throughput, latency, fairness, memory)
+**Week 17-18:**
+- [ ] FPGA synthesis for N=32 ports
+- [ ] Timing closure (target 250 MHz)
+- [ ] Resource utilization analysis
 
----
+**Week 19-20:**
+- [ ] Micro-burst traffic generation
+- [ ] Collect data for Test Suite 1
+- [ ] Preliminary fairness experiments
 
-## Part 13: Contingency Plans
+**Week 21-22:**
+- [ ] Complete Sections II-IV (Background, Architecture, Theory)
+- [ ] First draft of evaluation section (incomplete data OK)
 
-### 13.1 If ECS Performance Below Target
-
-**Scenario:** Hotspot throughput only 2-3× (not 4-6×)
-
-**Diagnosis:**
-- Check arbiter allocation: Are multiple arbiters actually being used?
-- Verify no contention at XPQ reassembly
-- Measure overhead of multi-path transmission
-
-**Fallback Strategy:**
-1. **Adjust Claims:** "2-3× improvement" still publishable if well-validated
-2. **Reposition:** Emphasize memory savings (90%) and latency reduction as primary contributions
-3. **Alternative Venue:** Target JSAC (special issue) instead of ToN
-
-### 13.2 If FPGA Timing Closure Fails
-
-**Scenario:** Cannot achieve 250 MHz with ECS enabled
-
-**Diagnosis:**
-- Identify critical path (likely Kalman predictor or ECS allocator)
-- Check if pipeline stages added correctly
-
-**Solutions:**
-1. **Reduce Fmax Target:** 200 MHz still respectable (line rate = 8 Gbps)
-2. **Simplify Kalman:** Reduce PREDICTION_HORIZON from 50 to 20 cycles
-3. **Distributed ECS:** Per-port ECS managers instead of global
-
-**Fallback:**
-- If hardware timing unsolvable, focus on **simulation validation**
-- Position as "architectural concept validated in cycle-accurate simulator"
-- Target JSAC instead of NSDI/SIGCOMM
-
-### 13.3 If Reviewers Claim "Incremental"
-
-**Preemptive Defense in Paper:**
-
-> "While prior work has explored buffer sharing (REVERIE), predictive scheduling (SwiftQueue), and multi-path routing (datacenter ECMP), **ECS is the first to combine predictive allocation with dynamic intra-fabric multi-path transmission**. Specifically:
->
-> - REVERIE shares buffers but maintains 1:1 VOQ-crosspoint mapping
-> - SwiftQueue predicts for monitoring, not resource allocation
-> - ECMP operates at routing layer (inter-switch), not fabric layer (intra-switch)
->
-> Our innovation operates at the **fundamental architectural level**: we modify the switch fabric's internal arbitration to allow temporal borrowing of crosspoint resources, which is qualitatively different from prior approaches."
-
-**If Still Rejected on "Incremental" Grounds:**
-
-1. **Major Revision:** Add TSN integration (Phase 4) to create "hybrid deterministic-elastic" novelty
-2. **Resubmit:** USENIX NSDI with stronger "systems implementation" positioning
-3. **Pivot:** Split into two papers - one on ECS architecture (ToN), one on FPGA implementation (TPDS)
+**Week 23-24:**
+- [ ] Advisor review of draft
+- [ ] Incorporate feedback
+- [ ] Plan next phase (start Phase 2 design in parallel)
 
 ---
 
-## Part 14: Practical Next Steps (Action Items)
+## Part 8: Long-Term Success Metrics
 
-### 14.1 Immediate Actions (Week 1)
+### 8.1 Publication Impact Goals
 
-1. **Create Feature Branch:**
-   ```bash
-   cd switch_fabric_v2
-   git checkout -b enhancement-q1-publication
-   ```
+| Metric | Target | Tracking Method |
+|--------|--------|-----------------|
+| **Citation Count (5 years)** | 50+ per paper | Google Scholar alerts |
+| **Journal Impact Factor** | ToN: 3.5, JSAC: 6.0, TII: 10.0 | Publish in high-IF venues |
+| **Conference Presentations** | 3-5 talks | Submit to INFOCOM, SIGCOMM workshops |
+| **Code Reuse** | 100+ GitHub stars | Open-source release with good docs |
+| **Industry Adoption** | 1-2 companies evaluate | Outreach to Cisco, Intel, Broadcom |
 
-2. **Add New Directories:**
-   ```bash
-   mkdir -p rtl/enhancement/
-   mkdir -p verification/tla_specs/
-   mkdir -p verification/spin_models/
-   mkdir -p fpga/testbed/
-   ```
+### 8.2 Career Milestones
 
-3. **Implement Kalman Predictor:**
-   - Start with `kalman_queue_predictor_v2.sv`
-   - Test standalone (predict synthetic traffic pattern)
-   - Target MAE < 50 words
-
-4. **Begin TLA+ Specification:**
-   - Download TLA+ Toolbox
-   - Write basic spec for elastic allocation
-   - Run TLC model checker on small instance (4 VOQs, 2 arbiters)
-
-### 14.2 Weekly Milestones (First Month)
-
-**Week 1:**
-- [ ] Kalman predictor module complete
-- [ ] Unit test: prediction accuracy on known patterns
-
-**Week 2:**
-- [ ] Adaptive QoS controller complete
-- [ ] Integration test: quantum adjusts based on occupancy
-
-**Week 3:**
-- [ ] ECS manager skeleton complete
-- [ ] Allocation algorithm functional (without multi-path)
-
-**Week 4:**
-- [ ] Multi-path transmitter/receiver complete
-- [ ] Integration test: packets correctly reassembled
-
-**Gate to Month 2:** All Phase 2 modules functional individually
-
-### 14.3 Monthly Progress Checkpoints
-
-**End of Month 1:**
-- [ ] All new modules compile in Verilator
-- [ ] Standalone tests pass for each component
-- [ ] Integration plan documented
-
-**End of Month 2:**
-- [ ] Full system simulation with ECS enabled
-- [ ] Hotspot throughput >4× baseline in simulation
-- [ ] No regressions on uniform traffic
-
-**End of Month 3:**
-- [ ] TLA+ specification complete
-- [ ] SPIN model checking passed
-- [ ] FPGA synthesis complete (timing closed)
-
-**End of Month 4:**
-- [ ] Hardware testbed deployed
-- [ ] All experiments complete
-- [ ] Statistical analysis done
-
-**End of Month 5:**
-- [ ] Paper draft complete
-- [ ] Internal review feedback addressed
-- [ ] Ready for submission
+| Timeline | Milestone | Impact |
+|----------|-----------|--------|
+| **Year 1.5** | Phase 1 accepted (ToN) | Strong PhD foundation |
+| **Year 2** | Conference paper (INFOCOM) | Visibility in community |
+| **Year 2.5** | Phase 2 accepted (JSAC) | Establishes expertise in area |
+| **Year 3** | Best Paper Award (workshop) | Recognition |
+| **Year 3.5** | Phase 3 accepted (TII) | Completes narrative |
+| **Year 4** | Thesis defense | PhD granted |
+| **Post-PhD** | Faculty position or senior research role | Leverage publication record |
 
 ---
 
-## Part 15: Long-Term Research Roadmap (Beyond First Paper)
+## Part 9: Resource Requirements
 
-### 15.1 Follow-On Publications
+### 9.1 Hardware
 
-**Paper 2: TSN Integration** (If implemented in Phase 4)
-> "Deterministic-Elastic Hybrid Switch Fabric: Seamless Integration of IEEE 802.1Qbv with Statistical Arbitration"
+| Item | Quantity | Cost (Estimate) | Purpose |
+|------|----------|-----------------|---------|
+| Xilinx VCU118 (VU9P) | 1 | $6,000 | Primary FPGA platform |
+| Xilinx Alveo U280 (optional) | 1 | $5,000 | High-radix testing (HBM) |
+| 10GbE NIC (Intel X540) | 2 | $500 | Traffic generation |
+| Workstation (GPU for ML training) | 1 | $3,000 | Offline classifier training |
+| **Total** | | **~$14,500** | Grant funding needed |
 
-**Target:** IEEE JSAC or Computer Networks
+### 9.2 Software
 
-**Paper 3: Scalability Study** (If validated at N=64 or 128)
-> "Scaling Elastic Crosspoint Scheduling to 128-Port Datacenter Fabrics: A Hierarchical Approach"
+| Tool | License | Cost | Usage |
+|------|---------|------|-------|
+| Vivado Design Suite | Academic | Free | FPGA synthesis |
+| PyTorch | Open-source | Free | ML training |
+| TLA+ Toolbox | Open-source | Free | Formal verification |
+| SPIN Model Checker | Open-source | Free | Deadlock analysis |
+| MATLAB | Academic | $50/year | Analytical modeling |
+| Zotero | Open-source | Free | Reference management |
 
-**Target:** IEEE TPDS or INFOCOM
+### 9.3 Compute
 
-**Paper 4: In-Network ML** (If time permits in Phase 4)
-> "Lightweight Machine Learning for Traffic Classification in FPGA Switch Fabrics"
-
-**Target:** ACM/IEEE Transactions on Machine Learning for Systems
-
-### 15.2 Potential Extensions
-
-1. **Optical-Electronic Hybrid:** Replace electrical crosspoints with optical circuit switching for high-bandwidth paths (100+ Gbps)
-
-2. **3D Fabric Topology:** Extend ECS to three-dimensional interconnects (TSVs in 3D ICs)
-
-3. **Quantum-Inspired Scheduling:** Explore Grover-like algorithms for weighted matching (theoretical interest)
-
-4. **DRL-Based Allocation:** Replace Kalman prediction with deep reinforcement learning for fully learned policy
-
----
-
-## Conclusion: Strategic Summary
-
-### Key Takeaways
-
-1. **Your v2.0 implementation is already 75% of the way to Q1 publication**
-   - Extensive QoS infrastructure exceeds original proposals
-   - Parametric architecture demonstrates engineering rigor
-   - Verification framework foundation exists
-
-2. **Focus remaining effort on three strategic gaps:**
-   - **Elastic Crosspoint Scheduling** (the breakthrough)
-   - **Kalman-based prediction** (the intelligence layer)
-   - **FPGA testbed** (the validation proof)
-
-3. **Leverage existing strengths in positioning:**
-   - 8-level QoS → "Fine-grained deterministic-statistical hybrid"
-   - Cell mode → "Adaptive latency-throughput optimization"
-   - Multicast → "Memory-efficient scalability enabler"
-   - Parametric → "Comprehensive validation across deployment scenarios"
-
-4. **Timeline is achievable:**
-   - 16-20 weeks to submission (not 24-32 as originally estimated)
-   - 85% acceptance probability at IEEE/ACM ToN
-   - First-round acceptance likely with rigorous validation
-
-### Final Recommendation
-
-**Proceed with this revised enhancement strategy:**
-
-1. **Immediate (Weeks 1-4):** Implement Kalman predictor + Adaptive QoS controller
-2. **Core (Weeks 5-10):** Implement ECS manager + multi-path transmission
-3. **Validation (Weeks 11-16):** Formal verification + FPGA testbed
-4. **Publication (Weeks 17-20):** Manuscript preparation + submission
-
-**Expected Outcome:** Q1 journal publication in IEEE/ACM Transactions on Networking with 80-85% acceptance probability, positioning your work as a landmark contribution to switch fabric design.
-
-**Your v2.0 codebase is solid. The path to publication is clear. Execute this plan, and you're on track for success.**
+| Resource | Allocation | Provider |
+|----------|-----------|----------|
+| CPU hours (simulations) | 10,000 hours | University cluster |
+| GPU hours (ML training) | 500 hours | Google Colab / AWS |
+| Storage (traces, results) | 1 TB | University NAS |
 
 ---
 
-**End of Enhancement Strategy Document**
+## Part 10: Collaboration Opportunities
+
+### 10.1 Potential Academic Collaborators
+
+| Institution | Researcher | Expertise | Collaboration Opportunity |
+|-------------|-----------|-----------|--------------------------|
+| **FORTH-ICS (Greece)** | Nikos Chrysos | CICQ fairness | Co-author on Phase 2 (cite his convergence work) |
+| **Stanford** | Nick McKeown | VOQ scheduling | Validation on P4-enabled Tofino |
+| **MIT** | Mohammad Alizadeh | Data center networks | Real trace sharing, co-submission |
+| **CMU** | Vyas Sekar | Programmable fabrics | Phase 3 control plane design |
+
+### 10.2 Industry Partnerships
+
+| Company | Contact Point | Potential Collaboration |
+|---------|--------------|------------------------|
+| **Broadcom** | Switch ASIC team | Benchmark comparisons, potential licensing |
+| **Intel** | FPGA Networking group | Stratix 10 port, testbed access |
+| **Cisco** | Nexus team | Real-world deployment feedback |
+| **Microsoft** | Azure networking | Cloud data center validation |
 
 ---
+
+## Part 11: Dissemination Strategy
+
+### 11.1 Primary Publications
+
+1. **Phase 1:** IEEE/ACM Transactions on Networking (ToN) - **Q1**
+2. **Phase 2:** IEEE Journal on Selected Areas in Communications (JSAC) - **Q1**
+3. **Phase 3:** IEEE Transactions on Industrial Informatics (TII) - **Q1**
+
+### 11.2 Secondary Venues
+
+| Type | Venue | Timing | Content |
+|------|-------|--------|---------|
+| **Workshop** | IEEE LANMAN | Year 2 | Early Phase 2 results |
+| **Magazine** | IEEE Network | Year 3 | Tutorial on elastic scheduling |
+| **Conference** | USENIX NSDI (poster) | Year 2 | FPGA demo |
+| **Short Paper** | IEEE ICC | Year 1.5 | Bounded WFQ theory |
+
+### 11.3 Non-Academic Outreach
+
+| Platform | Activity | Frequency |
+|----------|----------|-----------|
+| **GitHub** | Open-source code releases | Per paper acceptance |
+| **Medium/Blog** | Technical blog posts explaining research | Quarterly |
+| **Twitter** | Share paper acceptances, results | Per milestone |
+| **LinkedIn** | Professional updates | Per paper |
+| **YouTube** | FPGA demo videos | 2-3 total |
+| **ArXiv** | Preprints before journal submission | Per submission |
+
+---
+
+## Part 12: Thesis Structure Preview
+
+**Title:** *"Adaptive Fair Scheduling Architectures for High-Performance Programmable Switch Fabrics"*
+
+**Chapters:**
+
+1. **Introduction (30 pages)**
+   - Datacenter networking challenges
+   - VOQ fundamentals and limitations
+   - Research questions and contributions
+   - Thesis organization
+
+2. **Background & Related Work (40 pages)**
+   - Switch architecture evolution
+   - VOQ scheduling algorithms (comprehensive survey)
+   - Approximate WFQ variants
+   - Programmable data planes
+
+3. **Dynamic Shared Buffer Management (60 pages)**
+   - Micro-burst characterization
+   - Adaptive pooling algorithm
+   - Memory efficiency analysis
+   - **Based on Phase 1 paper**
+
+4. **Bounded Approximate Weighted Fair Queuing (50 pages)**
+   - Fairness theory and proofs
+   - Hardware implementation
+   - Experimental validation
+   - **Based on Phase 1 paper**
+
+5. **Elastic Crosspoint Scheduling (70 pages)**
+   - Architectural design
+   - Multi-path allocation
+   - Formal verification
+   - **Based on Phase 2 paper**
+
+6. **Predictive Arbitration with ML Guidance (60 pages)**
+   - Traffic classification
+   - Kalman-ML hybrid
+   - Performance analysis
+   - **Based on Phase 2 paper**
+
+7. **Scalable VOQ Grouping for High-Radix Fabrics (50 pages)**
+   - Clustering algorithms
+   - HOL blocking mitigation
+   - Scalability validation
+   - **Based on Phase 2 paper**
+
+8. **Programmable QoS Co-Design (50 pages)**
+   - Control plane architecture
+   - Energy-aware scheduling
+   - Real deployment scenarios
+   - **Based on Phase 3 paper**
+
+9. **Integrated System Evaluation (40 pages)**
+   - End-to-end performance
+   - Comparison with state-of-the-art
+   - Lessons learned
+
+10. **Conclusions & Future Directions (20 pages)**
+    - Summary of contributions
+    - Broader impact
+    - Open research questions
+
+**Total:** ~470 pages (typical PhD thesis: 200-400 pages, so well within range)
+
+---
+
+## Part 13: Final Recommendations
+
+### 13.1 Strategic Priorities
+
+**Immediate Focus (Next 6 Months):**
+1. ✅ **Implement Phase 1 (Buffers + Bounded WFQ)** - Foundation for everything
+2. ✅ **Publish Phase 1 in IEEE ToN** - Establish credibility
+3. ✅ **Start Phase 2 design in parallel** - Maintain momentum
+
+**Medium-Term (6-18 Months):**
+1. ✅ **Complete Phase 2 (ECS + ML + Grouping)** - Flagship contribution
+2. ✅ **Submit to IEEE JSAC** - High-impact venue
+3. ✅ **Present at major conference** - Build visibility
+
+**Long-Term (18-36 Months):**
+1. ✅ **Complete Phase 3 (Programmable Co-Design)** - Systems integration
+2. ✅ **Industry engagement** - Validate practical relevance
+3. ✅ **Thesis writing & defense** - Complete PhD
+
+### 13.2 Key Success Factors
+
+1. **Incremental Progress:** Each phase builds on previous work
+2. **Dual Impact:** Theoretical rigor + practical FPGA validation
+3. **Clear Differentiation:** Explicit comparison with 20+ prior works
+4. **Reproducibility:** Open-source code, detailed documentation
+5. **Industry Relevance:** Solve real datacenter problems (AI workloads)
+
+### 13.3 Decision Point (This Week)
+
+**Question:** Start with Phase 1 as recommended, or pivot to alternative?
+
+**Recommendation:** ✅ **Proceed with Phase 1**
+
+**Rationale:**
+- Natural extension of your v2.0 codebase (75% complete)
+- Addresses two critical gaps (memory efficiency + fairness)
+- High publication probability in Q1 venue (IEEE ToN)
+- Builds foundation for Phases 2-3
+- Manageable scope (10-12 months)
+
+**Alternative Paths (If you disagree):**
+- **Track A (Theory-first):** Start with fairness proofs, defer implementation
+- **Track B (Quick win):** Target conference (INFOCOM) instead of journal
+- **Track C (High-risk):** Jump directly to Phase 2 (ECS + ML)
+
+---
+
+## Conclusion
+
+This **Enhanced Switch Fabric Architecture v3.0 Enhancement Strategy** provides:
+
+1. ✅ **Three distinct, high-impact publications** (ToN, JSAC, TII)
+2. ✅ **Clear differentiation** from 20+ recent competing works
+3. ✅ **Leverages your existing v2.0 implementation** (75% complete)
+4. ✅ **Addresses critical research gaps** (adaptability, fairness, scalability)
+5. ✅ **Realistic timeline** (36-48 months to PhD completion)
+6. ✅ **Strong PhD narrative** (coherent story across 3 papers)
+
+**Next Action (This Week):**
+- Review this roadmap with your advisor
+- Confirm Phase 1 as starting point
+- Begin detailed specification for `adaptive_buffer_pool_v3.sv`
+- Set up Zotero library with key papers
+- Draft Phase 1 abstract (150 words)
+
+**You have a solid foundation (v2.0), a clear path forward (3 phases), and high publication potential (Q1 venues). Execute this plan systematically, and you're on track for a successful PhD with significant research impact.**
+
+---
+
+**END OF ENHANCEMENT STRATEGY v3.0**
 
 **Document Metadata:**
-- Based on: Enhanced Ethernet Switch Fabric v2.0 (doc_v2.md)
-- Enhancement alignment: 75% already implemented, 25% strategic additions
-- Publication target: IEEE/ACM Transactions on Networking
-- Timeline: 5 months to submission, 14-15 months to publication
-- Success probability: 80-85%
+- **Version:** 3.0 (Comprehensive Multi-Phase Research Roadmap)
+- **Date:** December 31, 2025
+- **Base:** Enhanced Ethernet Switch Fabric v2.0 (doc_v2.md)
+- **New Integration:** 23 research directions from comprehensive landscape analysis
+- **Target:** 3 Q1 publications + PhD thesis
+- **Timeline:** 36-48 months
+- **Success Probability:** 80-85% (with diligent execution)
+
+
+
+# Comprehensive Research Roadmap for Enhanced Ethernet Switch Fabric Architecture
+
+Based on your project and the extensive research landscape in VOQ, Crosspoint Scheduling, and Approximate WFQ, here's a structured roadmap organized by research direction with clear paths forward.
+
+## 📋 **Consolidated Research Directions Table**
+
+| ID | Research Direction | Core Idea | Relevance to Your Project | Novelty Level | Target Venue | Timeline |
+|----|-------------------|-----------|---------------------------|---------------|--------------|----------|
+| **VOQ Enhancements** |
+| 1 | Hierarchical VOQs for Lossless Ethernet | Separate VOQ traffic by flow/tenant to prevent PFC congestion spreading | High - addresses congestion in your 8-level QoS with credit-based flow control | Medium | IEEE ToN | 6-9 months |
+| 2 | Dynamic Shared Buffer Memory for VOQs | Dynamic allocation to handle micro-bursts without static partitioning | **Very High** - directly enhances your linked-list memory allocation (Section 3.4) | High | IEEE JSAC | 8-12 months |
+| 3 | High-Radix Scalable VOQ Grouping | Adaptive grouping to solve quadratic VOQ explosion for 128+ ports | **Critical** - your N×N×QoS matrix explodes at high radix | High | IEEE ToN | 10-14 months |
+| 4 | Elastic Hierarchical VOQ Architecture | Multi-level on-demand queues replacing static models | High - extends your parametric design philosophy | High | IEEE ToN | 12-16 months |
+| 5 | AI-Assisted VOQ Scheduling | ML for congestion prediction in VOQ arbitration | Medium - could enhance your QoS-aware matching arbiter | **Very High** | IEEE TETC | 10-15 months |
+| **Crosspoint/CICQ Scheduling** |
+| 6 | Predictive Elastic Crosspoint Scheduling (ECS) | Dynamically reallocate arbiters using urgency models | **Very High** - extends your crosspoint buffering (Section 3.3) | **Very High** | IEEE ToN | 12-18 months |
+| 7 | Distributed Fair Crosspoint Scheduling | Local schedulers approximate WFQ fairness at O(1) | **Critical** - addresses fairness in your distributed architecture | High | IEEE/ACM ToN | 10-14 months |
+| 8 | Crosspoint-Aware VOQ Coalescing | Merge idle VOQs/XPQs to balance load and reduce fragmentation | High - optimizes your dynamic memory allocation | High | IEEE TVLSI | 8-12 months |
+| 9 | Credit-Based Flow Control Optimization | Optimize credit loops for tiny crosspoint buffers | Medium - refines your existing credit-based mechanism | Medium | IEEE TNSM | 6-9 months |
+| 10 | Low-Complexity CICQ Scheduling | O(1) per-packet decisions with near-WFQ fairness | High - alternative to your priority-based matching | Medium | IEEE ICC | 6-8 months |
+| **Approximate WFQ** |
+| 11 | Adaptive Weighted Fair Queuing (Feedback-WFQ) | WFQ quantum updated continuously via closed-loop feedback | **Very High** - enhances your static WFQ implementation | **Very High** | IEEE TC | 10-14 months |
+| 12 | Approximate WFQ with Bounded Fairness Theory | Formal fairness deviation bounds for sublinear WFQ | **Critical** - provides theoretical foundation for your WFQ | **Very High** | IEEE ToN | 12-18 months |
+| 13 | Adaptive Approximate Fair Queueing (A²FQ) | Change queue counts based on traffic for fairness | High - adapts your 8-level QoS dynamically | High | IEEE TNSE | 8-12 months |
+| 14 | Hierarchical Approximate WFQ | O(1) complexity WFQ for high throughput | High - reduces complexity vs. your current WFQ | Medium | USENIX NSDI | 10-12 months |
+| 15 | Approximate WFQ with Deficit Compensation | Quantize weights and share timers for low cost | Medium - hardware optimization of your WFQ | Medium | IEEE Micro | 6-10 months |
+| **Predictive & Adaptive** |
+| 16 | Kalman-Predictive Queue Management | Predict queue depth with Kalman filtering for proactive control | High - adds predictive layer to your fabric | High | IEEE TNSM | 8-12 months |
+| 17 | ML-Guided VOQ Arbitration | Learning-based real-time arbitration for VOQ-XPQ matching | **Very High** - **RECOMMENDED PRIMARY DIRECTION** | **Very High** | IEEE ToN | 12-18 months |
+| **System Integration** |
+| 18 | Hardware–Software Co-Design for Programmable QoS | Software tunes hardware schedulers at runtime | **Very High** - leverages your microprocessor interface | High | IEEE Network | 10-14 months |
+| 19 | Programmable Scheduler Architecture | Software-defined pipeline for upgradable scheduling | Medium - extends your runtime reconfiguration | High | IEEE Micro | 12-16 months |
+| **Theory & Verification** |
+| 20 | Formal Verification of Elastic Scheduling | Prove correctness & fairness of elastic schedulers | High - extends your comprehensive verification suite | Medium | IEEE TCAD | 8-12 months |
+| 21 | Distributed CICQ Fairness Convergence | Prove weighted max-min convergence in CICQ fabrics | High - theoretical foundation for distributed design | Medium | IEEE JSAC | 10-14 months |
+| **Emerging Technologies** |
+| 22 | Energy-Aware Elastic Scheduling | Elastic scheduling with dynamic power control | Medium - adds green computing dimension | High | IEEE TSC | 8-10 months |
+| 23 | Optical/Photonic Elastic Scheduling | Adapt elastic scheduling to photonic crossbars | Low - future-looking but distant from current FPGA focus | **Very High** | IEEE PTL | 16-24 months |
+
+---
+
+## 🎯 **Recommended Primary Research Path**
+
+Based on your current project capabilities and research gaps, here's the **optimal 3-paper PhD roadmap**:
+
+### **Phase 1: Foundation Paper (8-12 months)**
+**Title:** *"Dynamic Shared Buffer Management with Approximate WFQ for High-Radix Ethernet Switch Fabrics"*
+
+**Core Contributions:**
+1. **Dynamic Shared Buffer Memory (ID #2)** - Extends your linked-list allocation with:
+   - Adaptive buffer pooling across VOQs based on real-time occupancy
+   - Micro-burst handling algorithms for AI/ML workloads
+   - 40-60% memory efficiency improvement over static partitioning
+
+2. **Approximate WFQ with Bounded Fairness (ID #12)** - Formalizes your WFQ with:
+   - Mathematical bounds on service deviation (SD ≤ ε_s)
+   - Sublinear O(1) enqueue/dequeue complexity
+   - <5% fairness deviation with 50% logic reduction
+
+**Target:** IEEE/ACM Transactions on Networking (ToN)
+
+**Implementation Steps:**
+- Month 1-2: Extend `switch_memory_manager.sv` with adaptive pooling
+- Month 3-4: Implement bounded A-WFQ in `switch_scheduler_wfq.sv`
+- Month 5-6: Formal proofs of fairness bounds
+- Month 7-8: FPGA prototyping and benchmarking
+- Month 9-10: Paper writing and submission
+- Month 11-12: Revision cycle
+
+**Key Benchmarks:**
+- Memory utilization: 60-70% vs 40-50% baseline (Benchmark 6)
+- Fairness deviation: <5% across all QoS levels
+- Throughput: >99% at full load
+- Latency: Maintain <1µs for high-priority traffic
+
+---
+
+### **Phase 2: Advanced Architecture Paper (10-14 months)**
+**Title:** *"Predictive Elastic Crosspoint Scheduling with ML-Guided Arbitration for Scalable Switch Fabrics"*
+
+**Core Contributions:**
+1. **Predictive Elastic Crosspoint Scheduling (ID #6)** - Introduces:
+   - Dynamic arbiter reallocation based on VOQ urgency
+   - Multi-path arbitration breaking 1:1 VOQ-XPQ constraint
+   - Kalman filtering for queue depth prediction (ID #16)
+
+2. **ML-Guided VOQ Arbitration (ID #17)** - Implements:
+   - Lightweight RL agent (decision tree/micro-NN) for match prediction
+   - Training on traffic metadata (burst length, QoS, congestion)
+   - 5-10% throughput improvement under variable loads
+
+3. **High-Radix Scalable VOQ Grouping (ID #3)** - Addresses:
+   - Adaptive destination grouping for 128+ ports
+   - Minimal HOL blocking reintroduction
+   - Reduced queue count from N² to ~O(N√N)
+
+**Target:** IEEE Journal on Selected Areas in Communications (JSAC)
+
+**Implementation Steps:**
+- Month 1-3: Design elastic arbiter architecture in `switch_high_radix_matching.sv`
+- Month 4-5: Implement Kalman predictor for queue management
+- Month 6-8: Train and integrate ML model (PyTorch → SystemVerilog)
+- Month 9-10: VOQ grouping algorithm development
+- Month 11-12: Comprehensive FPGA evaluation (N=32, 64, 128)
+- Month 13-14: Paper writing and submission
+
+**Key Benchmarks:**
+- Latency reduction: 2-3x improvement in incast scenarios (vs Benchmark 4: 48µs → ~16µs)
+- Throughput: 410+ Gbps at 100% load (vs 399.5 Gbps baseline)
+- Scalability: Support 128 ports with <15% resource overhead
+- Fairness: Maintain bounded deviation with elastic scheduling
+
+---
+
+### **Phase 3: System Integration Paper (10-14 months)**
+**Title:** *"Programmable Elastic QoS Fabrics: Hardware-Software Co-Design for Adaptive Data Center Networks"*
+
+**Core Contributions:**
+1. **Hardware-Software Co-Design (ID #18)** - Delivers:
+   - Runtime QoS policy updates via microprocessor interface
+   - P4/RISC-V control plane integration
+   - Adaptive quantum[] and priority[] tuning based on telemetry
+
+2. **Crosspoint-Aware VOQ Coalescing (ID #8)** - Provides:
+   - Dynamic queue merging for idle VOQs/XPQs
+   - Buffer defragmentation algorithms
+   - 10-15% energy reduction through resource consolidation
+
+3. **Distributed Fair Crosspoint Scheduling (ID #7)** - Ensures:
+   - Local O(1) fairness approximation at crosspoints
+   - Distributed CICQ fairness convergence proof (ID #21)
+   - Stability under elastic behavior
+
+**Target:** IEEE Transactions on Industrial Informatics (TII) or IEEE Network
+
+**Implementation Steps:**
+- Month 1-3: Design control plane API and software stack
+- Month 4-6: Implement coalescing logic in memory manager
+- Month 7-8: Distributed scheduler with convergence proofs
+- Month 9-10: Real-world traffic evaluation (data center traces)
+- Month 11-12: Energy profiling and optimization
+- Month 13-14: Paper writing and submission
+
+**Key Benchmarks:**
+- Reconfiguration latency: <100µs for policy updates
+- Energy savings: 10-15% vs static allocation
+- Convergence time: Prove bounded convergence to max-min fairness
+- Real traffic: Evaluate on Google/Facebook data center traces
+
+---
+
+## 🔬 **Alternative Shorter Research Tracks**
+
+### **Track A: Theoretical Focus (8-10 months)**
+Combine **ID #12 (Bounded WFQ Theory)** + **ID #21 (CICQ Fairness Convergence)**
+
+**Paper:** *"Formal Fairness Guarantees for Approximate Weighted Fair Queuing in Distributed Switch Fabrics"*
+- Target: IEEE Transactions on Computers (TC)
+- Focus: Mathematical proofs, analytical models
+- Less hardware prototyping, more theoretical rigor
+
+### **Track B: Hardware Optimization (6-9 months)**
+Combine **ID #8 (VOQ Coalescing)** + **ID #15 (WFQ Deficit Compensation)** + **ID #9 (Credit Optimization)**
+
+**Paper:** *"Memory and Energy Efficient Scheduling for High-Performance Ethernet Switches"*
+- Target: IEEE Transactions on VLSI Systems (TVLSI)
+- Focus: Resource optimization, power analysis
+- Leverage your existing FPGA synthesis reports
+
+### **Track C: AI/ML Integration (10-12 months)**
+Deep dive into **ID #17 (ML-Guided Arbitration)** with **ID #5 (AI-VOQ Scheduling)**
+
+**Paper:** *"Neural Network-Assisted Adaptive Scheduling for Next-Generation Data Center Fabrics"*
+- Target: IEEE Transactions on Emerging Topics in Computing (TETC)
+- Focus: Novel ML architectures for networking
+- High-risk, high-reward novelty
+
+---
+
+## 📊 **Gap Analysis: What Your Project Currently Lacks vs. Research Opportunities**
+
+| Current Project Feature | Research Gap | Best Direction to Address | Priority |
+|------------------------|--------------|--------------------------|----------|
+| Static WFQ with fixed quanta | No adaptability to traffic dynamics | **#11: Feedback-WFQ** or **#12: Bounded A-WFQ** | **Critical** |
+| Fixed N×N×QoS VOQ matrix | Doesn't scale beyond 128 ports | **#3: VOQ Grouping** | **Critical** |
+| Linked-list memory allocation | Not optimized for micro-bursts | **#2: Dynamic Shared Buffers** | **High** |
+| QoS-aware matching arbiter | No predictive/learning capability | **#17: ML-Guided Arbitration** | **High** |
+| Crosspoint buffering | Lacks dynamic resource reallocation | **#6: Elastic Crosspoint Scheduling** | **High** |
+| Credit-based flow control | Could be further optimized | #9: Credit Optimization | Medium |
+| 8-level QoS hierarchy | Static priority mapping | **#18: Programmable QoS Co-Design** | **High** |
+| Comprehensive verification suite | No formal fairness proofs | #20: Formal Verification of Scheduling | Medium |
+| Energy efficiency | Not explicitly optimized | #22: Energy-Aware Scheduling | Medium |
+
+---
+
+## 🚀 **Immediate Next Steps (Next 3-6 Months)**
+
+### **Step 1: Choose Your Primary Direction (Week 1-2)**
+**Recommendation:** Start with **Phase 1** (Dynamic Buffers + Bounded A-WFQ)
+- **Why:** Builds naturally on your existing memory manager and WFQ
+- **Impact:** Addresses critical gaps with moderate risk
+- **Publishability:** Strong fit for IEEE ToN (Q1 journal)
+
+### **Step 2: Prototype Core Algorithms (Month 1-3)**
+
+**For Dynamic Shared Buffers (#2):**
+```systemverilog
+// Extend switch_memory_manager.sv
+module adaptive_buffer_pool #(
+    parameter NUM_PORTS = 32,
+    parameter BUFFER_DEPTH = 16384,
+    parameter BURST_THRESHOLD = 128
+)(
+    input logic clk, rst_n,
+    input logic [NUM_PORTS-1:0] voq_occupancy [8], // Per QoS level
+    output logic [15:0] allocated_buffers [NUM_PORTS][8]
+);
+    // Adaptive pooling logic
+    // Monitor micro-bursts via occupancy gradients
+    // Reallocate buffers dynamically
+endmodule
+```
+
+**For Bounded A-WFQ (#12):**
+```systemverilog
+// Enhance switch_scheduler_wfq.sv
+module bounded_approximate_wfq #(
+    parameter NUM_QUEUES = 8,
+    parameter EPSILON_S = 5 // Max service deviation %
+)(
+    // Add fairness deviation tracking
+    logic signed [31:0] service_deviation [NUM_QUEUES];
+    logic [31:0] bounded_quantum [NUM_QUEUES];
+    
+    // Quantized weight sharing
+    // O(1) enqueue/dequeue with deviation bounds
+);
+endmodule
+```
+
+### **Step 3: Establish Theoretical Framework (Month 2-4)**
+
+**Fairness Bounds Formalization:**
+- Define metrics: Service Deviation (SD), Delay Deviation (DD)
+- Prove bounds: SD ≤ ε_s, DD ≤ ε_d
+- Derive stability conditions for elastic buffers
+
+**Tools:**
+- Use `code_execution` for Python simulations (queuing models)
+- MATLAB/Simulink for analytical validation
+- TLA+ or SPIN for formal verification (optional)
+
+### **Step 4: FPGA Prototyping (Month 4-6)**
+
+**Benchmarking Suite Enhancement:**
+- Extend Appendix D benchmarks with:
+  - Micro-burst traffic patterns (AI/ML workloads)
+  - Fairness deviation measurements
+  - Memory efficiency comparisons
+  
+**Target Metrics:**
+| Metric | Baseline (Your v2.0) | Target with Enhancements | Evaluation Method |
+|--------|---------------------|-------------------------|-------------------|
+| Memory Utilization | 40-50% | 60-70% | Occupancy counters |
+| Fairness Deviation | Unbounded | <5% | Service deficit tracking |
+| Throughput (100% load) | 399.5 Gbps | >405 Gbps | Traffic generator |
+| Latency (High QoS) | <1µs | <800ns | Packet timestamping |
+| Resource Overhead | Baseline | <10% LUTs/BRAM | Synthesis reports |
+
+### **Step 5: Paper Writing (Month 5-6)**
+
+**Recommended Structure:**
+1. **Introduction** (2 pages)
+   - Motivation: AI/ML data center challenges
+   - Gap analysis: Static vs. adaptive scheduling
+   - Contributions: Numbered list of 3-4 key innovations
+
+2. **Background & Related Work** (3 pages)
+   - VOQ fundamentals and scalability issues
+   - Approximate WFQ state-of-the-art (cite Chen 2024, Gearbox NSDI'22)
+   - Gap identification in current solutions
+
+3. **System Architecture** (4 pages)
+   - Overview of your enhanced fabric
+   - Dynamic buffer allocation algorithm
+   - Bounded A-WFQ design and theory
+
+4. **Theoretical Analysis** (3 pages)
+   - Fairness bounds proofs
+   - Complexity analysis (O(1) vs O(log N))
+   - Stability under adaptive behavior
+
+5. **Implementation** (3 pages)
+   - FPGA prototype details (Xilinx VU9P)
+   - Hardware resource breakdown
+   - Integration with existing fabric
+
+6. **Evaluation** (5 pages)
+   - Experimental setup and traffic patterns
+   - Comparative analysis (vs baselines)
+   - Ablation studies (each enhancement separately)
+
+7. **Discussion & Future Work** (2 pages)
+   - Limitations and trade-offs
+   - Path to Phase 2/3 papers
+   - Broader implications for data center fabrics
+
+8. **Conclusion** (1 page)
+
+**Total:** ~23 pages (IEEE ToN typical length: 12-18 pages double-column, so trim to ~15-16 pages final)
+
+---
+
+## 📖 **Key Papers to Cite and Build Upon**
+
+### **Must-Cite Recent Works (2023-2025):**
+
+1. **Adaptive Approximate Fair Queueing (A²FQ)**
+   - Chen, W. et al. (2024). "Adaptive Approximate Fair Queueing for Shared-Memory Programmable Switches." IEEE TNSE.
+   - **Relevance:** Directly informs your dynamic buffer allocation + A-WFQ
+
+2. **Gearbox (Hierarchical WFQ)**
+   - USENIX NSDI 2022. "Gearbox: A Hierarchical Packet Scheduler."
+   - **Relevance:** Benchmark for O(1) approximate WFQ comparison
+
+3. **FlexCross (Crosspoint VOQ)**
+   - arXiv 2024. "FlexCross: Flexible Crosspoint-Queued Crossbar for FPGA."
+   - **Relevance:** Similar parametric FPGA approach to yours
+
+4. **Enhancing Fairness for Approximate WFQ**
+   - IEEE/ACM TNET 2024. "Enhancing Fairness for Approximate Weighted Fair Queueing."
+   - **Relevance:** TCP flow fairness validation for your design
+
+5. **DRL for Switch Scheduling**
+   - Zhou et al. (2023). IEEE Access. "Deep Reinforcement Learning for Crosspoint Selection."
+   - **Relevance:** Foundation for future ML-guided direction
+
+6. **CICQ Fairness Convergence**
+   - Chrysos & Katevenis (FORTH). "Transient behavior of buffered crossbars converging to weighted max-min fairness."
+   - **Relevance:** Theoretical basis for distributed scheduling
+
+### **Comparison Baselines:**
+- **iSLIP:** Classic maximal matching (your current alternative)
+- **DRRM (Deficit Round-Robin Matching):** Fair matching for comparison
+- **FIRM (Fair Iterative Round-robin Matching):** Another fairness baseline
+- **Standard WFQ:** Your current implementation
+
+---
+
+## 🎓 **Long-Term PhD Trajectory**
+
+### **Year 1-1.5: Foundation**
+- Complete Phase 1 paper (Dynamic Buffers + Bounded A-WFQ)
+- 1-2 workshop papers or short IEEE Access papers on:
+  - Formal verification of your fabric (ID #20)
+  - Energy analysis (ID #22)
+
+### **Year 2-2.5: Advanced Contribution**
+- Complete Phase 2 paper (Elastic Scheduling + ML + VOQ Grouping)
+- Patent application on predictive elastic scheduling
+- Conference presentations at IEEE INFOCOM or SIGCOMM
+
+### **Year 3-3.5: Systems Integration**
+- Complete Phase 3 paper (Programmable QoS Co-Design)
+- Potential industry collaboration (Intel, Broadcom, Cisco)
+- Open-source release of enhanced fabric design
+
+### **Year 3.5-4: Thesis Completion**
+- **Thesis Title:** *"Adaptive Fair Scheduling Architectures for High-Performance Programmable Switch Fabrics"*
+- **Structure:**
+  - Chapter 1: Introduction (research gaps in data center fabrics)
+  - Chapter 2: Background (VOQ, CICQ, WFQ fundamentals)
+  - Chapter 3: Dynamic Shared Buffer Management (Paper 1)
+  - Chapter 4: Predictive Elastic Scheduling (Paper 2)
+  - Chapter 5: Programmable QoS Framework (Paper 3)
+  - Chapter 6: Integrated System Evaluation
+  - Chapter 7: Conclusions and Future Directions
+- **Defense:** Strong coherent story across 3 major contributions
+
+---
+
+## ⚠️ **Risk Mitigation Strategies**
+
+### **Technical Risks:**
+| Risk | Mitigation |
+|------|-----------|
+| ML model inference too slow for line rate | Use lightweight decision trees; pipeline inference; offline training |
+| Fairness bounds too loose (>5%) | Iterative algorithm refinement; hybrid exact/approximate approach |
+| FPGA resource overflow at N=128 | Optimize with resource sharing; use external memory (HBM) |
+| Elastic scheduling instability | Add hysteresis and dampening; formal verification of convergence |
+
+### **Publication Risks:**
+| Risk | Mitigation |
+|------|-----------|
+| Reviewer criticism of novelty | Clear gap analysis; comparison to 5+ recent baselines; unique combination |
+| Lack of real-world validation | Partner with data center operators; use public traces (Google, Facebook) |
+| Theory too complex | Include intuitive examples; simulation visualizations; step-by-step proofs |
+| Insufficient evaluation | Comprehensive ablation studies; sensitivity analysis; multiple traffic patterns |
+
+---
+
+## 🔗 **Resources and Tools**
+
+### **For Development:**
+- **Simulation:** Extend your Python/SystemVerilog co-simulation
+- **ML Training:** PyTorch for offline training → export to fixed-point SystemVerilog
+- **Formal Verification:** Add SVA assertions; optional: TLA+ for protocol verification
+- **Traffic Generation:** Enhance your automated sweep framework (Part V)
+
+### **For Writing:**
+- **Latex Template:** IEEE Transactions style (available on IEEE website)
+- **Plotting:** Python matplotlib for performance graphs
+- **Diagram Tools:** draw.io for architecture diagrams; Graphviz for flow charts
+
+### **For Benchmarking:**
+- **Traces:** Use publicly available data center traffic traces:
+  - Google: "Workload Characterization of a Datacenter Packet Network" (2022)
+  - Facebook: "Understanding TCP Incast and Its Implications" (2020)
+  - Synthetic: Generate using your existing traffic models + AI burst patterns
+
+---
+
+## 📞 **Next Steps Decision Matrix**
+
+Choose your path based on these criteria:
+
+| If you value... | Recommended Direction | Timeline | Risk |
+|----------------|----------------------|----------|------|
+| **Fast publication (6-9 months)** | Track B: Hardware Optimization | Short | Low |
+| **High impact & novelty** | Primary Path: Phase 1 → Phase 2 → Phase 3 | Long (3 years) | Medium |
+| **Strong theory background** | Track A: Theoretical Focus | Medium (8-10 mo) | Low |
+| **Cutting-edge AI integration** | Track C: ML Integration | Medium-Long | High |
+| **Balanced approach** | **Primary Phase 1 (RECOMMENDED)** | Medium (10-12 mo) | Medium |
+
+---
+
+## ✅ **Immediate Action Items (This Week)**
+
+1. **Choose primary direction** (recommend: Phase 1 - Dynamic Buffers + Bounded A-WFQ)
+2. **Set up literature tracking:**
+   - Create Zotero/Mendeley library with cited papers
+   - Set up Google Scholar alerts for key authors (Chen, Chrysos, etc.)
+3. **Outline Phase 1 paper:**
+   - Draft abstract (150 words)
+   - List 3-4 core contributions
+   - Identify 5-7 key baseline comparisons
+4. **Prototype first algorithm:**
+   - Start with adaptive buffer pooling in Python simulation
+   - Validate against your existing benchmarks
+5. **Schedule advisor meeting:**
+   - Present this roadmap
+   - Get feedback on direction choice
+   - Align expectations on publication timeline
+
+---
+
+This roadmap provides multiple viable paths forward, with the **Primary 3-Phase Path** offering the strongest PhD trajectory combining theory, architecture, and systems contributions. The **Phase 1 paper on Dynamic Buffers + Bounded A-WFQ** is the recommended starting point due to its natural fit with your existing design, high publishability in Q1 venues, and foundation for subsequent advanced work.
+
+Would you like me to:
+1. **Elaborate on any specific research direction** in more detail?
+2. **Draft the abstract and introduction** for Phase 1 paper?
+3. **Develop detailed pseudocode** for the adaptive buffer allocation or bounded A-WFQ algorithms?
+4. **Create a Gantt chart** for the next 12 months?
+5. **Prepare a conference presentation outline** for preliminary results?

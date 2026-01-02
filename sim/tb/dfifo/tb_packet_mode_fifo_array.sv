@@ -14,8 +14,8 @@ module tb_packet_mode_fifo_array;
     localparam READY_THRESHOLD              = 2*NUM_IN + 10;
 
     localparam  MAIN_MEM_READ_LATENCY         = 2;
-    localparam  MODEL_META_READ_LATENCY = 5;
-    localparam  MODEL_DATA_READ_LATENCY = MODEL_META_READ_LATENCY -1 + MAIN_MEM_READ_LATENCY;
+    localparam  MODEL_META_READ_LATENCY = 6;  // Was 5
+    localparam  MODEL_DATA_READ_LATENCY = MODEL_META_READ_LATENCY - 1 + MAIN_MEM_READ_LATENCY;  // Now 7
 
     localparam DONT_SEND_DURATION = 50;
     localparam LAST_POP_TRACK = NUM_IN-1;

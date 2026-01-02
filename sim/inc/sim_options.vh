@@ -4,10 +4,9 @@
 `timescale 1ns / 1ps
 
 //═══════════════════════════════════════════════════════════════════════════
-// Simulation-Specific Options
+// Simulation-Specific Options (not for synthesis)
 //═══════════════════════════════════════════════════════════════════════════
 
-// Simulation control
 `define SIM
 `define SIM_TIME_LIMIT 200us
 
@@ -22,6 +21,6 @@
 
 // Waveform control
 `define DUMP_WAVEFORMS 1
-`define WAVEFORM_DEPTH 0  // 0 = all levels
+`define WAVEFORM_DEPTH 0
 
 `endif // SIM_OPTIONS_VH

@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps
-// `default_nettype none
 
 `include "fabric_params.vh"
 
@@ -23,7 +22,7 @@ module tb_fabric_qos;
     switch_data_if #(.DATA_WIDTH(DATA_WIDTH), .ID_WIDTH(ID_WIDTH))
         tx_data_if [NUM_PORTS] ();
 
-    // Scoreboard and QoS checker
+    // Verification modules
     fabric_scoreboard #(
         .NUM_PORTS(NUM_PORTS),
         .DATA_WIDTH(DATA_WIDTH),
@@ -66,180 +65,115 @@ module tb_fabric_qos;
         $display("[%0t] Reset released", $time);
     end
 
-    // Packet ID counter
-    int next_pkt_id = 0;
+    //==========================================================================
+    // Per-port packet injection using generate
+    //==========================================================================
+    
+    // Packet request signals for each port
+    logic [NUM_PORTS-1:0]           pkt_req;
+    logic [NUM_PORTS-1:0]           pkt_done;
+    logic [NUM_PORTS-1:0]           pkt_dst_mask [NUM_PORTS];
+    logic [2:0]                     pkt_qos [NUM_PORTS];
+    int                             pkt_size [NUM_PORTS];
+    logic [ID_WIDTH-1:0]            pkt_id [NUM_PORTS];
 
-    // Test stimulus
-    initial begin
-        $timeformat(-9, 2, " ns", 10);
+    // Global packet ID counter
+    int next_pkt_id = 1;
 
-        wait (rst_n);
-        repeat (20) @(posedge clk);
-
-        $display("\n========================================");
-        $display("  FABRIC QoS TEST SEQUENCE");
-        $display("========================================\n");
-
-        // Test 1: Priority ordering
-        $display("[%0t] TEST 1: Priority Ordering", $time);
-        fork
-            send_packet(.src(0), .dst(1), .size(64), .qos(3'b010));   // Low
-            #(CLK_PERIOD*5);
-            send_packet(.src(2), .dst(1), .size(64), .qos(3'b000));   // High
-            #(CLK_PERIOD*5);
-            send_packet(.src(3), .dst(1), .size(64), .qos(3'b001));   // Medium
-        join
-
-        repeat (200) @(posedge clk);
-
-        // Test 2: Multicast high priority
-        $display("[%0t] TEST 2: Multicast High Priority", $time);
-        send_multicast(.src(0), .dst_mask(10'b0000001111), .size(128), .qos(3'b000));
-
-        repeat (300) @(posedge clk);
-
-        // Test 3: Sustained mixed load
-        $display("[%0t] TEST 3: Sustained Mixed Traffic", $time);
-        fork
-            repeat (10) begin
-                send_packet(.src(0), .dst($urandom_range(1,NUM_PORTS-1)), .size(64), .qos(3'b000));
-                #(CLK_PERIOD*10);
-            end
-            repeat (20) begin
-                send_packet(.src(1), .dst($urandom_range(0,NUM_PORTS-1)), .size(128), .qos(3'b001));
-                #(CLK_PERIOD*8);
-            end
-            repeat (30) begin
-                send_packet(.src(2), .dst($urandom_range(0,NUM_PORTS-1)), .size(256), .qos(3'b010));
-                #(CLK_PERIOD*6);
-            end
-        join
-
-        repeat (1000) @(posedge clk);
-
-        // Test 4: Congestion scenario
-        $display("[%0t] TEST 4: Congestion (all→port 5)", $time);
-        fork
-            for (int s = 0; s < NUM_PORTS; s++) begin
-                if (s != 5) begin
-                    automatic int src = s;
-                    fork
-                        repeat (5) begin
-                            send_packet(.src(src), .dst(5), .size(512), .qos(3'b001));
-                            #(CLK_PERIOD*20);
+    generate
+        for (genvar g = 0; g < NUM_PORTS; g++) begin : gen_tx_driver
+            
+            initial begin
+                // Initialize interface signals
+                rx_data_if[g].valid = 0;
+                rx_data_if[g].data = 0;
+                rx_data_if[g].keep = 0;
+                rx_data_if[g].last = 0;
+                rx_data_if[g].id = 0;
+                rx_data_if[g].qos_tag = 0;
+                rx_data_if[g].is_bad_frame = 0;
+                
+                rx_meta_if[g].valid = 0;
+                rx_meta_if[g].dest_port_mask = 0;
+                rx_meta_if[g].qos_tag = 0;
+                rx_meta_if[g].id = 0;
+                
+                pkt_done[g] = 0;
+                
+                forever begin
+                    // Wait for packet request
+                    @(posedge clk);
+                    if (pkt_req[g]) begin
+                        automatic int num_beats;
+                        automatic int bytes_remaining;
+                        automatic logic [ID_WIDTH-1:0] my_id;
+                        automatic logic [NUM_PORTS-1:0] my_dst_mask;
+                        automatic logic [2:0] my_qos;
+                        automatic int my_size;
+                        
+                        // Capture parameters
+                        my_id = pkt_id[g];
+                        my_dst_mask = pkt_dst_mask[g];
+                        my_qos = pkt_qos[g];
+                        my_size = pkt_size[g];
+                        num_beats = (my_size + (DATA_WIDTH/8) - 1) / (DATA_WIDTH/8);
+                        bytes_remaining = my_size;
+                        
+                        // Send metadata
+                        rx_meta_if[g].dest_port_mask <= my_dst_mask;
+                        rx_meta_if[g].qos_tag <= my_qos;
+                        rx_meta_if[g].id <= my_id;
+                        rx_meta_if[g].valid <= 1'b1;
+                        
+                        do @(posedge clk); while (!rx_meta_if[g].ready);
+                        rx_meta_if[g].valid <= 1'b0;
+                        
+                        // Send data beats
+                        for (int beat = 0; beat < num_beats; beat++) begin
+                            automatic int keep_val;
+                            
+                            if (bytes_remaining >= (DATA_WIDTH/8))
+                                keep_val = (DATA_WIDTH/8);
+                            else
+                                keep_val = bytes_remaining;
+                            
+                            bytes_remaining -= keep_val;
+                            
+                            rx_data_if[g].data <= $urandom;
+                            rx_data_if[g].keep <= keep_val[3:0];
+                            rx_data_if[g].valid <= 1'b1;
+                            rx_data_if[g].last <= (beat == num_beats-1);
+                            rx_data_if[g].is_bad_frame <= 1'b0;
+                            rx_data_if[g].id <= my_id;
+                            rx_data_if[g].qos_tag <= my_qos;
+                            
+                            do @(posedge clk); while (!rx_data_if[g].ready);
                         end
-                    join_none
+                        
+                        rx_data_if[g].valid <= 1'b0;
+                        rx_data_if[g].last <= 1'b0;
+                        
+                        // Signal completion
+                        pkt_done[g] <= 1'b1;
+                        @(posedge clk);
+                        pkt_done[g] <= 1'b0;
+                    end
                 end
             end
-        join
-
-        repeat (2000) @(posedge clk);
-
-        // Print reports
-        scoreboard.print_report();
-        qos_check.print_report();
-
-        $display("[%0t] All tests complete", $time);
-        $finish;
-    end
-
-    // Task to send packet
-    task automatic send_packet(
-        input int src,
-        input int dst,
-        input int size,
-        input logic [2:0] qos
-    );
-        automatic int num_beats = (size + (DATA_WIDTH/8) - 1) / (DATA_WIDTH/8);
-        automatic int pkt_id = next_pkt_id++;
-
-        // Send metadata first
-        @(posedge clk);
-        rx_meta_if[src].dest_port_mask <= (1 << dst);
-        rx_meta_if[src].qos_tag <= qos;
-        rx_meta_if[src].id <= pkt_id[ID_WIDTH-1:0];
-        rx_meta_if[src].valid <= 1'b1;
-
-        wait (rx_meta_if[src].ready);
-        @(posedge clk);
-        rx_meta_if[src].valid <= 1'b0;
-
-        // Record in scoreboard
-        scoreboard.record_tx(pkt_id[ID_WIDTH-1:0], src, dst, qos, size, 1'b0);
-
-        // Send data
-        for (int beat = 0; beat < num_beats; beat++) begin
-            @(posedge clk);
-            rx_data_if[src].data <= $random;
-            rx_data_if[src].keep <= (beat == num_beats-1) ? size % (DATA_WIDTH/8) : (DATA_WIDTH/8);
-            rx_data_if[src].valid <= 1'b1;
-            rx_data_if[src].last <= (beat == num_beats-1);
-            rx_data_if[src].is_bad_frame <= 1'b0;
-            rx_data_if[src].id <= pkt_id[ID_WIDTH-1:0];
-            rx_data_if[src].qos_tag <= qos;
-
-            wait (rx_data_if[src].ready);
         end
+    endgenerate
 
-        @(posedge clk);
-        rx_data_if[src].valid <= 1'b0;
-
-    endtask
-
-    task automatic send_multicast(
-        input int src,
-        input logic [NUM_PORTS-1:0] dst_mask,
-        input int size,
-        input logic [2:0] qos
-    );
-        automatic int num_beats = (size + (DATA_WIDTH/8) - 1) / (DATA_WIDTH/8);
-        automatic int pkt_id = next_pkt_id++;
-
-        @(posedge clk);
-        rx_meta_if[src].dest_port_mask <= dst_mask;
-        rx_meta_if[src].qos_tag <= qos;
-        rx_meta_if[src].id <= pkt_id[ID_WIDTH-1:0];
-        rx_meta_if[src].valid <= 1'b1;
-
-        wait (rx_meta_if[src].ready);
-        @(posedge clk);
-        rx_meta_if[src].valid <= 1'b0;
-
-        // Record multicast (to each destination)
-        for (int dst = 0; dst < NUM_PORTS; dst++) begin
-            if (dst_mask[dst]) begin
-                scoreboard.record_tx(pkt_id[ID_WIDTH-1:0], src, dst, qos, size, 1'b0);
-            end
-        end
-
-        for (int beat = 0; beat < num_beats; beat++) begin
-            @(posedge clk);
-            rx_data_if[src].data <= $random;
-            rx_data_if[src].keep <= (beat == num_beats-1) ? size % (DATA_WIDTH/8) : (DATA_WIDTH/8);
-            rx_data_if[src].valid <= 1'b1;
-            rx_data_if[src].last <= (beat == num_beats-1);
-            rx_data_if[src].is_bad_frame <= 1'b0;
-            rx_data_if[src].id <= pkt_id[ID_WIDTH-1:0];
-            rx_data_if[src].qos_tag <= qos;
-
-            wait (rx_data_if[src].ready);
-        end
-
-        @(posedge clk);
-        rx_data_if[src].valid <= 1'b0;
-    endtask
-
-    // RX monitors
-    genvar g;
+    //==========================================================================
+    // RX monitors - one per output port
+    //==========================================================================
     generate
-        for (g = 0; g < NUM_PORTS; g++) begin : gen_rx_monitor
-
-            int beat_count = 0;
-            logic [ID_WIDTH-1:0] current_id;
-            logic [2:0] current_qos;
-            int current_size;
-
+        for (genvar g = 0; g < NUM_PORTS; g++) begin : gen_rx_monitor
             initial begin
+                automatic int beat_count = 0;
+                automatic logic [ID_WIDTH-1:0] current_id;
+                automatic logic [2:0] current_qos;
+                automatic int current_size;
+
                 tx_data_if[g].ready = 1'b1;
 
                 forever begin
@@ -274,6 +208,154 @@ module tb_fabric_qos;
         end
     endgenerate
 
-endmodule
+    //==========================================================================
+    // Helper task to send packet (triggers the per-port driver)
+    //==========================================================================
+    task automatic send_packet(
+        input int src,
+        input int dst,
+        input int size,
+        input logic [2:0] qos
+    );
+        automatic int my_pkt_id;
+        
+        // Get unique packet ID (protected by sequential execution)
+        my_pkt_id = next_pkt_id++;
+        
+        // Set up packet parameters
+        pkt_dst_mask[src] = (1 << dst);
+        pkt_qos[src] = qos;
+        pkt_size[src] = size;
+        pkt_id[src] = my_pkt_id[ID_WIDTH-1:0];
+        
+        // Record in scoreboard before sending
+        scoreboard.record_tx(my_pkt_id[ID_WIDTH-1:0], src, dst, qos, size, 1'b0);
+        
+        // Trigger the driver
+        @(posedge clk);
+        pkt_req[src] = 1'b1;
+        @(posedge clk);
+        pkt_req[src] = 1'b0;
+        
+        // Wait for completion
+        wait(pkt_done[src]);
+        @(posedge clk);
+    endtask
 
-`default_nettype wire
+    task automatic send_multicast(
+        input int src,
+        input logic [NUM_PORTS-1:0] dst_mask,
+        input int size,
+        input logic [2:0] qos
+    );
+        automatic int my_pkt_id;
+        
+        my_pkt_id = next_pkt_id++;
+        
+        pkt_dst_mask[src] = dst_mask;
+        pkt_qos[src] = qos;
+        pkt_size[src] = size;
+        pkt_id[src] = my_pkt_id[ID_WIDTH-1:0];
+        
+        // Record for each destination
+        for (int dst = 0; dst < NUM_PORTS; dst++) begin
+            if (dst_mask[dst]) begin
+                scoreboard.record_tx(my_pkt_id[ID_WIDTH-1:0], src, dst, qos, size, 1'b0);
+            end
+        end
+        
+        @(posedge clk);
+        pkt_req[src] = 1'b1;
+        @(posedge clk);
+        pkt_req[src] = 1'b0;
+        
+        wait(pkt_done[src]);
+        @(posedge clk);
+    endtask
+
+    //==========================================================================
+    // Test stimulus
+    //==========================================================================
+    initial begin
+        $timeformat(-9, 2, " ns", 10);
+        
+        // Initialize request signals
+        for (int i = 0; i < NUM_PORTS; i++) begin
+            pkt_req[i] = 0;
+            pkt_dst_mask[i] = 0;
+            pkt_qos[i] = 0;
+            pkt_size[i] = 0;
+            pkt_id[i] = 0;
+        end
+
+        wait (rst_n);
+        repeat (20) @(posedge clk);
+
+        $display("\n========================================");
+        $display("  FABRIC QoS TEST SEQUENCE");
+        $display("========================================\n");
+
+        //----------------------------------------------------------------------
+        // Test 1: Basic unicast with different priorities
+        //----------------------------------------------------------------------
+        $display("[%0t] TEST 1: Priority Ordering", $time);
+        
+        send_packet(.src(0), .dst(1), .size(64), .qos(3'b010));   // Low priority
+        send_packet(.src(2), .dst(1), .size(64), .qos(3'b000));   // High priority
+        send_packet(.src(3), .dst(1), .size(64), .qos(3'b001));   // Medium priority
+
+        repeat (200) @(posedge clk);
+
+        //----------------------------------------------------------------------
+        // Test 2: Multicast high priority
+        //----------------------------------------------------------------------
+        $display("[%0t] TEST 2: Multicast High Priority", $time);
+        send_multicast(.src(0), .dst_mask(10'b0000001111), .size(128), .qos(3'b000));
+
+        repeat (300) @(posedge clk);
+
+        //----------------------------------------------------------------------
+        // Test 3: Sustained mixed load (sequential for simplicity)
+        //----------------------------------------------------------------------
+        $display("[%0t] TEST 3: Sustained Mixed Traffic", $time);
+        
+        for (int i = 0; i < 10; i++) begin
+            send_packet(.src(0), .dst((i % (NUM_PORTS-1)) + 1), .size(64), .qos(3'b000));
+        end
+        
+        for (int i = 0; i < 10; i++) begin
+            send_packet(.src(1), .dst(i % NUM_PORTS), .size(128), .qos(3'b001));
+        end
+        
+        for (int i = 0; i < 10; i++) begin
+            send_packet(.src(2), .dst(i % NUM_PORTS), .size(256), .qos(3'b010));
+        end
+
+        repeat (1000) @(posedge clk);
+
+        //----------------------------------------------------------------------
+        // Test 4: Congestion scenario (all ports to port 5)
+        //----------------------------------------------------------------------
+        $display("[%0t] TEST 4: Congestion (all->port 5)", $time);
+        
+        for (int rep = 0; rep < 3; rep++) begin
+            for (int s = 0; s < NUM_PORTS; s++) begin
+                if (s != 5) begin
+                    send_packet(.src(s), .dst(5), .size(256), .qos(3'b001));
+                end
+            end
+        end
+
+        repeat (2000) @(posedge clk);
+
+        //----------------------------------------------------------------------
+        // Print reports and finish
+        //----------------------------------------------------------------------
+        scoreboard.print_report();
+        qos_check.print_report();
+
+        $display("[%0t] All tests complete", $time);
+        $finish;
+    end
+
+endmodule

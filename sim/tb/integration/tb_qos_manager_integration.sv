@@ -16,6 +16,9 @@ module tb_qos_manager_integration;
     parameter AGING_THRESHOLD = 50;
     parameter CLK_PERIOD = 10;  // 100 MHz
 
+    // Define PRIORITY_BULK locally if not in header
+    localparam [2:0] PRIORITY_BULK = `PRIORITY_BEST_EFFORT;  // Map to best effort
+
     //═══════════════════════════════════════════════════════════════════════════
     // Signals
     //═══════════════════════════════════════════════════════════════════════════
@@ -117,12 +120,13 @@ module tb_qos_manager_integration;
 
     // Initialize all signals
     task automatic init_signals();
+        int j;  // Declare at top of task
         request = '0;
         use_vlan_pcp = 0;
         use_ip_dscp = 1;  // Default: DSCP-based
         use_port_classify = 0;
 
-        for (int j = 0; j < NUM_INPUTS; j++) begin
+        for (j = 0; j < NUM_INPUTS; j++) begin
             ethertype[j] = 16'h0800;  // IPv4
             vlan_pcp[j] = 3'b000;
             ip_tos[j] = 8'h00;
@@ -179,7 +183,8 @@ module tb_qos_manager_integration;
                     `PRIORITY_CRITICAL:        ip_tos[idx] = {6'd26, 2'b00};  // AF31
                     `PRIORITY_EXCELLENT:       ip_tos[idx] = {6'd18, 2'b00};  // AF21
                     `PRIORITY_STANDARD:        ip_tos[idx] = {6'd10, 2'b00};  // AF11
-                    `PRIORITY_BULK:            ip_tos[idx] = {6'd2, 2'b00};   // CS1
+                    `PRIORITY_BEST_EFFORT:     ip_tos[idx] = {6'd8, 2'b00};   // CS1 (was 6'd2!)
+                    `PRIORITY_BACKGROUND:      ip_tos[idx] = {6'd0, 2'b00};   // CS0/BE
                     default:                   ip_tos[idx] = {6'd0, 2'b00};   // BE
                 endcase
             end
@@ -216,12 +221,13 @@ module tb_qos_manager_integration;
     //═══════════════════════════════════════════════════════════════════════════
 
     always @(posedge clk) begin
+        int j, p;  // Local variables for always block
         if (rst_n) begin
             total_cycles++;
 
             // Track grants by input
             if (grant_valid) begin
-                for (int j = 0; j < NUM_INPUTS; j++) begin
+                for (j = 0; j < NUM_INPUTS; j++) begin
                     if (grant[j]) begin
                         total_grants[j]++;
                         if (qos_tag[j] < QOS_LEVELS) begin
@@ -232,7 +238,7 @@ module tb_qos_manager_integration;
             end
 
             // Track classification distribution
-            for (int j = 0; j < NUM_INPUTS; j++) begin
+            for (j = 0; j < NUM_INPUTS; j++) begin
                 if (request[j] && qos_tag[j] < QOS_LEVELS) begin
                     classifier_hits[qos_tag[j]]++;
                 end
@@ -243,6 +249,7 @@ module tb_qos_manager_integration;
     // Print statistics
     task automatic print_statistics();
         real avg_grant, avg_class;
+        int j, p;
 
         $display("\n╔═══════════════════════════════════════════════════════════════════╗");
         $display("║ INTEGRATION STATISTICS                                            ║");
@@ -251,7 +258,7 @@ module tb_qos_manager_integration;
         $display("╠═══════════════════════════════════════════════════════════════════╣");
         $display("║ Grants by Input:                                                  ║");
 
-        for (int j = 0; j < NUM_INPUTS; j++) begin
+        for (j = 0; j < NUM_INPUTS; j++) begin
             if (total_cycles > 0) begin
                 avg_grant = (real'(total_grants[j]) / real'(total_cycles)) * 100.0;
                 $display("║   Input[%0d]: %5d grants (%5.2f%%)                                 ║",
@@ -262,7 +269,7 @@ module tb_qos_manager_integration;
         $display("╠═══════════════════════════════════════════════════════════════════╣");
         $display("║ Grants by Priority Level:                                         ║");
 
-        for (int p = 0; p < QOS_LEVELS; p++) begin
+        for (p = 0; p < QOS_LEVELS; p++) begin
             if (total_cycles > 0) begin
                 avg_grant = (real'(priority_grants[p]) / real'(total_cycles)) * 100.0;
                 $display("║   Priority[%0d]: %5d grants (%5.2f%%)                             ║",
@@ -273,7 +280,7 @@ module tb_qos_manager_integration;
         $display("╠═══════════════════════════════════════════════════════════════════╣");
         $display("║ Classification Distribution:                                      ║");
 
-        for (int p = 0; p < QOS_LEVELS; p++) begin
+        for (p = 0; p < QOS_LEVELS; p++) begin
             if (total_cycles > 0) begin
                 avg_class = (real'(classifier_hits[p]) / real'(total_cycles)) * 100.0;
                 $display("║   Priority[%0d]: %5d classifications (%5.2f%%)                    ║",
@@ -286,8 +293,9 @@ module tb_qos_manager_integration;
 
     // Reset statistics
     task automatic reset_statistics();
-        for (int j = 0; j < NUM_INPUTS; j++) total_grants[j] = 0;
-        for (int p = 0; p < QOS_LEVELS; p++) begin
+        int j, p;
+        for (j = 0; j < NUM_INPUTS; j++) total_grants[j] = 0;
+        for (p = 0; p < QOS_LEVELS; p++) begin
             priority_grants[p] = 0;
             classifier_hits[p] = 0;
         end
@@ -388,6 +396,10 @@ module tb_qos_manager_integration;
 
     // Test 3: Round-robin fairness within priority
     task automatic test_rr_fairness();
+        int j;
+        int min_grants, max_grants;
+        real fairness_ratio;
+        
         start_test("Round-Robin Fairness Within Priority");
 
         reset_statistics();
@@ -396,7 +408,7 @@ module tb_qos_manager_integration;
         use_port_classify = 0;
 
         // All inputs at same priority
-        for (int j = 0; j < 4; j++) begin
+        for (j = 0; j < 4; j++) begin
             set_packet_class(j, `PRIORITY_STANDARD, "dscp");
         end
 
@@ -404,13 +416,14 @@ module tb_qos_manager_integration;
         wait_cycles(100);  // Run for 100 cycles
 
         // Check fairness (each should get ~25 grants)
-        int min_grants = 1000, max_grants = 0;
-        for (int j = 0; j < 4; j++) begin
+        min_grants = 1000;
+        max_grants = 0;
+        for (j = 0; j < 4; j++) begin
             if (total_grants[j] < min_grants) min_grants = total_grants[j];
             if (total_grants[j] > max_grants) max_grants = total_grants[j];
         end
 
-        real fairness_ratio = real'(max_grants) / real'(min_grants);
+        fairness_ratio = real'(max_grants) / real'(min_grants);
 
         if (fairness_ratio > 2.0) begin
             $display("   ERROR: Unfair scheduling detected");
@@ -492,6 +505,9 @@ module tb_qos_manager_integration;
 
     // Test 6: Aging mechanism integration
     task automatic test_aging_integration();
+        int low_grant_count;
+        int cycle;
+        
         start_test("Aging Mechanism Integration");
 
         if (!ENABLE_AGING) begin
@@ -510,10 +526,10 @@ module tb_qos_manager_integration;
         set_packet_class(7, `PRIORITY_BACKGROUND, "dscp");
         request[7] = 1'b1;
 
-        int low_grant_count = 0;
+        low_grant_count = 0;
 
         // Run past aging threshold
-        for (int cycle = 0; cycle < AGING_THRESHOLD * 3; cycle++) begin
+        for (cycle = 0; cycle < AGING_THRESHOLD * 3; cycle++) begin
             @(posedge clk);
             #1;
             if (grant[7]) low_grant_count++;
@@ -531,6 +547,11 @@ module tb_qos_manager_integration;
 
     // Test 7: Stress test - random traffic
     task automatic test_random_traffic();
+        int cycle;
+        int j;
+        int rand_pri;
+        int grant_count;
+        
         start_test("Stress Test - Random Traffic Mix");
 
         reset_statistics();
@@ -538,16 +559,14 @@ module tb_qos_manager_integration;
         use_vlan_pcp = 0;
         use_port_classify = 0;
 
-        int cycles = 500;
-
-        for (int cycle = 0; cycle < cycles; cycle++) begin
+        for (cycle = 0; cycle < 500; cycle++) begin
             // Randomize requests
             request = $random;
 
             // Randomize priorities
-            for (int j = 0; j < NUM_INPUTS; j++) begin
-                int rand_pri = $random % QOS_LEVELS;
-                set_packet_class(j, rand_pri, "dscp");
+            for (j = 0; j < NUM_INPUTS; j++) begin
+                rand_pri = $random % QOS_LEVELS;
+                set_packet_class(j, rand_pri[QOS_TAG_WIDTH-1:0], "dscp");
             end
 
             @(posedge clk);
@@ -555,7 +574,7 @@ module tb_qos_manager_integration;
 
             // Verify grant properties
             if (grant_valid) begin
-                int grant_count = $countones(grant);
+                grant_count = $countones(grant);
                 if (grant_count != 1) begin
                     $display("   ERROR: Grant not one-hot at cycle %0d", cycle);
                     errors++;
@@ -570,7 +589,7 @@ module tb_qos_manager_integration;
             end
         end
 
-        $display("   Random stress test completed: %0d cycles", cycles);
+        $display("   Random stress test completed: 500 cycles");
         print_statistics();
 
         end_test();
@@ -578,12 +597,16 @@ module tb_qos_manager_integration;
 
     // Test 8: All priority levels
     task automatic test_all_priority_levels();
+        int j;
+        int expected_pri;
+        int granted_input;
+        
         start_test("All 8 Priority Levels");
 
         use_ip_dscp = 1;
 
         // Assign each input a different priority
-        for (int j = 0; j < QOS_LEVELS; j++) begin
+        for (j = 0; j < QOS_LEVELS; j++) begin
             set_packet_class(j, j[QOS_TAG_WIDTH-1:0], "dscp");
         end
 
@@ -591,7 +614,7 @@ module tb_qos_manager_integration;
         wait_cycles(2);
 
         // Verify they're served in priority order (7 down to 0)
-        for (int expected_pri = QOS_LEVELS-1; expected_pri >= 0; expected_pri--) begin
+        for (expected_pri = QOS_LEVELS-1; expected_pri >= 0; expected_pri--) begin
             @(posedge clk);
             #1;
 
@@ -602,8 +625,8 @@ module tb_qos_manager_integration;
             end
 
             // Find which input got the grant
-            int granted_input = -1;
-            for (int j = 0; j < NUM_INPUTS; j++) begin
+            granted_input = -1;
+            for (j = 0; j < NUM_INPUTS; j++) begin
                 if (grant[j]) granted_input = j;
             end
 
@@ -630,6 +653,8 @@ module tb_qos_manager_integration;
 
     // Test 9: Bursty traffic patterns
     task automatic test_bursty_traffic();
+        int burst;
+        
         start_test("Bursty Traffic Patterns");
 
         use_ip_dscp = 1;
@@ -643,7 +668,7 @@ module tb_qos_manager_integration;
         request[7] = 1'b1;
 
         // Burst pattern
-        for (int burst = 0; burst < 5; burst++) begin
+        for (burst = 0; burst < 5; burst++) begin
             // Burst on
             request[0] = 1'b1;
             request[1] = 1'b1;
@@ -669,6 +694,9 @@ module tb_qos_manager_integration;
 
     // Test 10: Full system integration
     task automatic test_full_integration();
+        int time_slot;
+        real voice_bw, video_bw, bulk_bw;
+        
         start_test("Full System Integration Test");
 
         reset_statistics();
@@ -687,13 +715,13 @@ module tb_qos_manager_integration;
         set_packet_class(3, `PRIORITY_VIDEO, "dscp");
 
         // Best effort (bulk)
-        set_packet_class(4, `PRIORITY_BULK, "dscp");
-        set_packet_class(5, `PRIORITY_BULK, "dscp");
-        set_packet_class(6, `PRIORITY_BULK, "dscp");
-        set_packet_class(7, `PRIORITY_BULK, "dscp");
+        set_packet_class(4, PRIORITY_BULK, "dscp");
+        set_packet_class(5, PRIORITY_BULK, "dscp");
+        set_packet_class(6, PRIORITY_BULK, "dscp");
+        set_packet_class(7, PRIORITY_BULK, "dscp");
 
         // Run realistic pattern
-        for (int time_slot = 0; time_slot < 200; time_slot++) begin
+        for (time_slot = 0; time_slot < 200; time_slot++) begin
             // VoIP bursts every 20 cycles
             if (time_slot % 20 == 0) begin
                 request[0] = 1'b1;
@@ -714,9 +742,9 @@ module tb_qos_manager_integration;
         end
 
         // Verify QoS guarantees
-        real voice_bw = real'(priority_grants[`PRIORITY_VOICE]) / real'(total_cycles);
-        real video_bw = real'(priority_grants[`PRIORITY_VIDEO]) / real'(total_cycles);
-        real bulk_bw = real'(priority_grants[`PRIORITY_BULK]) / real'(total_cycles);
+        voice_bw = real'(priority_grants[`PRIORITY_VOICE]) / real'(total_cycles);
+        video_bw = real'(priority_grants[`PRIORITY_VIDEO]) / real'(total_cycles);
+        bulk_bw = real'(priority_grants[PRIORITY_BULK]) / real'(total_cycles);
 
         $display("  Bandwidth allocation:");
         $display("    Voice: %.1f%%", voice_bw * 100.0);

@@ -4,10 +4,30 @@
 `timescale 1ns / 1ps
 
 //═══════════════════════════════════════════════════════════════════════════
+// System Configuration
+//═══════════════════════════════════════════════════════════════════════════
+`ifndef NUM_PORT
+    `define NUM_PORT 10
+`endif
+
+`ifndef NUM_PORTS
+    `define NUM_PORTS `NUM_PORT
+`endif
+
+//═══════════════════════════════════════════════════════════════════════════
 // QoS Level Definitions
 //═══════════════════════════════════════════════════════════════════════════
-`define QOS_LEVELS              8
-`define QOS_TAG_WIDTH           3
+`ifndef QOS_LEVELS
+    `define QOS_LEVELS 8
+`endif
+
+`ifndef PRIORITY_LEVELS
+    `define PRIORITY_LEVELS `QOS_LEVELS
+`endif
+
+`ifndef QOS_TAG_WIDTH
+    `define QOS_TAG_WIDTH 3
+`endif
 
 //═══════════════════════════════════════════════════════════════════════════
 // Priority Levels (3-bit values for 8 levels)
@@ -38,7 +58,9 @@
 // Metadata Configuration
 //═══════════════════════════════════════════════════════════════════════════
 `define META_DATA_WIDTH         32
-`define META_QOS_OFFSET         0           // QoS tag position in metadata
+`ifndef META_QOS_OFFSET
+    `define META_QOS_OFFSET     0           // QoS tag position in metadata
+`endif
 `define META_PORT_OFFSET        3           // Port ID position
 `define META_TIMESTAMP_OFFSET   8           // Timestamp position
 

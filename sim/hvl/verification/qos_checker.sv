@@ -18,6 +18,9 @@ module qos_checker #(
     // QoS violation counters
     int priority_inversions = 0;
     int starvation_events = 0;
+    
+    // Static variables for starvation check
+    time last_p2_service = 0;
 
     // Check for priority inversion
     task check_priority_order(
@@ -25,7 +28,9 @@ module qos_checker #(
         input logic [2:0] qos,
         input time current_time
     );
-        qos_event_t evt;
+        automatic qos_event_t evt;
+        automatic real time_diff;
+        
         evt.id = id;
         evt.qos = qos;
         evt.time_sent = current_time;
@@ -34,7 +39,7 @@ module qos_checker #(
         foreach (event_queue[i]) begin
             if (event_queue[i].qos > qos) begin
                 // Lower priority packet sent before this higher priority one
-                real time_diff = current_time - event_queue[i].time_sent;
+                time_diff = real'(current_time - event_queue[i].time_sent);
 
                 if (time_diff < 1000) begin  // Within 1us
                     $warning("[QoS] Priority inversion: P%0d after P%0d (%.2f ns)",
@@ -55,13 +60,13 @@ module qos_checker #(
         input logic [2:0] qos,
         input time current_time
     );
-        static time last_p2_service = 0;
+        automatic real time_since;
 
         if (qos == 3'b010) begin  // Priority 2 (low)
             last_p2_service = current_time;
         end else begin
             if (last_p2_service > 0) begin
-                real time_since = current_time - last_p2_service;
+                time_since = real'(current_time - last_p2_service);
                 if (time_since > 10000) begin  // > 10us
                     $warning("[QoS] Starvation: P2 not served for %.2f us", time_since/1000);
                     starvation_events++;

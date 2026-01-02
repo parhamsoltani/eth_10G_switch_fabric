@@ -14,8 +14,8 @@ module crossbar_switch #(
     input  wire [DATA_WIDTH-1:0]            data_in  [NUM_PORT],
     input  wire [NUM_PORT-1:0]              valid_in,
 
-    // Grants back to inputs
-    output wire [NUM_PORT-1:0][NUM_PORT-1:0] grant,
+    // Grants back to inputs - Changed from wire to logic
+    output logic [NUM_PORT-1:0][NUM_PORT-1:0] grant,
 
     // Outputs
     output logic [DATA_WIDTH-1:0]           data_out [NUM_PORT],
