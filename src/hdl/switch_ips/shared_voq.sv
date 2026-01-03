@@ -21,14 +21,14 @@ module shared_voq #(
     parameter   MULTICAST_SUPPORT       = 0,
     parameter   MULTICAST_RATE          = 1,
     parameter   PACKET_ID_WIDTH         = 8,
-    parameter   QOS_TAG_WIDTH           = 1,
+    parameter   QOS_TAG_WIDTH           = 3,             // NEW: QoS tag width
     parameter   KEEP_WIDTH              = $clog2((W_MINI/8) + 1),
     // DO NOT CHANGE!
     parameter S_LOG                     = $clog2(S),
     parameter MAIN_MEM_DEPTH_LOG        = $clog2(MAIN_MEM_DEPTH),
     parameter NUM_PORT_LOG              = $clog2(NUM_PORT),
-    // MODIFIED: Added PACKET_ID_WIDTH to metadata
-    parameter DFIFO_META_DATA_WIDTH     = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH,
+    // MODIFIED: Added QOS_TAG_WIDTH to metadata
+    parameter DFIFO_META_DATA_WIDTH     = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH + QOS_TAG_WIDTH,
     parameter NUM_XPQ                   = (NUM_PORT+S-1)/S,
     parameter NUM_XPQ_LOG               = NUM_XPQ == 1 ? 1 : $clog2(NUM_XPQ)
 ) (
@@ -39,6 +39,7 @@ module shared_voq #(
     input   wire                                valid_rx [S],
     input   wire                                is_bad_frame_rx [S],
     input   wire [PACKET_ID_WIDTH-1:0]          packet_id_rx [S],
+    input   wire [QOS_TAG_WIDTH-1:0]            qos_tag_rx [S],         // NEW: QoS tag input
     input   wire                                last_rx [S],
     input   wire                                iq_fifo_almost_empty [S],
     input   wire [NUM_PORT-1:0]                 dest_mask_rx [S],
@@ -69,7 +70,7 @@ module shared_voq #(
     localparam FULL_WAIT_DURATION       = 50;
 
     //==============================================================================
-    // wires
+    // wires, regs and memories
     //==============================================================================
 
     // === main_mem wires ===
@@ -114,6 +115,7 @@ module shared_voq #(
     wire [S_LOG-1:0]                p2c_rr_counter       [S];
     wire                            p2c_force_to_send    [S];
     wire [PACKET_ID_WIDTH-1:0]      p2c_packet_id_rx     [S];  // NEW: Packet ID to P2C
+    wire [QOS_TAG_WIDTH-1:0]        p2c_qos_tag_rx       [S];  // NEW: QoS tag to P2C
 
     wire [NUM_PORT-1:0]             p2c_dest_mask_o      [S];
     wire                            p2c_pop_iq_o         [S];
@@ -174,7 +176,8 @@ module shared_voq #(
             assign p2c_start_time_slot[i]    = rr_sel[rr_index(i, 0)];
             assign p2c_rr_counter[i]         = rr_counter[rr_index(i, 0)];
             assign p2c_force_to_send[i]      = dfifo_pop_from_last_packet_o[i];
-            assign p2c_packet_id_rx[i]       = packet_id_rx[i];  // NEW: Connect packet_id
+            assign p2c_packet_id_rx[i]       = packet_id_rx[i];      // NEW: Connect packet_id
+            assign p2c_qos_tag_rx[i]         = qos_tag_rx[i];        // NEW: Connect QoS tag
         end
     endgenerate
 
@@ -248,7 +251,8 @@ module shared_voq #(
                 .S(S),
                 .W_MINI(W_MINI),
                 .FULL_WAIT_DURATION(FULL_WAIT_DURATION),
-                .PACKET_ID_WIDTH(PACKET_ID_WIDTH)        // NEW: Pass parameter
+                .PACKET_ID_WIDTH(PACKET_ID_WIDTH),          // NEW: Pass parameter
+                .QOS_TAG_WIDTH(QOS_TAG_WIDTH)               // NEW: Pass parameter
             ) p2c (
                 .clk(clk),
                 .data_rx(p2c_data_rx[i]),
@@ -259,6 +263,7 @@ module shared_voq #(
                 .dest_mask_rx(p2c_dest_mask_rx[i]),
                 .dest_mask_valid_rx(p2c_dest_mask_valid_rx[i]),
                 .packet_id_rx(p2c_packet_id_rx[i]),      // NEW: Connect packet_id
+                .qos_tag_rx(p2c_qos_tag_rx[i]),          // NEW: Connect QoS tag
                 .end_time_slot(p2c_end_time_slot[i]),
                 .start_time_slot(p2c_start_time_slot[i]),
                 .rr_counter(p2c_rr_counter[i]),

@@ -4,51 +4,48 @@
 
 module tb_fabric_qos;
 
-    parameter NUM_PORTS = 10;
-    parameter DATA_WIDTH = 32;
-    parameter ID_WIDTH = 10;
+    parameter NUM_PORT = 10;  // Changed to match module (no 'S')
+    parameter DATA_WIDTH = 64;  // Changed to 64 to match W_MINI
+    parameter PACKET_ID_WIDTH = 8;  // Changed to match module
     parameter CLK_PERIOD = 4.0;  // 250 MHz
 
     logic clk;
     logic rst_n;
 
-    // Interfaces
-    switch_data_if #(.DATA_WIDTH(DATA_WIDTH), .ID_WIDTH(ID_WIDTH))
-        rx_data_if [NUM_PORTS] ();
+    // Interfaces (updated parameters to match)
+    switch_data_if #(.DATA_WIDTH(DATA_WIDTH), .ID_WIDTH(PACKET_ID_WIDTH))
+        rx_data_if [NUM_PORT] ();
 
-    switch_metadata_if #(.PORT_MASK_WIDTH(NUM_PORTS), .ID_WIDTH(ID_WIDTH))
-        rx_meta_if [NUM_PORTS] ();
+    switch_metadata_if #(.PORT_MASK_WIDTH(NUM_PORT), .ID_WIDTH(PACKET_ID_WIDTH))
+        rx_meta_if [NUM_PORT] ();
 
-    switch_data_if #(.DATA_WIDTH(DATA_WIDTH), .ID_WIDTH(ID_WIDTH))
-        tx_data_if [NUM_PORTS] ();
+    switch_data_if #(.DATA_WIDTH(DATA_WIDTH), .ID_WIDTH(PACKET_ID_WIDTH))
+        tx_data_if [NUM_PORT] ();
 
-    // Verification modules
+    // Verification modules (updated parameters)
     fabric_scoreboard #(
-        .NUM_PORTS(NUM_PORTS),
+        .NUM_PORTS(NUM_PORT),  // Use NUM_PORT for consistency
         .DATA_WIDTH(DATA_WIDTH),
-        .ID_WIDTH(ID_WIDTH)
+        .ID_WIDTH(PACKET_ID_WIDTH)
     ) scoreboard ();
 
     qos_checker #(
-        .NUM_PORTS(NUM_PORTS),
-        .ID_WIDTH(ID_WIDTH)
+        .NUM_PORTS(NUM_PORT),  // Use NUM_PORT for consistency
+        .ID_WIDTH(PACKET_ID_WIDTH)
     ) qos_check ();
 
-    // DUT
+    // DUT (updated parameter overrides and ports)
     switch_fabric #(
-        .NUM_PORTS(NUM_PORTS),
-        .DATA_WIDTH(DATA_WIDTH),
-        .ID_WIDTH(ID_WIDTH)
+        .NUM_PORT(NUM_PORT),
+        .W_MINI(DATA_WIDTH),
+        .PACKET_ID_WIDTH(PACKET_ID_WIDTH)
     ) dut (
         .clk(clk),
-        .rst_n(rst_n),
+        .reset(~rst_n),  // Invert to match active-high reset in module
         .rx_data_if(rx_data_if),
         .rx_meta_if(rx_meta_if),
-        .tx_data_if(tx_data_if),
-        .pkt_count_rx(),
-        .pkt_count_tx(),
-        .pkt_drop_count(),
-        .free_ids()
+        .tx_data_if(tx_data_if)
+        // Removed non-existent ports: .pkt_count_rx(), etc.
     );
 
     // Clock generation
@@ -69,19 +66,19 @@ module tb_fabric_qos;
     // Per-port packet injection using generate
     //==========================================================================
     
-    // Packet request signals for each port
-    logic [NUM_PORTS-1:0]           pkt_req;
-    logic [NUM_PORTS-1:0]           pkt_done;
-    logic [NUM_PORTS-1:0]           pkt_dst_mask [NUM_PORTS];
-    logic [2:0]                     pkt_qos [NUM_PORTS];
-    int                             pkt_size [NUM_PORTS];
-    logic [ID_WIDTH-1:0]            pkt_id [NUM_PORTS];
+    // Packet request signals for each port (updated to NUM_PORT)
+    logic [NUM_PORT-1:0]           pkt_req;
+    logic [NUM_PORT-1:0]           pkt_done;
+    logic [NUM_PORT-1:0]           pkt_dst_mask [NUM_PORT];
+    logic [2:0]                     pkt_qos [NUM_PORT];
+    int                             pkt_size [NUM_PORT];
+    logic [PACKET_ID_WIDTH-1:0]     pkt_id [NUM_PORT];  // Updated width
 
     // Global packet ID counter
     int next_pkt_id = 1;
 
     generate
-        for (genvar g = 0; g < NUM_PORTS; g++) begin : gen_tx_driver
+        for (genvar g = 0; g < NUM_PORT; g++) begin : gen_tx_driver
             
             initial begin
                 // Initialize interface signals
@@ -106,8 +103,8 @@ module tb_fabric_qos;
                     if (pkt_req[g]) begin
                         automatic int num_beats;
                         automatic int bytes_remaining;
-                        automatic logic [ID_WIDTH-1:0] my_id;
-                        automatic logic [NUM_PORTS-1:0] my_dst_mask;
+                        automatic logic [PACKET_ID_WIDTH-1:0] my_id;  // Updated width
+                        automatic logic [NUM_PORT-1:0] my_dst_mask;
                         automatic logic [2:0] my_qos;
                         automatic int my_size;
                         
@@ -164,13 +161,13 @@ module tb_fabric_qos;
     endgenerate
 
     //==========================================================================
-    // RX monitors - one per output port
+    // RX monitors - one per output port (updated to NUM_PORT)
     //==========================================================================
     generate
-        for (genvar g = 0; g < NUM_PORTS; g++) begin : gen_rx_monitor
+        for (genvar g = 0; g < NUM_PORT; g++) begin : gen_rx_monitor
             initial begin
                 automatic int beat_count = 0;
-                automatic logic [ID_WIDTH-1:0] current_id;
+                automatic logic [PACKET_ID_WIDTH-1:0] current_id;  // Updated width
                 automatic logic [2:0] current_qos;
                 automatic int current_size;
 
@@ -209,7 +206,7 @@ module tb_fabric_qos;
     endgenerate
 
     //==========================================================================
-    // Helper task to send packet (triggers the per-port driver)
+    // Helper task to send packet (triggers the per-port driver) - updated widths
     //==========================================================================
     task automatic send_packet(
         input int src,
@@ -226,10 +223,10 @@ module tb_fabric_qos;
         pkt_dst_mask[src] = (1 << dst);
         pkt_qos[src] = qos;
         pkt_size[src] = size;
-        pkt_id[src] = my_pkt_id[ID_WIDTH-1:0];
+        pkt_id[src] = my_pkt_id[PACKET_ID_WIDTH-1:0];  // Updated width
         
         // Record in scoreboard before sending
-        scoreboard.record_tx(my_pkt_id[ID_WIDTH-1:0], src, dst, qos, size, 1'b0);
+        scoreboard.record_tx(my_pkt_id[PACKET_ID_WIDTH-1:0], src, dst, qos, size, 1'b0);
         
         // Trigger the driver
         @(posedge clk);
@@ -244,7 +241,7 @@ module tb_fabric_qos;
 
     task automatic send_multicast(
         input int src,
-        input logic [NUM_PORTS-1:0] dst_mask,
+        input logic [NUM_PORT-1:0] dst_mask,
         input int size,
         input logic [2:0] qos
     );
@@ -255,12 +252,12 @@ module tb_fabric_qos;
         pkt_dst_mask[src] = dst_mask;
         pkt_qos[src] = qos;
         pkt_size[src] = size;
-        pkt_id[src] = my_pkt_id[ID_WIDTH-1:0];
+        pkt_id[src] = my_pkt_id[PACKET_ID_WIDTH-1:0];  // Updated width
         
         // Record for each destination
-        for (int dst = 0; dst < NUM_PORTS; dst++) begin
+        for (int dst = 0; dst < NUM_PORT; dst++) begin
             if (dst_mask[dst]) begin
-                scoreboard.record_tx(my_pkt_id[ID_WIDTH-1:0], src, dst, qos, size, 1'b0);
+                scoreboard.record_tx(my_pkt_id[PACKET_ID_WIDTH-1:0], src, dst, qos, size, 1'b0);
             end
         end
         
@@ -274,13 +271,13 @@ module tb_fabric_qos;
     endtask
 
     //==========================================================================
-    // Test stimulus
+    // Test stimulus (updated to NUM_PORT)
     //==========================================================================
     initial begin
         $timeformat(-9, 2, " ns", 10);
         
         // Initialize request signals
-        for (int i = 0; i < NUM_PORTS; i++) begin
+        for (int i = 0; i < NUM_PORT; i++) begin
             pkt_req[i] = 0;
             pkt_dst_mask[i] = 0;
             pkt_qos[i] = 0;
@@ -320,15 +317,15 @@ module tb_fabric_qos;
         $display("[%0t] TEST 3: Sustained Mixed Traffic", $time);
         
         for (int i = 0; i < 10; i++) begin
-            send_packet(.src(0), .dst((i % (NUM_PORTS-1)) + 1), .size(64), .qos(3'b000));
+            send_packet(.src(0), .dst((i % (NUM_PORT-1)) + 1), .size(64), .qos(3'b000));
         end
         
         for (int i = 0; i < 10; i++) begin
-            send_packet(.src(1), .dst(i % NUM_PORTS), .size(128), .qos(3'b001));
+            send_packet(.src(1), .dst(i % NUM_PORT), .size(128), .qos(3'b001));
         end
         
         for (int i = 0; i < 10; i++) begin
-            send_packet(.src(2), .dst(i % NUM_PORTS), .size(256), .qos(3'b010));
+            send_packet(.src(2), .dst(i % NUM_PORT), .size(256), .qos(3'b010));
         end
 
         repeat (1000) @(posedge clk);
@@ -339,7 +336,7 @@ module tb_fabric_qos;
         $display("[%0t] TEST 4: Congestion (all->port 5)", $time);
         
         for (int rep = 0; rep < 3; rep++) begin
-            for (int s = 0; s < NUM_PORTS; s++) begin
+            for (int s = 0; s < NUM_PORT; s++) begin
                 if (s != 5) begin
                     send_packet(.src(s), .dst(5), .size(256), .qos(3'b001));
                 end

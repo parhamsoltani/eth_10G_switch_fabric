@@ -9,6 +9,7 @@
 // Description: High radix switch with QoS support and packet ID preservation
 //
 // MODIFIED: Added packet_id_tx output and proper metadata width calculation
+// FURTHER MODIFIED: Added qos_tag_rx and qos_tag_tx ports, propagated through hierarchy
 //////////////////////////////////////////////////////////////////////////////////
 
 `include "fabric_params.vh"
@@ -35,6 +36,7 @@ module switch_high_radix_matching #(
     input   wire                                valid_rx [NUM_PORT],
     input   wire                                is_bad_frame_rx [NUM_PORT],
     input   wire [PACKET_ID_WIDTH-1:0]          packet_id_rx [NUM_PORT],
+    input   wire [QOS_TAG_WIDTH-1:0]            qos_tag_rx [NUM_PORT],      // NEW: QoS input
     input   wire                                last_rx [NUM_PORT],
     input   wire                                iq_fifo_almost_empty [NUM_PORT],
     input   wire [NUM_PORT-1:0]                 dest_mask_rx [NUM_PORT],
@@ -46,6 +48,7 @@ module switch_high_radix_matching #(
     output  wire                                valid_tx [NUM_PORT],
     output  wire                                is_bad_frame_tx [NUM_PORT],
     output  wire [PACKET_ID_WIDTH-1:0]          packet_id_tx [NUM_PORT],    // NEW: Packet ID output
+    output  wire [QOS_TAG_WIDTH-1:0]            qos_tag_tx [NUM_PORT],      // NEW: QoS output
     output  wire                                last_tx [NUM_PORT],
     input   wire                                oq_wr_prog_full [NUM_PORT],
 
@@ -58,9 +61,9 @@ module switch_high_radix_matching #(
     //==========================================================================
     localparam S_LOG = $clog2(S);
     localparam NUM_PORT_LOG = $clog2(NUM_PORT);
-    // MODIFIED: Metadata now includes PACKET_ID_WIDTH instead of QOS_TAG_WIDTH
-    // Format: [packet_id | keep_minicell | keep_last | is_bad_frame | last_minicell_index]
-    localparam META_DATA_WIDTH = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH;
+    // MODIFIED: Metadata now includes both PACKET_ID_WIDTH and QOS_TAG_WIDTH
+    // Format: [qos_tag | packet_id | keep_minicell | keep_last | is_bad_frame | last_minicell_index]
+    localparam META_DATA_WIDTH = QOS_TAG_WIDTH + PACKET_ID_WIDTH + S + KEEP_WIDTH + 1 + S_LOG;
     localparam DFIFO_READY_THRESHOLD = 2*S+20;
     localparam READ_OFFSET = 0;
     localparam FULL_WAIT_DURATION = 50;
@@ -94,7 +97,8 @@ module switch_high_radix_matching #(
     wire                                cell2pkt_valid_tx [NUM_XPQ_COL][S];
     wire                                cell2pkt_is_bad_frame_tx [NUM_XPQ_COL][S];
     wire                                cell2pkt_last_tx [NUM_XPQ_COL][S];
-    wire [PACKET_ID_WIDTH-1:0]          cell2pkt_packet_id_tx [NUM_XPQ_COL][S];  // NEW: Packet ID from C2P
+    wire [PACKET_ID_WIDTH-1:0]          cell2pkt_packet_id_tx [NUM_XPQ_COL][S];   // NEW: Packet ID from C2P
+    wire [QOS_TAG_WIDTH-1:0]            cell2pkt_qos_tag_tx [NUM_XPQ_COL][S];     // NEW: QoS from C2P
 
     //==========================================================================
     // Wires - Column Destination Finder
@@ -138,6 +142,7 @@ module switch_high_radix_matching #(
     wire                               voq_valid_rx [NUM_VOQ][S];
     wire                               voq_is_bad_frame_rx [NUM_VOQ][S];
     wire [PACKET_ID_WIDTH-1:0]         voq_packet_id_rx [NUM_VOQ][S];
+    wire [QOS_TAG_WIDTH-1:0]           voq_qos_tag_rx [NUM_VOQ][S];        // NEW: QoS per lane
     wire                               voq_last_rx [NUM_VOQ][S];
     wire                               voq_iq_fifo_almost_empty [NUM_VOQ][S];
     wire [NUM_PORT-1:0]                voq_dest_mask_rx [NUM_VOQ][S];
@@ -161,30 +166,30 @@ module switch_high_radix_matching #(
     wire [W_MINI-1:0]                 xpq_push_data [NUM_XPQ_ROW][NUM_XPQ_COL][S];
     wire [META_DATA_WIDTH-1:0]        xpq_push_metadata [NUM_XPQ_ROW][NUM_XPQ_COL];
     wire [S_LOG-1:0]                  xpq_push_id [NUM_XPQ_ROW][NUM_XPQ_COL];
-    wire                              xpq_pop [NUM_XPQ_ROW][NUM_XPQ_COL];
-    wire [S_LOG-1:0]                  xpq_pop_id [NUM_XPQ_ROW][NUM_XPQ_COL];
-    wire                              xpq_pop_last_cell [NUM_XPQ_ROW][NUM_XPQ_COL];
-    wire [W_MINI-1:0]                 xpq_pop_data [NUM_XPQ_ROW][NUM_XPQ_COL][S];
-    wire [META_DATA_WIDTH-1:0]        xpq_pop_metadata [NUM_XPQ_ROW][NUM_XPQ_COL];
-    wire [S-1:0]                      xpq_none_mepty_fifos [NUM_XPQ_ROW][NUM_XPQ_COL];
-    wire [S-1:0]                      xpq_blocked_ports [NUM_XPQ_ROW][NUM_XPQ_COL];
+    wire xpq_pop [NUM_XPQ_ROW][NUM_XPQ_COL];
+    wire [S_LOG-1:0] xpq_pop_id [NUM_XPQ_ROW][NUM_XPQ_COL];
+    wire xpq_pop_last_cell [NUM_XPQ_ROW][NUM_XPQ_COL];
+    wire [W_MINI-1:0] xpq_pop_data [NUM_XPQ_ROW][NUM_XPQ_COL][S];
+    wire [META_DATA_WIDTH-1:0] xpq_pop_metadata [NUM_XPQ_ROW][NUM_XPQ_COL];
+    wire [S-1:0] xpq_none_mepty_fifos [NUM_XPQ_ROW][NUM_XPQ_COL];
+    wire [S-1:0] xpq_blocked_ports [NUM_XPQ_ROW][NUM_XPQ_COL];
 
     //==========================================================================
     // Wires - Mux
     //==========================================================================
     wire [META_DATA_WIDTH-1:0] mux_pop_metadata [NUM_XPQ_COL];
-    wire                       mux_pop_last_cell [NUM_XPQ_COL];
-    wire [W_MINI-1:0]          mux_pop_data [NUM_XPQ_COL][S];
+    wire mux_pop_last_cell [NUM_XPQ_COL];
+    wire [W_MINI-1:0] mux_pop_data [NUM_XPQ_COL][S];
 
     //==========================================================================
     // Wires - Replication
     //==========================================================================
-    wire                            rep_push [NUM_VOQ][NUM_XPQ_COL];
-    wire                            rep_last_cell [NUM_VOQ][NUM_XPQ_COL];
-    wire [META_DATA_WIDTH-1:0]      rep_metadata [NUM_VOQ][NUM_XPQ_COL];
-    wire [S_LOG-1:0]                rep_push_id [NUM_VOQ][NUM_XPQ_COL];
-    wire [W_MINI-1:0]               rep_data [NUM_VOQ][S][NUM_XPQ_COL];
-    wire [NUM_XPQ_COL_LOG-1:0]      rep_xpq_index [NUM_VOQ][NUM_XPQ_COL];
+    wire rep_push [NUM_VOQ][NUM_XPQ_COL];
+    wire rep_last_cell [NUM_VOQ][NUM_XPQ_COL];
+    wire [META_DATA_WIDTH-1:0] rep_metadata [NUM_VOQ][NUM_XPQ_COL];
+    wire [S_LOG-1:0] rep_push_id [NUM_VOQ][NUM_XPQ_COL];
+    wire [W_MINI-1:0] rep_data [NUM_VOQ][S][NUM_XPQ_COL];
+    wire [NUM_XPQ_COL_LOG-1:0] rep_xpq_index [NUM_VOQ][NUM_XPQ_COL];
     wire col_dest_finder_chosen_xpq_valid_D[NUM_XPQ_COL][0:COL_READ_LATENCY];
 
     //==========================================================================
@@ -192,11 +197,11 @@ module switch_high_radix_matching #(
     //==========================================================================
     generate
         if (NUM_DEST_FINDER_MATCHING > 0) begin : gen_rm_signals
-            wire                           rm_push [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
-            wire                           rm_last_cell [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
-            wire [META_DATA_WIDTH-1:0]     rm_metadata [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
-            wire [S_LOG-1:0]               rm_push_id [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
-            wire [W_MINI-1:0]              rm_data [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL][S];
+            wire rm_push [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
+            wire rm_last_cell [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
+            wire [META_DATA_WIDTH-1:0] rm_metadata [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
+            wire [S_LOG-1:0] rm_push_id [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL];
+            wire [W_MINI-1:0] rm_data [NUM_DEST_FINDER_MATCHING][NUM_XPQ_COL][S];
         end
     endgenerate
 
@@ -241,7 +246,7 @@ module switch_high_radix_matching #(
     endgenerate
 
     //==========================================================================
-    // Assignments - VOQ RX Mapping
+    // Assignments - VOQ RX Mapping - NEW: Added qos_tag_rx mapping
     //==========================================================================
     generate
         for (genvar r = 0; r < NUM_VOQ; r++) begin : g_voq_rx_map
@@ -252,6 +257,7 @@ module switch_high_radix_matching #(
                     assign voq_valid_rx[r][i] = valid_rx[r*S + i];
                     assign voq_is_bad_frame_rx[r][i] = is_bad_frame_rx[r*S + i];
                     assign voq_packet_id_rx[r][i] = packet_id_rx[r*S + i];
+                    assign voq_qos_tag_rx[r][i] = qos_tag_rx[r*S + i];     // NEW: Map QoS
                     assign voq_last_rx[r][i] = last_rx[r*S + i];
                     assign voq_iq_fifo_almost_empty[r][i] = iq_fifo_almost_empty[r*S + i];
                     assign voq_dest_mask_rx[r][i] = dest_mask_rx[r*S + i];
@@ -262,6 +268,7 @@ module switch_high_radix_matching #(
                     assign voq_valid_rx[r][i] = 1'b0;
                     assign voq_is_bad_frame_rx[r][i] = 1'b0;
                     assign voq_packet_id_rx[r][i] = '0;
+                    assign voq_qos_tag_rx[r][i] = '0;                      // NEW: Default QoS
                     assign voq_last_rx[r][i] = 1'b0;
                     assign voq_iq_fifo_almost_empty[r][i] = 1'b1;
                     assign voq_dest_mask_rx[r][i] = '0;
@@ -326,7 +333,7 @@ module switch_high_radix_matching #(
     endgenerate
 
     //==========================================================================
-    // TX Output Mapping - NEW: Includes packet_id_tx
+    // TX Output Mapping - NEW: Includes packet_id_tx and qos_tag_tx
     //==========================================================================
     generate
         for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : g_tx_flatten_col
@@ -338,6 +345,7 @@ module switch_high_radix_matching #(
                     assign is_bad_frame_tx[c*S + i] = cell2pkt_is_bad_frame_tx[c][i];
                     assign last_tx[c*S + i] = cell2pkt_last_tx[c][i];
                     assign packet_id_tx[c*S + i] = cell2pkt_packet_id_tx[c][i];  // NEW: Connect packet_id
+                    assign qos_tag_tx[c*S + i] = cell2pkt_qos_tag_tx[c][i];      // NEW: Connect QoS
                 end
             end
         end
@@ -385,7 +393,7 @@ module switch_high_radix_matching #(
     //==========================================================================
     generate
         if (NUM_DEST_FINDER_MATCHING > 0) begin : g_row_df_enabled
-            for (genvar p = 0; p < NUM_DEST_FINDER_MATCHING; ++p) begin : g_row_df_pair
+            for (genvar p = 0; p < NUM_DEST_FINDER_MATCHING; p++) begin : g_row_df_pair
                 (* keep_hierarchy = "yes" *)
                 dest_finder_row_matching_qos #(
                     .S(S),
@@ -447,7 +455,7 @@ module switch_high_radix_matching #(
     endgenerate
 
     //==========================================================================
-    // Cell to Packet Converters - MODIFIED: Added PACKET_ID_WIDTH and packet_id_tx
+    // Cell to Packet Converters - MODIFIED: Added PACKET_ID_WIDTH, QOS_TAG_WIDTH, and qos_tag_tx
     //==========================================================================
     generate
         for (genvar c = 0; c < NUM_XPQ_COL; c++) begin : g_cell2pkt_col
@@ -456,7 +464,8 @@ module switch_high_radix_matching #(
                 .S(S),
                 .W_MINI(W_MINI),
                 .START_OF_CELL_DELAY(C2P_START_OF_CELL_DELAY),
-                .PACKET_ID_WIDTH(PACKET_ID_WIDTH)           // NEW: Pass parameter
+                .PACKET_ID_WIDTH(PACKET_ID_WIDTH),          // NEW: Pass parameter
+                .QOS_TAG_WIDTH(QOS_TAG_WIDTH)               // NEW: Pass parameter
             ) u_cell2pkt_c (
                 .clk(clk),
                 .start_of_cell_i(cell2pkt_start_of_cell[c]),
@@ -469,13 +478,14 @@ module switch_high_radix_matching #(
                 .valid_tx(cell2pkt_valid_tx[c]),
                 .is_bad_frame_tx(cell2pkt_is_bad_frame_tx[c]),
                 .last_tx(cell2pkt_last_tx[c]),
-                .packet_id_tx(cell2pkt_packet_id_tx[c])     // NEW: Connect packet_id
+                .packet_id_tx(cell2pkt_packet_id_tx[c]),    // NEW: Connect packet_id
+                .qos_tag_tx(cell2pkt_qos_tag_tx[c])         // NEW: Connect QoS
             );
         end
     endgenerate
 
     //==========================================================================
-    // VOQ Instances
+    // VOQ Instances - MODIFIED: Added QOS_TAG_WIDTH and qos_tag_rx
     //==========================================================================
     generate
         for (genvar r = 0; r < NUM_VOQ; r++) begin : g_voq
@@ -490,7 +500,7 @@ module switch_high_radix_matching #(
                 .MULTICAST_SUPPORT(MULTICAST_SUPPORT),
                 .MULTICAST_RATE(MULTICAST_RATE),
                 .PACKET_ID_WIDTH(PACKET_ID_WIDTH),
-                .QOS_TAG_WIDTH(QOS_TAG_WIDTH),
+                .QOS_TAG_WIDTH(QOS_TAG_WIDTH),              // NEW: Pass parameter
                 .KEEP_WIDTH(KEEP_WIDTH)
             ) voq_i (
                 .clk(clk),
@@ -499,6 +509,7 @@ module switch_high_radix_matching #(
                 .valid_rx(voq_valid_rx[r]),
                 .is_bad_frame_rx(voq_is_bad_frame_rx[r]),
                 .packet_id_rx(voq_packet_id_rx[r]),
+                .qos_tag_rx(voq_qos_tag_rx[r]),            // NEW: Connect QoS input
                 .last_rx(voq_last_rx[r]),
                 .iq_fifo_almost_empty(voq_iq_fifo_almost_empty[r]),
                 .dest_mask_rx(voq_dest_mask_rx[r]),

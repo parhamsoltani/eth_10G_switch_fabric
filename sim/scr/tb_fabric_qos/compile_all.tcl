@@ -86,6 +86,7 @@ vlog -sv {*}$INCLUDE_OPTS ../src/hdl/switch_ips/cell_to_packet_s_port_with_barre
 #===============================================================================
 vlog -sv {*}$INCLUDE_OPTS ../src/hdl/switches/switch_s.sv
 vlog -sv {*}$INCLUDE_OPTS ../src/hdl/switches/switch_high_radix.sv
+vlog -sv {*}$INCLUDE_OPTS ../src/hdl/switches/switch_high_radix_matching.sv
 
 #===============================================================================
 # Top level

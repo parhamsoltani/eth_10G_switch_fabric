@@ -1,4 +1,4 @@
-# 🚀 QoS-Aware Ethernet Switch Fabric
+#  QoS-Aware Ethernet Switch Fabric
 
 > **High-performance, parametric Ethernet switching fabric with 8-level quality-of-service support**  
 > Designed for data center, embedded networking, and telecommunications applications
@@ -10,7 +10,7 @@
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Overview](#-overview)
 - [Key Features](#-key-features)
@@ -29,13 +29,13 @@
 
 ---
 
-## 🎯 Overview
+##  Overview
 
 This project implements a **fully parametric, QoS-aware Ethernet switch fabric** optimized for FPGA deployment. The design supports **10 to 128 ports** with configurable data widths and operates in **cell-switching mode** for ultra-low latency.
 
 ### **Why This Design?**
 
-| Traditional Switches | This Design ✨ |
+| Traditional Switches | This Design  |
 |---------------------|---------------|
 | Fixed port count | **Parametric 10-128 ports** |
 | Store-and-forward (high latency) | **Cell-switching (100× lower)** |
@@ -46,43 +46,43 @@ This project implements a **fully parametric, QoS-aware Ethernet switch fabric**
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
 ### **🔧 Architecture**
-- ✅ **Parametric design**: Configure port count, bandwidth, buffer depth at compile-time
-- ✅ **Three topology options**:
+-  **Parametric design**: Configure port count, bandwidth, buffer depth at compile-time
+-  **Three topology options**:
   - Single-stage crossbar (10-16 ports) - **Current default: 10×10G**
   - Two-stage Clos (17-64 ports)
   - High-radix matching (65-128 ports)
-- ✅ **Cell-switching mode**: 100× lower latency vs. store-and-forward
-- ✅ **Non-blocking**: Full bisection bandwidth under uniform traffic
+-  **Cell-switching mode**: 100× lower latency vs. store-and-forward
+-  **Non-blocking**: Full bisection bandwidth under uniform traffic
 
-### **🎚️ Quality of Service (QoS)**
-- ✅ **8-level IEEE 802.1p priorities**: Network Control → Background
-- ✅ **Classification methods**:
+### ** Quality of Service (QoS)**
+-  **8-level IEEE 802.1p priorities**: Network Control → Background
+-  **Classification methods**:
   - VLAN PCP (802.1Q tag bits)
   - IP DSCP (RFC 2474)
   - Port-based policies
-- ✅ **Strict priority + weighted round-robin scheduling**
-- ✅ **Deficit counter anti-starvation** (prevents low-priority queue blocking)
-- ✅ **Per-priority Virtual Output Queues (VOQs)** (eliminates head-of-line blocking)
+-  **Strict priority + weighted round-robin scheduling**
+-  **Deficit counter anti-starvation** (prevents low-priority queue blocking)
+-  **Per-priority Virtual Output Queues (VOQs)** (eliminates head-of-line blocking)
 
-### **📦 Advanced Features**
-- ✅ **Multicast support**: Efficient address replication (90% memory savings)
-- ✅ **Dynamic memory management**: Linked-list packet buffers with free pool
-- ✅ **Credit-based flow control**: Prevents deadlock in Clos networks
-- ✅ **Runtime reconfiguration**: AXI4-Lite microprocessor interface
-- ✅ **Comprehensive statistics**: Per-port, per-QoS counters (packets, bytes, drops)
+### ** Advanced Features**
+-  **Multicast support**: Efficient address replication (90% memory savings)
+-  **Dynamic memory management**: Linked-list packet buffers with free pool
+-  **Credit-based flow control**: Prevents deadlock in Clos networks
+-  **Runtime reconfiguration**: AXI4-Lite microprocessor interface
+-  **Comprehensive statistics**: Per-port, per-QoS counters (packets, bytes, drops)
 
-### **🔬 Verification**
-- ✅ **UVM-style testbench**: Mailbox-driven constrained-random testing
-- ✅ **QoS-aware scoreboard**: Latency/throughput validation per priority
-- ✅ **Automated regression**: 10+ testbenches with full coverage
-- ✅ **Formal-ready**: SVA properties included
+### ** Verification**
+-  **UVM-style testbench**: Mailbox-driven constrained-random testing
+-  **QoS-aware scoreboard**: Latency/throughput validation per priority
+-  **Automated regression**: 10+ testbenches with full coverage
+-  **Formal-ready**: SVA properties included
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ### **High-Level Block Diagram (10×10G Configuration)**
 
@@ -168,7 +168,7 @@ Virtual Output Queues (VOQ)
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### **Prerequisites**
 
@@ -240,11 +240,11 @@ vivado -mode batch -source vivado_qos_build_2019.tcl
 ```
 
 **Build process** (automated):
-1. ✅ Creates Vivado project (`qos_fabric_10x10g.xpr`)
-2. ✅ Synthesizes design (target: xcku3p-ffvd900-2-i)
-3. ✅ Generates timing reports (`reports/timing_synth.rpt`)
-4. ✅ Verifies QoS integration (classifiers, VOQs)
-5. ✅ Skips place & route (synthesis verification mode)
+1.  Creates Vivado project (`qos_fabric_10x10g.xpr`)
+2.  Synthesizes design (target: xcku3p-ffvd900-2-i)
+3.  Generates timing reports (`reports/timing_synth.rpt`)
+4.  Verifies QoS integration (classifiers, VOQs)
+5.  Skips place & route (synthesis verification mode)
 
 **Expected output:**
 ```
@@ -262,9 +262,9 @@ vivado -mode batch -source vivado_qos_build_2019.tcl
     Status:         EXCEEDS (interface-based design)
 
   QoS Integration:
-    Classifiers:    10 ✅
-    Ingress QoS:    10 ✅
-    Status:         INTEGRATED ✅
+    Classifiers:    10 
+    Ingress QoS:    10 
+    Status:         INTEGRATED 
 
   Resources:
     LUTs:           7,792 (1.8%)
@@ -272,11 +272,11 @@ vivado -mode batch -source vivado_qos_build_2019.tcl
     BRAMs:          20 (0.9%)
 
   Synthesis Outputs:
-    Netlist:        Verified ✅
-    QoS Logic:      Verified ✅
+    Netlist:        Verified 
+    QoS Logic:      Verified 
     Reports:        vivado_build/reports/
 
-  ⚠ Next Steps for FPGA Implementation:
+   Next Steps for FPGA Implementation:
     1. Create switch_fabric_fpga_top.sv wrapper
     2. Add external I/O (PCIe, Ethernet PHY, etc.)
     3. Re-run build with new top-level
@@ -289,7 +289,7 @@ vivado -mode batch -source vivado_qos_build_2019.tcl
 
 ---
 
-## ⚙️ Configuration
+##  Configuration
 
 ### **Option A: Use Python Generator (Recommended)**
 
@@ -387,7 +387,7 @@ write_reg(QOS_BASE + 0x104, 2000);
 
 ---
 
-## 🎚️ QoS Capabilities
+##  QoS Capabilities
 
 ### **Priority Levels (IEEE 802.1p Mapping)**
 
@@ -524,14 +524,14 @@ VOQ State (Destination Port 3):
 └─────┴────────┴────────┴────────┴────────┘
 
 Arbiter Decision:
-  ✅ Priority 6 (Voice) selected
-  ✅ Src 1 granted (round-robin next = Src 2)
-  ✅ PKT B/C (Priority 5) wait → aging counter increments
+   Priority 6 (Voice) selected
+   Src 1 granted (round-robin next = Src 2)
+   PKT B/C (Priority 5) wait → aging counter increments
 ```
 
 ---
 
-## 📊 Performance
+##  Performance
 
 ### **Latency Breakdown (10×10G, Single-Stage)**
 
@@ -549,7 +549,7 @@ Arbiter Decision:
 Cell-switching:     44.8 ns
 Store-and-forward:  1,200 ns (1500-byte frame @ 10G)
 
-Speedup: 26.8× faster! 🚀
+Speedup: 26.8× faster! 
 ```
 
 ### **Throughput Validation**
@@ -564,10 +564,10 @@ Speedup: 26.8× faster! 🚀
 
 | Metric | Measured | Theoretical | Utilization |
 |--------|----------|-------------|-------------|
-| Total throughput | **99.7 Gbps** | 100 Gbps | 99.7% ✅ |
-| Per-port TX | **9.97 Gbps** | 10 Gbps | 99.7% ✅ |
-| Packet loss | **0** | 0 | 0% ✅ |
-| QoS violations | **0** | 0 | 0% ✅ |
+| Total throughput | **99.7 Gbps** | 100 Gbps | 99.7%  |
+| Per-port TX | **9.97 Gbps** | 10 Gbps | 99.7%  |
+| Packet loss | **0** | 0 | 0%  |
+| QoS violations | **0** | 0 | 0%  |
 | Avg latency | **52.3 ns** | ~45 ns | +16% (acceptable) |
 
 ### **QoS Priority Latency**
@@ -578,19 +578,19 @@ Test: 1000 packets/priority, oversubscribed (150% load)
 ┌─────┬─────────────┬─────────────┬─────────────┐
 │ QoS │  Min (ns)   │  Avg (ns)   │  Max (ns)   │
 ├─────┼─────────────┼─────────────┼─────────────┤
-│  7  │    44.8     │    46.1     │    51.2     │  🔴 Network Control
-│  6  │    45.6     │    48.3     │    67.8     │  🟠 Voice
-│  5  │    46.2     │    52.7     │    89.4     │  🟡 Video
-│  4  │    47.1     │    61.2     │   134.5     │  🟢 Critical
-│  3  │    48.9     │    78.4     │   223.1     │  🔵 Excellent
-│  2  │    51.3     │   102.7     │   456.8     │  🟣 Standard
-│  1  │    54.6     │   187.3     │   891.2     │  🟤 Bulk
-│  0  │    58.2     │   312.4     │  1567.9     │  ⚫ Background
+│  7  │    44.8     │    46.1     │    51.2     │   Network Control
+│  6  │    45.6     │    48.3     │    67.8     │   Voice
+│  5  │    46.2     │    52.7     │    89.4     │   Video
+│  4  │    47.1     │    61.2     │   134.5     │   Critical
+│  3  │    48.9     │    78.4     │   223.1     │   Excellent
+│  2  │    51.3     │   102.7     │   456.8     │   Standard
+│  1  │    54.6     │   187.3     │   891.2     │   Bulk
+│  0  │    58.2     │   312.4     │  1567.9     │   Background
 └─────┴─────────────┴─────────────┴─────────────┘
 
-✅ Priority 7 latency ALWAYS < 100 ns (even under oversubscription)
-✅ Priority 6-5 meet VoIP/video latency budgets (<100 ns jitter)
-⚠️ Priority 0 experiences delays (intentional, low-priority traffic)
+ Priority 7 latency ALWAYS < 100 ns (even under oversubscription)
+ Priority 6-5 meet VoIP/video latency budgets (<100 ns jitter)
+ Priority 0 experiences delays (intentional, low-priority traffic)
 ```
 
 ### **Resource Utilization (xcku3p-ffvd900-2-i)**
@@ -601,12 +601,12 @@ Post-Synthesis Results (Vivado 2019.1):
 ┌─────────────┬────────┬───────────┬─────────┬─────────┐
 │  Resource   │  Used  │ Available │   %     │  Note   │
 ├─────────────┼────────┼───────────┼─────────┼─────────┤
-│ LUTs        │  7,792 │  432,000  │  1.8%   │ ✅ Low  │
-│ FFs         │  8,838 │  864,000  │  1.0%   │ ✅ Low  │
-│ BRAMs       │     20 │    2,160  │  0.9%   │ ✅ Low  │
+│ LUTs        │  7,792 │  432,000  │  1.8%   │  Low    │
+│ FFs         │  8,838 │  864,000  │  1.0%   │  Low    │
+│ BRAMs       │     20 │    2,160  │  0.9%   │  Low    │
 │ URAMs       │      0 │      320  │  0.0%   │ Unused  │
 │ DSPs        │      0 │    1,728  │  0.0%   │ Unused  │
-│ I/O         │  1,412 │      386  │ 365.8%  │ ⚠️ High*│
+│ I/O         │  1,412 │      386  │ 365.8%  │  High*  │
 └─────────────┴────────┴───────────┴─────────┴─────────┘
 
 * I/O count exceeds device capacity (expected for interface-based design)
@@ -620,7 +620,7 @@ Scaling Estimates:
 
 ---
 
-## 📁 Directory Structure
+##  Directory Structure
 
 ```
 eth/
@@ -717,7 +717,7 @@ eth/
 
 ---
 
-## 🧪 Simulation
+##  Simulation
 
 ### **Available Testbenches**
 
@@ -765,24 +765,24 @@ vsim -do "set TB tb_fabric_basic; do sim_qos.tcl"
   Started: 2025-12-26 15:30:00
 ═══════════════════════════════════════════════════════════
 
- [1/6] Running tb_fabric_basic...              PASSED ✅ (182μs)
- [2/6] Running tb_fabric_qos_sweep...          PASSED ✅ (523μs)
- [3/6] Running tb_fabric_qos_stress...         PASSED ✅ (1.2ms)
- [4/6] Running tb_qos_classifier_unit...       PASSED ✅ (48μs)
- [5/6] Running tb_qos_scheduler_unit...        PASSED ✅ (97μs)
- [6/6] Running tb_voq_unit...                  PASSED ✅ (102μs)
+ [1/6] Running tb_fabric_basic...              PASSED  (182μs)
+ [2/6] Running tb_fabric_qos_sweep...          PASSED  (523μs)
+ [3/6] Running tb_fabric_qos_stress...         PASSED  (1.2ms)
+ [4/6] Running tb_qos_classifier_unit...       PASSED  (48μs)
+ [5/6] Running tb_qos_scheduler_unit...        PASSED  (97μs)
+ [6/6] Running tb_voq_unit...                  PASSED  (102μs)
 
 ═══════════════════════════════════════════════════════════
   REGRESSION SUMMARY
 ═══════════════════════════════════════════════════════════
   Total Tests: 6
-  Passed:      6 ✅
+  Passed:      6 
   Failed:      0
   Coverage:    92.3% (line), 87.1% (branch)
   Results:     regression_results_20251226_153000/
 
 ═══════════════════════════════════════════════════════════
- ✅ ALL TESTS PASSED
+  ALL TESTS PASSED
 ═══════════════════════════════════════════════════════════
 ```
 
@@ -804,7 +804,7 @@ run -all
 
 ---
 
-## 🔨 Synthesis
+##  Synthesis
 
 ### **Automated Build (Vivado 2019.1)**
 
@@ -823,9 +823,9 @@ vivado -mode batch -source vivado_qos_build_2019.tcl
 4. **Synthesis** (target: xcku3p-ffvd900-2-i, -2 speed grade)
 5. **Report generation** (`reports/timing_synth.rpt`, `utilization_synth.rpt`)
 6. **Verification checks**:
-   - ✅ QoS classifiers present
-   - ✅ VOQ structures instantiated
-   - ✅ Setup timing passes (WNS > 0)
+   -  QoS classifiers present
+   -  VOQ structures instantiated
+   -  Setup timing passes (WNS > 0)
    - ⚠️ Hold violations expected (synthesis-only mode, no P&R)
 
 **Output files:**
@@ -866,14 +866,14 @@ vivado_build/
 
 ---
 
-## ⏱️ Timing Closure
+##  Timing Closure
 
 ### **Current Status (Vivado 2019.1 Build)**
 
 ```
-Setup Timing:  WNS = +0.125 ns ✅  (PASSING)
+Setup Timing:  WNS = +0.125 ns   (PASSING)
 Hold Timing:   WHS = -2.810 ns ❌  (EXPECTED - see below)
-Critical Warnings: 0 ✅
+Critical Warnings: 0 
 ```
 
 ### **Why Hold Violations Are Expected**
@@ -899,9 +899,9 @@ vivado -mode tcl
 ```
 
 Vivado's router will:
-- ✅ Balance clock/data paths
-- ✅ Insert delay buffers
-- ✅ Automatically fix hold violations
+-  Balance clock/data paths
+-  Insert delay buffers
+-  Automatically fix hold violations
 
 #### **Option B: Bypass I/O timing (synthesis verification)**
 
@@ -953,7 +953,7 @@ set_false_path -from [get_ports -filter {NAME =~ "*reset*"}]
 1. ❌ **Removed** `set_false_path` to specific endpoints (caused critical warnings)
 2. ❌ **Removed** `set_min_delay` (caused hold violations)
 3. ❌ **Removed** multicycle paths (register names didn't match post-synthesis)
-4. ✅ **Simplified** to basic I/O constraints only
+4.  **Simplified** to basic I/O constraints only
 
 ### **Timing Analysis Tips**
 
@@ -1014,7 +1014,7 @@ report_drc -file drc.rpt
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 ### **Development Workflow**
 
@@ -1125,8 +1125,8 @@ This design is **proprietary** and confidential. Unauthorized copying, distribut
 
 | Activity | Allowed | License Required |
 |----------|---------|------------------|
-| Internal use (licensed organizations) | ✅ | Standard |
-| FPGA prototyping (evaluation) | ✅ | Evaluation |
+| Internal use (licensed organizations) |  | Standard |
+| FPGA prototyping (evaluation) |  | Evaluation |
 | Commercial deployment | ❌ | Commercial |
 | Redistribution of source code | ❌ | Not permitted |
 | Reverse engineering | ❌ | Not permitted |
@@ -1148,7 +1148,7 @@ This design is **proprietary** and confidential. Unauthorized copying, distribut
 
 ---
 
-## 📞 Support
+##  Support
 
 ### **Technical Support**
 
@@ -1164,7 +1164,7 @@ This design is **proprietary** and confidential. Unauthorized copying, distribut
 
 ---
 
-## 🗺️ Roadmap
+##  Roadmap
 
 ### **Version 1.1 (Q2 2025)**
 - [ ] Weighted Fair Queueing (WFQ) scheduler (IEEE 802.1Qav)
@@ -1186,16 +1186,16 @@ This design is **proprietary** and confidential. Unauthorized copying, distribut
 
 ---
 
-## 📈 Changelog
+##  Changelog
 
 ### **v1.0.0** (2025-12-26)
-- ✅ Production release with 8-level QoS
-- ✅ Parametric 10-128 ports (default: 10×10G)
-- ✅ Multicast support (90% memory savings vs. duplication)
-- ✅ AXI4-Lite configuration interface
-- ✅ Comprehensive test suite (10 testbenches, 100% pass rate)
-- ✅ Vivado 2019.1 synthesis flow (timing closure guidance)
-- ✅ 1600+ page technical documentation
+-  Production release with 8-level QoS
+-  Parametric 10-128 ports (default: 10×10G)
+-  Multicast support (90% memory savings vs. duplication)
+-  AXI4-Lite configuration interface
+-  Comprehensive test suite (10 testbenches, 100% pass rate)
+-  Vivado 2019.1 synthesis flow (timing closure guidance)
+-  1600+ page technical documentation
 
 ### **v0.9.0** (2025-11-26)
 - Beta release for internal testing
@@ -1207,7 +1207,7 @@ This design is **proprietary** and confidential. Unauthorized copying, distribut
 
 ---
 
-## ❓ Frequently Asked Questions (FAQ)
+##  Frequently Asked Questions (FAQ)
 
 <details>
 <summary><b>Q: Can I use this design in an ASIC?</b></summary>

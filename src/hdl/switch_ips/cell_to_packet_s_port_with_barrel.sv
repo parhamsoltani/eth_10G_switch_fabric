@@ -16,11 +16,12 @@ module cell_to_packet_s_port_with_barrel #(
     parameter   W_MINI                  = 64,            // bus data width (mini cell data width)
     parameter   START_OF_CELL_DELAY     = 0,
     parameter   PACKET_ID_WIDTH         = 8,             // NEW: Packet ID width
+    parameter   QOS_TAG_WIDTH           = 3,             // NEW: QoS tag width
     // DO NOT CHANGE
     parameter   KEEP_WIDTH              = $clog2((W_MINI/8) + 1),
     parameter   S_LOG                   = $clog2(S),
-    // MODIFIED: Added PACKET_ID_WIDTH to metadata
-    parameter   META_DATA_WIDTH         = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH
+    // MODIFIED: Added QOS_TAG_WIDTH to metadata
+    parameter   META_DATA_WIDTH         = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH + QOS_TAG_WIDTH
 ) (
     input   wire                                clk,
     input   wire                                start_of_cell_i,
@@ -34,7 +35,8 @@ module cell_to_packet_s_port_with_barrel #(
     output  wire                                valid_tx[S],
     output  wire                                is_bad_frame_tx[S],
     output  wire                                last_tx[S],
-    output  wire [PACKET_ID_WIDTH-1:0]          packet_id_tx[S]  // NEW: Packet ID output array
+    output  wire [PACKET_ID_WIDTH-1:0]          packet_id_tx[S],  // NEW: Packet ID output array
+    output  wire [QOS_TAG_WIDTH-1:0]            qos_tag_tx[S]     // NEW: QoS tag output array
 );
 
     //==============================================================================
@@ -57,6 +59,7 @@ module cell_to_packet_s_port_with_barrel #(
     wire                          c2p_is_bad_frame_tx  [S];
     wire                          c2p_last_tx          [S];
     wire [PACKET_ID_WIDTH-1:0]    c2p_packet_id_tx     [S];  // NEW: Per-port packet_id
+    wire [QOS_TAG_WIDTH-1:0]      c2p_qos_tag_tx       [S];  // NEW: Per-port qos_tag
 
     reg rr_sel [S];
 
@@ -86,6 +89,7 @@ module cell_to_packet_s_port_with_barrel #(
             assign is_bad_frame_tx[i] = c2p_is_bad_frame_tx[i];
             assign last_tx[i]         = c2p_last_tx[i];
             assign packet_id_tx[i]    = c2p_packet_id_tx[i];  // NEW: Connect packet_id
+            assign qos_tag_tx[i]      = c2p_qos_tag_tx[i];    // NEW: Connect qos_tag
         end
     endgenerate
 
@@ -109,7 +113,8 @@ module cell_to_packet_s_port_with_barrel #(
             cell_to_packet #(
                 .S(S),
                 .W_MINI(W_MINI),
-                .PACKET_ID_WIDTH(PACKET_ID_WIDTH)        // NEW: Pass parameter
+                .PACKET_ID_WIDTH(PACKET_ID_WIDTH),        // NEW: Pass parameter
+                .QOS_TAG_WIDTH(QOS_TAG_WIDTH)             // NEW: Pass parameter
             ) c2p (
                 .clk             (clk),
                 .start_of_cell_i (c2p_start_of_cell_i[i]),
@@ -121,7 +126,8 @@ module cell_to_packet_s_port_with_barrel #(
                 .valid_tx        (c2p_valid_tx[i]),
                 .is_bad_frame_tx (c2p_is_bad_frame_tx[i]),
                 .last_tx         (c2p_last_tx[i]),
-                .packet_id_tx    (c2p_packet_id_tx[i])   // NEW: Connect packet_id
+                .packet_id_tx    (c2p_packet_id_tx[i]),   // NEW: Connect packet_id
+                .qos_tag_tx      (c2p_qos_tag_tx[i])      // NEW: Connect qos_tag
             );
         end
     endgenerate

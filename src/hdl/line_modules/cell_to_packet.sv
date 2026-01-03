@@ -9,18 +9,19 @@
 // Description: Converts cells back to packets with packet ID preservation
 //
 // MODIFIED: Added PACKET_ID_WIDTH parameter and packet_id output
+// FURTHER MODIFIED: Added QOS_TAG_WIDTH parameter, qos_tag output, and propagation
 //////////////////////////////////////////////////////////////////////////////////
 
 module cell_to_packet #(
     parameter   S                       = 10,            // speed up
     parameter   W_MINI                  = 64,            // bus data width (mini cell data width)
     parameter   PACKET_ID_WIDTH         = 8,             // NEW: Packet ID width
-
-    // DO NOT CHANGE
+    parameter   QOS_TAG_WIDTH           = 3,             // NEW: QoS tag width
+    
+    // DO NOT CHANGE - Moved these before ports
     parameter   KEEP_WIDTH              = $clog2((W_MINI/8) + 1),
     parameter   S_LOG                   = $clog2(S),
-    // MODIFIED: Added PACKET_ID_WIDTH to metadata
-    parameter   META_DATA_WIDTH         = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH
+    parameter   META_DATA_WIDTH         = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH + QOS_TAG_WIDTH
 ) (
     input   wire                                clk,
     input   wire                                start_of_cell_i,
@@ -33,18 +34,21 @@ module cell_to_packet #(
     output  wire                                valid_tx,
     output  wire                                is_bad_frame_tx,
     output  wire                                last_tx,
-    output  wire [PACKET_ID_WIDTH-1:0]          packet_id_tx    // NEW: Packet ID output
+    output  wire [PACKET_ID_WIDTH-1:0]          packet_id_tx,    // NEW: Packet ID output
+    output  wire [QOS_TAG_WIDTH-1:0]            qos_tag_tx       // NEW: QoS tag output
 );
 
     //==============================================================================
     // local parameters and integers
     //==============================================================================
     // Metadata bit positions (from MSB to LSB):
-    // [packet_id | keep_minicell | keep_last | is_bad_frame | last_minicell_index]
+    // [packet_id | qos_tag | keep_minicell | keep_last | is_bad_frame | last_minicell_index]
     localparam PKT_ID_MSB = META_DATA_WIDTH - 1;
     localparam PKT_ID_LSB = META_DATA_WIDTH - PACKET_ID_WIDTH;
-    localparam KEEP_MINI_MSB = PKT_ID_LSB - 1;
-    localparam KEEP_MINI_LSB = PKT_ID_LSB - S;
+    localparam QOS_MSB = PKT_ID_LSB - 1;
+    localparam QOS_LSB = PKT_ID_LSB - QOS_TAG_WIDTH;
+    localparam KEEP_MINI_MSB = QOS_LSB - 1;
+    localparam KEEP_MINI_LSB = QOS_LSB - S;
     localparam KEEP_LAST_MSB = KEEP_MINI_LSB - 1;
     localparam KEEP_LAST_LSB = KEEP_MINI_LSB - KEEP_WIDTH;
     localparam BAD_FRAME_BIT = KEEP_LAST_LSB - 1;
@@ -60,7 +64,8 @@ module cell_to_packet #(
     reg                         valid_reg_o = 0;
     reg                         is_bad_frame_reg_o = 0;
     reg                         last_reg_o = 0;
-    reg  [PACKET_ID_WIDTH-1:0]  packet_id_reg_o = 0;    // NEW: Packet ID output register
+    reg [PACKET_ID_WIDTH-1:0]  packet_id_reg_o = 0;    // NEW: Packet ID output register
+    reg [QOS_TAG_WIDTH-1:0]    qos_tag_reg_o = 0;      // NEW: QoS tag output register
 
     // reg inputs
     reg                         last_cell_reg;
@@ -69,6 +74,7 @@ module cell_to_packet #(
     reg                         is_bad_frame_reg;
     reg [S_LOG-1:0]             last_minicell_index_reg = '0;
     reg [PACKET_ID_WIDTH-1:0]   packet_id_reg = '0;     // NEW: Packet ID storage
+    reg [QOS_TAG_WIDTH-1:0]     qos_tag_reg = '0;       // NEW: QoS tag storage
 
     // temp aux variables
     reg [S_LOG:0]               cell_valid_counter = S;
@@ -81,6 +87,7 @@ module cell_to_packet #(
     assign is_bad_frame_tx  = is_bad_frame_reg_o;
     assign last_tx          = last_reg_o;
     assign packet_id_tx     = packet_id_reg_o;          // NEW: Connect packet_id output
+    assign qos_tag_tx       = qos_tag_reg_o;            // NEW: Connect qos_tag output
 
     //==============================================================================
     // Main Controls
@@ -97,8 +104,9 @@ module cell_to_packet #(
     always @(posedge clk) begin
         if (start_of_cell_i) begin
             last_cell_reg           <= last_cell_i;
-            // MODIFIED: Extract all fields including packet_id from metadata
+            // MODIFIED: Extract all fields including packet_id and qos_tag from metadata
             packet_id_reg           <= metadata_i[PKT_ID_MSB:PKT_ID_LSB];
+            qos_tag_reg             <= metadata_i[QOS_MSB:QOS_LSB];
             keep_minicell_reg       <= metadata_i[KEEP_MINI_MSB:KEEP_MINI_LSB];
             keep_last_reg           <= metadata_i[KEEP_LAST_MSB:KEEP_LAST_LSB];
             is_bad_frame_reg        <= metadata_i[BAD_FRAME_BIT];
@@ -110,6 +118,7 @@ module cell_to_packet #(
         if (cell_valid_counter < S && is_minicell_valid) begin
             valid_reg_o <= 1;
             packet_id_reg_o <= packet_id_reg;           // NEW: Output packet_id when valid
+            qos_tag_reg_o <= qos_tag_reg;               // NEW: Output qos_tag when valid
             if (last_minicell_index_reg == cell_valid_counter) begin
                 last_reg_o <= last_cell_reg;
                 is_bad_frame_reg_o <= is_bad_frame_reg;
@@ -125,6 +134,7 @@ module cell_to_packet #(
             is_bad_frame_reg_o <= 0;
             last_reg_o <= 0;
             packet_id_reg_o <= '0;                      // NEW: Clear when not valid
+            qos_tag_reg_o <= '0;                        // NEW: Clear when not valid
         end
     end
 

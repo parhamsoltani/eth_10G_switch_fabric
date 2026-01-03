@@ -61,6 +61,7 @@ module switch_fabric #(
     wire                        is_bad_frame_tx [NUM_PORT];
     wire                        last_tx        [NUM_PORT];
     wire [PACKET_ID_WIDTH-1:0]  packet_id_tx   [NUM_PORT];   // NEW: Packet ID from switch core
+    wire [QOS_TAG_WIDTH-1:0]    qos_tag_tx     [NUM_PORT];   // NEW: QoS tag from switch core
     wire                        oq_wr_prog_full [NUM_PORT];
 
     // Debug outputs kept as internal wires
@@ -173,6 +174,7 @@ module switch_fabric #(
                     .valid_rx(valid_rx),
                     .is_bad_frame_rx(is_bad_frame_rx),
                     .packet_id_rx(packet_id_rx),
+                    .qos_tag_rx(qos_tag_rx),                // NEW: Connect QoS input
                     .last_rx(last_rx),
                     .iq_fifo_almost_empty(iq_fifo_almost_empty),
                     .dest_mask_rx(dest_mask_rx),
@@ -183,6 +185,7 @@ module switch_fabric #(
                     .valid_tx(valid_tx),
                     .is_bad_frame_tx(is_bad_frame_tx),
                     .packet_id_tx(packet_id_tx),             // NEW: Connect packet_id
+                    .qos_tag_tx(qos_tag_tx),                 // NEW: Connect QoS output
                     .last_tx(last_tx),
                     .oq_wr_prog_full(oq_wr_prog_full),
                     .addr_fifos_num_free_o(addr_fifos_num_free_internal),
@@ -227,6 +230,7 @@ module switch_fabric #(
                 // Tie off packet_id for non-QoS mode (legacy)
                 for (genvar j = 0; j < NUM_PORT; j++) begin : gen_pkt_id_tieoff
                     assign packet_id_tx[j] = '0;
+                    assign qos_tag_tx[j] = `PRIORITY_STANDARD;   // NEW: Default QoS
                 end
                 
             end
@@ -269,6 +273,7 @@ module switch_fabric #(
             // Tie off packet_id for switch_2s (needs update if packet_id support added)
             for (genvar j = 0; j < NUM_PORT; j++) begin : gen_pkt_id_tieoff_2s
                 assign packet_id_tx[j] = '0;
+                assign qos_tag_tx[j] = `PRIORITY_STANDARD;   // NEW: Default QoS
             end
             
         end else begin : gen_high_radix
@@ -291,6 +296,7 @@ module switch_fabric #(
                 .valid_rx(valid_rx),
                 .is_bad_frame_rx(is_bad_frame_rx),
                 .packet_id_rx(packet_id_rx),
+                .qos_tag_rx(qos_tag_rx),                // NEW: Connect QoS input
                 .last_rx(last_rx),
                 .iq_fifo_almost_empty(iq_fifo_almost_empty),
                 .dest_mask_rx(dest_mask_rx),
@@ -301,6 +307,7 @@ module switch_fabric #(
                 .valid_tx(valid_tx),
                 .is_bad_frame_tx(is_bad_frame_tx),
                 .packet_id_tx(packet_id_tx),             // NEW: Connect packet_id
+                .qos_tag_tx(qos_tag_tx),                 // NEW: Connect QoS output
                 .last_tx(last_tx),
                 .oq_wr_prog_full(oq_wr_prog_full),
                 .addr_fifos_num_free_o(addr_fifos_num_free_internal),
@@ -324,7 +331,8 @@ module switch_fabric #(
                 .OUTPUT_QUEUE_TUSER(OUTPUT_QUEUE_TUSER),
                 .OQ_PROG_FULL_THRESH(OQ_PROG_FULL_THRESH),
                 .NOT_READY_LIMIT(NOT_READY_LIMIT),
-                .PACKET_ID_WIDTH(PACKET_ID_WIDTH)        // NEW: Pass parameter
+                .PACKET_ID_WIDTH(PACKET_ID_WIDTH),        // NEW: Pass parameter
+                .QOS_TAG_WIDTH(QOS_TAG_WIDTH)             // NEW: Pass parameter
             ) egress_inst (
                 .clk(clk),
                 .tx_data_if(tx_data_if[i]),
@@ -334,6 +342,7 @@ module switch_fabric #(
                 .is_bad_frame_tx(is_bad_frame_tx[i]),
                 .last_tx(last_tx[i]),
                 .packet_id_tx(packet_id_tx[i]),          // NEW: Connect packet_id
+                .qos_tag_tx(qos_tag_tx[i]),              // NEW: Connect QoS tag
                 .oq_wr_prog_full(oq_wr_prog_full[i])
             );
 

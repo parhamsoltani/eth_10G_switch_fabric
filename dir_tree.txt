@@ -9,30 +9,65 @@ C:.
 |   Makefile
 |   quick_start.bash
 |   README.md
+|   run_all_tests.bat
+|   run_qos_build_complete.bat
+|   run_single_test.bat
 |   transcript
 |   usage.bash
-|   usage_example.bash
 |   vivado.jou
 |   vivado.log
-|   vivado_1416.backup.jou
-|   vivado_1416.backup.log
-|   vivado_16024.backup.jou
-|   vivado_16024.backup.log
-|   vivado_22404.backup.jou
-|   vivado_22404.backup.log
-|   vivado_24544.backup.jou
-|   vivado_24544.backup.log
-|   vivado_3064.backup.jou
-|   vivado_3064.backup.log
+|   vivado_11604.backup.jou
+|   vivado_11604.backup.log
+|   vivado_18048.backup.jou
+|   vivado_18048.backup.log
+|   vivado_18092.backup.jou
+|   vivado_18092.backup.log
+|   vivado_19300.backup.jou
+|   vivado_19300.backup.log
+|   vivado_23900.backup.jou
+|   vivado_23900.backup.log
 |   vivado_qos_build.tcl
 |   vivado_qos_build_2019.tcl
 |   
 +---.Xil
+|   +---Vivado-17180-DESKTOP-0PT18SE
+|   |   \---wt
+|   |           synthesis.wdf
+|   |           
+|   +---Vivado-17396-DESKTOP-0PT18SE
+|   |   \---wt
+|   |           synthesis.wdf
+|   |           
+|   +---Vivado-18960-DESKTOP-0PT18SE
+|   |   \---wt
+|   |           synthesis.wdf
+|   |           
+|   +---Vivado-1928-DESKTOP-0PT18SE
+|   |   \---wt
+|   |           synthesis.wdf
+|   |           
+|   +---Vivado-20676-DESKTOP-0PT18SE
+|   |   \---wt
+|   |           synthesis.wdf
+|   |           
+|   +---Vivado-6332-DESKTOP-0PT18SE
+|   |   \---wt
+|   |           synthesis.wdf
+|   |           
+|   \---Vivado-6916-DESKTOP-0PT18SE
+|       \---wt
+|               synthesis.wdf
+|               
 +---docs
 |       doc_v2.md
 |       enhancement_v2.md
+|       enhancement_v3.md
 |       IMPLEMENTATION_STATUS.md
+|       paper_testing.md
 |       qos_integration_guide.md
+|       README.md
+|       roadmap.md
+|       test_plan.md
 |       
 +---out
 |   \---hw_history
@@ -42,9 +77,16 @@ C:.
 |   |   check_project.bat
 |   |   clear_junks.bat
 |   |   files_list.tcl
+|   |   ooc_timing_analysis.tcl
+|   |   run_full_implementation.tcl
 |   |   
 |   +---analysis
+|   |       analyze_timing.tcl
+|   |       collect_results.py
+|   |       compare_qos_impact.py
+|   |       generate_thesis_figures.py
 |   |       qos_performance_analyzer.py
+|   |       thesis_report_generator.py
 |   |       timing_analyzer.tcl
 |   |       
 |   +---build_hw
@@ -104,12 +146,18 @@ C:.
 |   |   sim.tcl
 |   |   sim_qos.tcl
 |   |   tb_qos_classifier_unit.vcd
+|   |   tb_qos_manager_integration.vcd
+|   |   tb_qos_scheduler_unit.vcd
 |   |   transcript
 |   |   transcript_72.log
 |   |   transcript_73.log
 |   |   transcript_74.log
+|   |   transcript_75.log
+|   |   transcript_76.log
+|   |   transcript_77.log
+|   |   transcript_78.log
+|   |   transcript_79.log
 |   |   transcript_qos.log
-|   |   vsim.dbg
 |   |   vsim_stacktrace.vstf
 |   |   wave_tb_fabric_qos_sweep.do
 |   |   
@@ -145,8 +193,6 @@ C:.
 |   |           qos_latency_tracker.sv
 |   |           
 |   +---inc
-|   |       fabric_params.vh
-|   |       implement_options.vh
 |   |       qos_defines.vh
 |   |       sim_options.vh
 |   |       
@@ -157,6 +203,14 @@ C:.
 |   |   \---xilinx_ips_sim
 |   |           ila_ips.sv
 |   |           
+|   +---logs
+|   |       tb_qos_classifier_unit_20260102_232959.log
+|   |       tb_qos_classifier_unit_20260102_233558.log
+|   |       test_run_20260102_232959.log
+|   |       test_run_20260102_233558.log
+|   |       
+|   +---results
+|   |   \---figures
 |   +---scr
 |   |   |   perf_tb_top.sv
 |   |   |   run_all_qos_tests.tcl
@@ -172,6 +226,7 @@ C:.
 |   |   |       
 |   |   +---tb_fabric_qos
 |   |   |       compile_all.tcl
+|   |   |       wave.tcl
 |   |   |       
 |   |   +---tb_fabric_qos_stress
 |   |   |       compile_all.tcl
@@ -226,7 +281,7 @@ C:.
 |   |   |       tb_qos_manager_integration.sv
 |   |   |       
 |   |   +---pipeline_mux
-|   |   |       mux_tb.sv
+|   |   |       tb_pipeline_mux.sv
 |   |   |       
 |   |   \---unit
 |   |           tb_qos_classifier_unit.sv
@@ -236,15 +291,26 @@ C:.
 |   +---wave
 |   +---wlf
 |   |       tb_fabric_basic.wlf
+|   |       tb_fabric_qos_stress.wlf
+|   |       tb_fabric_qos_sweep.wlf
+|   |       tb_fifo_array.wlf
+|   |       tb_packet_mode_fifo_array.wlf
+|   |       tb_pipeline_mux.wlf
 |   |       tb_qos_classifier_unit.wlf
+|   |       tb_qos_scheduler_unit.wlf
+|   |       tb_voq_unit.wlf
 |   |       vsim.wlf
+|   |       wlft2iz0mw
+|   |       wlftxjghe8
+|   |       wlftzva8bf
 |   |       
 |   \---work
 |       |   _info
 |       |   _lib.qdb
-|       |   _lib1_2.qdb
-|       |   _lib1_2.qpg
-|       |   _lib1_2.qtl
+|       |   _lib1_127.qdb
+|       |   _lib1_127.qpg
+|       |   _lib1_127.qtl
+|       |   _opt2__lock
 |       |   _opt__lock
 |       |   _vmake
 |       |   
@@ -270,11 +336,11 @@ C:.
 |       |   |   _lib6_0.qtl
 |       |   |   
 |       |   \---_data
-|       |           exempti7bxxe
-|       |           exemptiesxgz
-|       |           exemptik3xeh
+|       |           exemptnhrrj1
+|       |           exemptnm8r7w
+|       |           exemptnzxrsz
 |       |           
-|       +---@_opt1
+|       +---@_opt2
 |       |   |   _lib.qdb
 |       |   |   _lib1_0.qdb
 |       |   |   _lib1_0.qpg
@@ -290,22 +356,34 @@ C:.
 |       |   |   _lib4_0.qtl
 |       |   |   
 |       |   \---_data
-|       |           exempt31izvy
-|       |           exempt3rezyz
-|       |           exempt3xgz7z
+|       |           exempt7bg135
+|       |           exempt7ej124
+|       |           exempt7jd1bv
 |       |           
 |       +---_dbcontainer
-|       |   +---#64_opt
+|       |   +---#64_opt1
 |       |   |       work_axis_fifo_fast_0.dbg
 |       |   |       work_axis_fifo_fast__1_0.dbg
 |       |   |       work_barrel_shifter_fast_0.dbg
 |       |   |       work_barrel_shifter_fast__1_0.dbg
 |       |   |       work_cell_to_packet_fast_0.dbg
+|       |   |       work_cell_to_packet_s_port_with_barrel_fast_0.dbg
+|       |   |       work_col_pipeline_mux_fast_0.dbg
 |       |   |       work_delayed_regs_fast_0.dbg
 |       |   |       work_delayed_regs_fast__10_0.dbg
 |       |   |       work_delayed_regs_fast__11_0.dbg
 |       |   |       work_delayed_regs_fast__12_0.dbg
+|       |   |       work_delayed_regs_fast__13_0.dbg
+|       |   |       work_delayed_regs_fast__14_0.dbg
+|       |   |       work_delayed_regs_fast__15_0.dbg
+|       |   |       work_delayed_regs_fast__16_0.dbg
+|       |   |       work_delayed_regs_fast__17_0.dbg
+|       |   |       work_delayed_regs_fast__18_0.dbg
+|       |   |       work_delayed_regs_fast__19_0.dbg
 |       |   |       work_delayed_regs_fast__1_0.dbg
+|       |   |       work_delayed_regs_fast__20_0.dbg
+|       |   |       work_delayed_regs_fast__21_0.dbg
+|       |   |       work_delayed_regs_fast__22_0.dbg
 |       |   |       work_delayed_regs_fast__2_0.dbg
 |       |   |       work_delayed_regs_fast__3_0.dbg
 |       |   |       work_delayed_regs_fast__4_0.dbg
@@ -314,32 +392,64 @@ C:.
 |       |   |       work_delayed_regs_fast__7_0.dbg
 |       |   |       work_delayed_regs_fast__8_0.dbg
 |       |   |       work_delayed_regs_fast__9_0.dbg
-|       |   |       work_dest_finder_s_fast_0.dbg
+|       |   |       work_dest_finder_col_fast_0.dbg
+|       |   |       work_dest_finder_row_fast_0.dbg
 |       |   |       work_egress_switch_fast_0.dbg
+|       |   |       work_fabric_driver_fast_0.dbg
+|       |   |       work_fabric_monitor_fast_0.dbg
+|       |   |       work_fifo_array_model_fast_0.dbg
+|       |   |       work_first_none_zero_except_k_fast_0.dbg
 |       |   |       work_first_non_zero_fast_0.dbg
 |       |   |       work_glbl_fast_0.dbg
-|       |   |       work_ingress_switch_fast_0.dbg
+|       |   |       work_ingress_line_qos_fast_0.dbg
 |       |   |       work_linklist_dynamic_fifo_fast_0.dbg
+|       |   |       work_mux_tile_fast_0.dbg
+|       |   |       work_one_hot_none_zero_fast_0.dbg
 |       |   |       work_packet_mode_fifo_array_fast_0.dbg
 |       |   |       work_packet_to_cell_fast_0.dbg
 |       |   |       work_pipeline_mem_fast_0.dbg
-|       |   |       work_pipeline_mem_with_inout_barrel_fast_0.dbg
+|       |   |       work_pipeline_mem_fast__1_0.dbg
+|       |   |       work_pipeline_mem_with_in_barrel_fast_0.dbg
+|       |   |       work_pipeline_mux_fast_0.dbg
+|       |   |       work_pipeline_mux_fast__1_0.dbg
+|       |   |       work_pipeline_mux_fast__2_0.dbg
+|       |   |       work_qos_classifier_fast_0.dbg
+|       |   |       work_qos_scheduler_fast_0.dbg
+|       |   |       work_register_replicator_fast_0.dbg
+|       |   |       work_register_replicator_fast__1_0.dbg
+|       |   |       work_register_replicator_fast__2_0.dbg
+|       |   |       work_register_replicator_fast__3_0.dbg
+|       |   |       work_round_robin_arbiter_fast_0.dbg
 |       |   |       work_sdpram_init_value_all_same_fast_0.dbg
 |       |   |       work_sdpram_init_value_fast_0.dbg
 |       |   |       work_sdpram_init_value_fast__1_0.dbg
 |       |   |       work_sdpram_init_value_fast__2_0.dbg
+|       |   |       work_sdpram_init_value_fast__3_0.dbg
+|       |   |       work_sdpram_init_value_fast__4_0.dbg
 |       |   |       work_sdpram_init_value_n1_n2_fast_0.dbg
 |       |   |       work_sdpram_init_value_n1_n2_fast__1_0.dbg
+|       |   |       work_sdpram_init_value_n1_n2_fast__2_0.dbg
+|       |   |       work_sdpram_init_value_n1_n2_fast__3_0.dbg
 |       |   |       work_sdpram_xpm_fast_0.dbg
 |       |   |       work_sdpram_xpm_fast__1_0.dbg
 |       |   |       work_sdpram_xpm_fast__2_0.dbg
+|       |   |       work_sdpram_xpm_fast__3_0.dbg
+|       |   |       work_sdpram_xpm_fast__4_0.dbg
+|       |   |       work_shared_voq_fast_0.dbg
+|       |   |       work_shared_xpq_fast_0.dbg
 |       |   |       work_switch_data_if_fast__1_0.dbg
 |       |   |       work_switch_data_if_fast__2_0.dbg
 |       |   |       work_switch_fabric_fast_0.dbg
+|       |   |       work_switch_high_radix_matching_fast_0.dbg
 |       |   |       work_switch_metadata_if_fast__1_0.dbg
-|       |   |       work_switch_s_fast_0.dbg
 |       |   |       work_sync_fifo_init_value_fast_0.dbg
-|       |   |       work_tb_fabric_basic_fast_0.dbg
+|       |   |       work_sync_fifo_init_value_fast__1_0.dbg
+|       |   |       work_tb_fabric_qos_stress_fast_0.dbg
+|       |   |       work_tb_fabric_qos_sweep_fast_0.dbg
+|       |   |       work_tb_fifo_array_fast_0.dbg
+|       |   |       work_tb_pipeline_mux_fast_0.dbg
+|       |   |       work_tb_qos_classifier_unit_fast_0.dbg
+|       |   |       work_tb_qos_scheduler_unit_fast_0.dbg
 |       |   |       work_xpm_cdc_sync_rst_fast_0.dbg
 |       |   |       work_xpm_counter_updn_fast_0.dbg
 |       |   |       work_xpm_counter_updn_fast__10_0.dbg
@@ -360,6 +470,8 @@ C:.
 |       |   |       work_xpm_fifo_reg_bit_fast__1_0.dbg
 |       |   |       work_xpm_fifo_rst_fast_0.dbg
 |       |   |       work_xpm_memory_base_fast_0.dbg
+|       |   |       work_xpm_memory_base_fast__10_0.dbg
+|       |   |       work_xpm_memory_base_fast__11_0.dbg
 |       |   |       work_xpm_memory_base_fast__1_0.dbg
 |       |   |       work_xpm_memory_base_fast__2_0.dbg
 |       |   |       work_xpm_memory_base_fast__3_0.dbg
@@ -367,18 +479,83 @@ C:.
 |       |   |       work_xpm_memory_base_fast__5_0.dbg
 |       |   |       work_xpm_memory_base_fast__6_0.dbg
 |       |   |       work_xpm_memory_base_fast__7_0.dbg
+|       |   |       work_xpm_memory_base_fast__8_0.dbg
+|       |   |       work_xpm_memory_base_fast__9_0.dbg
 |       |   |       work_xpm_memory_sdpram_fast_0.dbg
 |       |   |       work_xpm_memory_sdpram_fast__1_0.dbg
 |       |   |       work_xpm_memory_sdpram_fast__2_0.dbg
 |       |   |       work_xpm_memory_sdpram_fast__3_0.dbg
 |       |   |       work_xpm_memory_sdpram_fast__4_0.dbg
 |       |   |       work_xpm_memory_sdpram_fast__5_0.dbg
+|       |   |       work_xpm_memory_sdpram_fast__6_0.dbg
+|       |   |       work_xpm_memory_sdpram_fast__7_0.dbg
+|       |   |       work_xpm_memory_sdpram_fast__8_0.dbg
+|       |   |       work_xpm_memory_sdpram_fast__9_0.dbg
 |       |   |       __mti.dbg
 |       |   |       
-|       |   \---#64_opt1
+|       |   \---#64_opt2
+|       |           work_delayed_regs_fast_0.dbg
+|       |           work_delayed_regs_fast__10_0.dbg
+|       |           work_delayed_regs_fast__11_0.dbg
+|       |           work_delayed_regs_fast__12_0.dbg
+|       |           work_delayed_regs_fast__1_0.dbg
+|       |           work_delayed_regs_fast__2_0.dbg
+|       |           work_delayed_regs_fast__3_0.dbg
+|       |           work_delayed_regs_fast__4_0.dbg
+|       |           work_delayed_regs_fast__5_0.dbg
+|       |           work_delayed_regs_fast__6_0.dbg
+|       |           work_delayed_regs_fast__7_0.dbg
+|       |           work_delayed_regs_fast__8_0.dbg
+|       |           work_delayed_regs_fast__9_0.dbg
+|       |           work_first_non_zero_fast_0.dbg
 |       |           work_glbl_fast_0.dbg
+|       |           work_linklist_dynamic_fifo_fast_0.dbg
+|       |           work_mux_tile_fast_0.dbg
+|       |           work_packet_buffer_fast_0.dbg
+|       |           work_packet_mode_dfifo_with_mem_fast_0.dbg
+|       |           work_packet_mode_fifo_array_fast_0.dbg
+|       |           work_packet_mode_fifo_array_model_fast_0.dbg
+|       |           work_pipeline_mux_fast_0.dbg
 |       |           work_qos_classifier_fast_0.dbg
+|       |           work_register_replicator_fast_0.dbg
+|       |           work_register_replicator_fast__1_0.dbg
+|       |           work_register_replicator_fast__2_0.dbg
+|       |           work_register_replicator_fast__3_0.dbg
+|       |           work_sdpram_init_value_all_same_fast_0.dbg
+|       |           work_sdpram_init_value_fast_0.dbg
+|       |           work_sdpram_init_value_fast__1_0.dbg
+|       |           work_sdpram_init_value_fast__2_0.dbg
+|       |           work_sdpram_init_value_fast__3_0.dbg
+|       |           work_sdpram_init_value_n1_n2_fast_0.dbg
+|       |           work_sdpram_init_value_n1_n2_fast__1_0.dbg
+|       |           work_sdpram_init_value_n1_n2_fast__2_0.dbg
+|       |           work_sdpram_xpm_fast_0.dbg
+|       |           work_sdpram_xpm_fast__1_0.dbg
+|       |           work_sdpram_xpm_fast__2_0.dbg
+|       |           work_sdpram_xpm_fast__3_0.dbg
+|       |           work_sync_fifo_init_value_fast_0.dbg
+|       |           work_sync_fifo_init_value_fast__1_0.dbg
+|       |           work_tb_packet_mode_fifo_array_fast_0.dbg
+|       |           work_tb_pipeline_mux_fast_0.dbg
 |       |           work_tb_qos_classifier_unit_fast_0.dbg
+|       |           work_tb_voq_unit_fast_0.dbg
+|       |           work_voq_buffer_fast_0.dbg
+|       |           work_xpm_memory_base_fast_0.dbg
+|       |           work_xpm_memory_base_fast__1_0.dbg
+|       |           work_xpm_memory_base_fast__2_0.dbg
+|       |           work_xpm_memory_base_fast__3_0.dbg
+|       |           work_xpm_memory_base_fast__4_0.dbg
+|       |           work_xpm_memory_base_fast__5_0.dbg
+|       |           work_xpm_memory_base_fast__6_0.dbg
+|       |           work_xpm_memory_base_fast__7_0.dbg
+|       |           work_xpm_memory_sdpram_fast_0.dbg
+|       |           work_xpm_memory_sdpram_fast__1_0.dbg
+|       |           work_xpm_memory_sdpram_fast__2_0.dbg
+|       |           work_xpm_memory_sdpram_fast__3_0.dbg
+|       |           work_xpm_memory_sdpram_fast__4_0.dbg
+|       |           work_xpm_memory_sdpram_fast__5_0.dbg
+|       |           work_xpm_memory_sdpram_fast__6_0.dbg
+|       |           work_xpm_memory_sdpram_fast__7_0.dbg
 |       |           __mti.dbg
 |       |           
 |       +---_temp
@@ -402,7 +579,6 @@ C:.
 |   |   +---converters
 |   |   |       cell_to_packet_s_port_with_barrel.sv
 |   |   |       packet_to_cell.sv
-|   |   |       packet_to_cell_converter.sv
 |   |   |       reg_tree_replicator.sv
 |   |   |       
 |   |   +---core
@@ -417,7 +593,7 @@ C:.
 |   |   |       fabric_crosspoint.sv
 |   |   |       fabric_egress.sv
 |   |   |       fabric_ingress.sv
-|   |   |       switch_fabric.sv
+|   |   |       switch_fabric_qos.sv
 |   |   |       
 |   |   +---interfaces
 |   |   |       axis_if.sv
@@ -467,9 +643,6 @@ C:.
 |   |   |   |   |       sdpram_init_value.sv
 |   |   |   |   |       sdpram_init_value_all_same.sv
 |   |   |   |   |       sdpram_init_value_n1_n2.sv
-|   |   |   |   |       
-|   |   |   |   +---pipeline_mem
-|   |   |   |   |       pipeline_mem.sv
 |   |   |   |   |       
 |   |   |   |   \---sdpram_xpm
 |   |   |   |           sdpram_xpm.sv
@@ -532,8 +705,6 @@ C:.
 |   |   |   fabric_params.vh
 |   |   |   implement_options.vh
 |   |   |   qos_defines.vh
-|   |   |   qos_defines_enhanced.vh
-|   |   |   sim_options.vh
 |   |   |   
 |   |   \---mem_init
 |   |           mem_init_0_9.mem
@@ -562,6 +733,15 @@ C:.
 \---vivado_build
     |   qos_fabric_10x10g.xpr
     |   
+    +---mem_init
+    |       mem_init_0_9.mem
+    |       mem_init_10_16383.mem
+    |       mem_init_10_63.mem
+    |       mem_init_11_16383.mem
+    |       mem_init_11_63.mem
+    |       mem_init_all_0_depth_16384.mem
+    |       mem_init_all_1_depth_10.mem
+    |       
     +---qos_fabric_10x10g.cache
     |   \---wt
     |           project.wpc
@@ -603,6 +783,9 @@ C:.
     |               
     \---reports
             high_fanout.rpt
+            timing_ooc.rpt
             timing_synth.rpt
+            utilization_ooc.rpt
+            utilization_opt.rpt
             utilization_synth.rpt
             

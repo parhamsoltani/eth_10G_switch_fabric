@@ -9,6 +9,7 @@
 // Description: Converts packets to cells with packet ID preservation
 // 
 // MODIFIED: Added PACKET_ID_WIDTH parameter and packet_id propagation
+// FURTHER MODIFIED: Added QOS_TAG_WIDTH parameter and qos_tag propagation
 //////////////////////////////////////////////////////////////////////////////////
 
 module packet_to_cell #(
@@ -17,11 +18,12 @@ module packet_to_cell #(
     parameter   W_MINI                  = 64,            // bus data width (mini cell data width)
     parameter   FULL_WAIT_DURATION      = 50,
     parameter   PACKET_ID_WIDTH         = 8,             // NEW: Packet ID width
+    parameter   QOS_TAG_WIDTH           = 3,             // NEW: QoS tag width
     // DO NOT CHANGE
     parameter   KEEP_WIDTH              = $clog2((W_MINI/8) + 1),
     parameter   S_LOG                   = $clog2(S),
-    // MODIFIED: Added PACKET_ID_WIDTH to metadata
-    parameter   META_DATA_WIDTH         = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH
+    // MODIFIED: Added PACKET_ID_WIDTH and QOS_TAG_WIDTH to metadata
+    parameter   META_DATA_WIDTH         = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH + QOS_TAG_WIDTH
 ) (
     input   wire                                clk,
 
@@ -33,6 +35,7 @@ module packet_to_cell #(
     input   wire [NUM_PORT-1:0]                 dest_mask_rx,
     input   wire                                dest_mask_valid_rx,
     input   wire [PACKET_ID_WIDTH-1:0]          packet_id_rx,    // NEW: Packet ID input
+    input   wire [QOS_TAG_WIDTH-1:0]            qos_tag_rx,      // NEW: QoS tag input
 
     input   wire                                end_time_slot,
     input   wire                                start_time_slot,
@@ -84,6 +87,7 @@ module packet_to_cell #(
     reg                         first_mini_cell = 1;
     reg [$clog2(START_NUM_CELL_FORCED):0] num_send_cell_reg = 0;
     reg [PACKET_ID_WIDTH-1:0]   packet_id_reg = '0;          // NEW: Packet ID register
+    reg [QOS_TAG_WIDTH-1:0]     qos_tag_reg = '0;            // NEW: QoS tag register
 
     reg [S_LOG-1:0]             last_minicell_index_next;
     reg                         wr_en_next;
@@ -96,6 +100,7 @@ module packet_to_cell #(
     reg                         first_mini_cell_next;
     reg [$clog2(START_NUM_CELL_FORCED):0] num_send_cell_next;
     reg [PACKET_ID_WIDTH-1:0]   packet_id_next;              // NEW: Packet ID next
+    reg [QOS_TAG_WIDTH-1:0]     qos_tag_next;                // NEW: QoS tag next
 
     reg [$clog2(FULL_WAIT_DURATION)-1:0] dont_send_duration = 0;
 
@@ -111,8 +116,8 @@ module packet_to_cell #(
     assign data_o       = data_i_D[2];
     assign make_cell_o  = make_cell_reg;
     assign last_cell_o  = last_cell_reg;
-    // MODIFIED: Include packet_id in metadata output
-    assign metadata_o   = {packet_id_reg, keep_minicell_reg, keep_last_reg, is_bad_frame_reg, last_minicell_index_reg};
+    // MODIFIED: Include packet_id and qos_tag in metadata output
+    assign metadata_o   = {packet_id_reg, qos_tag_reg, keep_minicell_reg, keep_last_reg, is_bad_frame_reg, last_minicell_index_reg};
 
     //==============================================================================
     // Main Controls
@@ -138,6 +143,7 @@ module packet_to_cell #(
         first_mini_cell_next = first_mini_cell;
         num_send_cell_next = num_send_cell_reg;
         packet_id_next = packet_id_reg;      // NEW: Default hold
+        qos_tag_next = qos_tag_reg;          // NEW: Default hold
 
         p2c_state_next = p2c_state;
 
@@ -162,12 +168,14 @@ module packet_to_cell #(
                 is_bad_frame_next = 0;
                 keep_last_next = 0;
                 packet_id_next = '0;         // NEW: Reset packet_id
+                qos_tag_next = '0;           // NEW: Reset qos_tag
                 if (!dfifo_ready) begin
                     p2c_state_next = FULL_FINISH_CELL;
                 end else if (start_time_slot) begin
                     if (valid_rx) begin
                         write_minicell();
                         packet_id_next = packet_id_rx;  // NEW: Capture packet_id on first beat
+                        qos_tag_next = qos_tag_rx;      // NEW: Capture qos_tag on first beat
                         p2c_state_next = FULL_CELL;
                     end
                 end
@@ -278,6 +286,7 @@ module packet_to_cell #(
                     is_bad_frame_next = 1;
                     keep_last_next = {KEEP_WIDTH{1'b1}};
                     packet_id_next = '0;     // NEW: Clear on error
+                    qos_tag_next = '0;       // NEW: Clear on error
                     p2c_state_next = WAIT_AFTER_FULL;
                 end
             end
@@ -309,6 +318,7 @@ module packet_to_cell #(
         first_mini_cell         <= first_mini_cell_next;
         force_to_send_reg       <= force_to_send_next;
         packet_id_reg           <= packet_id_next;   // NEW: Register packet_id
+        qos_tag_reg             <= qos_tag_next;     // NEW: Register qos_tag
     end
 
     //==============================================================================

@@ -1,5 +1,3 @@
-
-
 # === Config paths ===
 set cfg_file "inc/implement_options.vh"
 set mem_dir  "../src/inc/mem_init"
@@ -169,6 +167,22 @@ for {set i 0} {$i < [llength $mem_ranges]} {incr i} {
     set fname [format "%s/mem_init_%d_%d.mem" $mem_dir $start $end]
     generate_range_file $fname $start $end
     lappend generated_files $fname
+
+    # Pad specific files to expected depth
+    if {[string match "*11_63*" $fname]} {
+        set expected_depth 64
+        set current_count [expr {$end - $start + 1}]
+        if {$current_count < $expected_depth} {
+            set fh [open $fname a]
+            set next_val [expr {$end + 1}]
+            set pad_count [expr {$expected_depth - $current_count}]
+            for {set p 0} {$p < $pad_count} {incr p} {
+                puts $fh [format %X [expr {$next_val + $p}]]
+            }
+            close $fh
+            puts "INFO: Padded $fname from $current_count to $expected_depth lines"
+        }
+    }
 }
 
 

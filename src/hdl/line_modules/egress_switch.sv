@@ -19,7 +19,8 @@ module egress_switch #(
     parameter   OUTPUT_QUEUE_TUSER      = 1,             // Legacy parameter (not used directly now)
     parameter   OQ_PROG_FULL_THRESH     = 30,
     parameter   NOT_READY_LIMIT         = 20,
-    parameter   PACKET_ID_WIDTH         = 8              // NEW: Packet ID width
+    parameter   PACKET_ID_WIDTH         = 8,             // NEW: Packet ID width
+    parameter   QOS_TAG_WIDTH           = 3              // NEW: QoS tag width
 ) (
     input   wire                                clk,
     switch_data_if.master_mp                    tx_data_if,
@@ -29,14 +30,15 @@ module egress_switch #(
     input   wire                                is_bad_frame_tx,
     input   wire                                last_tx,
     input   wire [PACKET_ID_WIDTH-1:0]          packet_id_tx,    // NEW: Packet ID input
+    input   wire [QOS_TAG_WIDTH-1:0]            qos_tag_tx,      // NEW: QoS tag input
     output  wire                                oq_wr_prog_full
 );
 
     //==============================================================================
     // local parameters and integers
     //==============================================================================
-    // MODIFIED: Updated tuser width to include packet_id
-    localparam OUTPUT_QUEUE_TUSER_ACTUAL = PACKET_ID_WIDTH + 1 + KEEP_WIDTH;
+    // MODIFIED: Updated tuser width to include packet_id and qos_tag
+    localparam OUTPUT_QUEUE_TUSER_ACTUAL = PACKET_ID_WIDTH + QOS_TAG_WIDTH + 1 + KEEP_WIDTH;
 
     //==============================================================================
     // wires, regs and memories
@@ -77,18 +79,19 @@ module egress_switch #(
 
     assign output_queue_rd_tready = oq_ready_int || tx_data_if.ready;
 
-    // MODIFIED: Pack packet_id into tuser
+    // MODIFIED: Pack packet_id and qos_tag into tuser
     assign output_queue_wr_tdata  = data_tx;
-    assign output_queue_wr_tuser  = {packet_id_tx, is_bad_frame_tx, keep_tx};
+    assign output_queue_wr_tuser  = {packet_id_tx, qos_tag_tx, is_bad_frame_tx, keep_tx};
     assign output_queue_wr_tvalid = valid_tx;
     assign output_queue_wr_tlast  = last_tx;
 
     assign oq_wr_prog_full = output_queue_wr_prog_full;
 
-    // MODIFIED: Unpack packet_id from tuser and connect to tx_data_if
+    // MODIFIED: Unpack packet_id and qos_tag from tuser and connect to tx_data_if
     assign tx_data_if.data         = output_queue_rd_tdata;
     assign tx_data_if.id           = output_queue_rd_tuser[OUTPUT_QUEUE_TUSER_ACTUAL-1 -: PACKET_ID_WIDTH];
-    assign tx_data_if.is_bad_frame = output_queue_rd_tuser[KEEP_WIDTH];
+    assign tx_data_if.qos_tag      = output_queue_rd_tuser[OUTPUT_QUEUE_TUSER_ACTUAL-1 - PACKET_ID_WIDTH -: QOS_TAG_WIDTH];
+    assign tx_data_if.is_bad_frame = output_queue_rd_tuser[KEEP_WIDTH + QOS_TAG_WIDTH];
     assign tx_data_if.keep         = output_queue_rd_tuser[KEEP_WIDTH-1:0];
     assign tx_data_if.valid        = output_queue_rd_tvalid;
     assign tx_data_if.last         = output_queue_rd_tlast;
