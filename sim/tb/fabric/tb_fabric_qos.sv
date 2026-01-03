@@ -180,6 +180,10 @@ module tb_fabric_qos;
                             current_id = tx_data_if[g].id;
                             current_qos = tx_data_if[g].qos_tag;
                             current_size = 0;
+                            
+                            // DEBUG: Print received packet
+                            $display("[MONITOR] RX Packet: ID=%0d on port %0d qos=%0d (binary %b)",
+                                     current_id, g, current_qos, current_qos);
                         end
 
                         current_size += tx_data_if[g].keep;
@@ -225,6 +229,10 @@ module tb_fabric_qos;
         pkt_size[src] = size;
         pkt_id[src] = my_pkt_id[PACKET_ID_WIDTH-1:0];  // Updated width
         
+        // DEBUG: Print transmitted packet
+        $display("[DRIVER] TX Packet: ID=%0d from port %0d to port %0d qos=%0d",
+                 my_pkt_id, src, dst, qos);
+        
         // Record in scoreboard before sending
         scoreboard.record_tx(my_pkt_id[PACKET_ID_WIDTH-1:0], src, dst, qos, size, 1'b0);
         
@@ -253,6 +261,10 @@ module tb_fabric_qos;
         pkt_qos[src] = qos;
         pkt_size[src] = size;
         pkt_id[src] = my_pkt_id[PACKET_ID_WIDTH-1:0];  // Updated width
+        
+        // DEBUG
+        $display("[DRIVER] TX Multicast: ID=%0d from port %0d mask=%b qos=%0d",
+                 my_pkt_id, src, dst_mask, qos);
         
         // Record for each destination
         for (int dst = 0; dst < NUM_PORT; dst++) begin
@@ -289,17 +301,19 @@ module tb_fabric_qos;
         repeat (20) @(posedge clk);
 
         $display("\n========================================");
-        $display("  FABRIC QoS TEST SEQUENCE");
+        $display("  FABRIC QoS TEST SEQUENCE - FIXED PRIORITIES");
+        $display("  Note: Lower QoS number = HIGHER priority");
         $display("========================================\n");
 
         //----------------------------------------------------------------------
-        // Test 1: Basic unicast with different priorities
+        // Test 1: Basic unicast with different priorities - FIXED
         //----------------------------------------------------------------------
         $display("[%0t] TEST 1: Priority Ordering", $time);
         
-        send_packet(.src(0), .dst(1), .size(64), .qos(3'b010));   // Low priority
-        send_packet(.src(2), .dst(1), .size(64), .qos(3'b000));   // High priority
-        send_packet(.src(3), .dst(1), .size(64), .qos(3'b001));   // Medium priority
+        // CORRECTED: 0=highest, 1=medium, 2=lowest
+        send_packet(.src(0), .dst(1), .size(64), .qos(3'b000));   // HIGHEST priority (0)
+        send_packet(.src(2), .dst(1), .size(64), .qos(3'b001));   // MEDIUM priority (1)
+        send_packet(.src(3), .dst(1), .size(64), .qos(3'b010));   // LOWEST priority (2)
 
         repeat (200) @(posedge clk);
 

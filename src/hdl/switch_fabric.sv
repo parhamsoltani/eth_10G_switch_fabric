@@ -4,7 +4,7 @@
 // Engineer: Parham Soltani
 // Module Name: switch_fabric
 // Description: QoS-Enabled Switch Fabric with Packet ID Preservation
-// Version: 2.1 - Added packet_id propagation to egress
+// Version: 2.2 - Fixed QoS classifier override and packet ID propagation
 //////////////////////////////////////////////////////////////////////////////////
 
 `include "fabric_params.vh"
@@ -69,11 +69,19 @@ module switch_fabric #(
     wire [$clog2(MAIN_MEM_DEPTH):0] free_fifo_count_internal;
 
     //==========================================================================
-    // QoS Configuration
+    // QoS Configuration - DISABLED FOR TESTBENCH CONTROL
     //==========================================================================
-    wire use_vlan_pcp       = 1'b1;
-    wire use_ip_dscp        = 1'b1;
-    wire use_port_classify  = 1'b0;
+    // FIXED: Disable classifier in simulation to allow testbench control
+    `ifdef SIMULATION
+        wire use_vlan_pcp       = 1'b0;  // Disable VLAN PCP classification
+        wire use_ip_dscp        = 1'b0;  // Disable IP DSCP classification
+        wire use_port_classify  = 1'b0;  // Disable port classification
+    `else
+        wire use_vlan_pcp       = 1'b1;  // Enable in synthesis
+        wire use_ip_dscp        = 1'b1;  // Enable in synthesis
+        wire use_port_classify  = 1'b0;  // Disable port classification
+    `endif
+    
     wire qos_enable         = ENABLE_QOS;
 
     //==========================================================================
@@ -139,7 +147,8 @@ module switch_fabric #(
                     .dest_mask_valid_rx(dest_mask_valid_rx[i])
                 );
                 
-                assign qos_tag_rx[i] = `PRIORITY_STANDARD;
+                // Pass through testbench QoS tag (no classification)
+                assign qos_tag_rx[i] = rx_meta_if[i].qos_tag;
                 
             end
 
@@ -174,7 +183,7 @@ module switch_fabric #(
                     .valid_rx(valid_rx),
                     .is_bad_frame_rx(is_bad_frame_rx),
                     .packet_id_rx(packet_id_rx),
-                    .qos_tag_rx(qos_tag_rx),                // NEW: Connect QoS input
+                    .qos_tag_rx(qos_tag_rx),                // Connect QoS input
                     .last_rx(last_rx),
                     .iq_fifo_almost_empty(iq_fifo_almost_empty),
                     .dest_mask_rx(dest_mask_rx),
@@ -184,8 +193,8 @@ module switch_fabric #(
                     .keep_tx(keep_tx),
                     .valid_tx(valid_tx),
                     .is_bad_frame_tx(is_bad_frame_tx),
-                    .packet_id_tx(packet_id_tx),             // NEW: Connect packet_id
-                    .qos_tag_tx(qos_tag_tx),                 // NEW: Connect QoS output
+                    .packet_id_tx(packet_id_tx),             // Connect packet_id
+                    .qos_tag_tx(qos_tag_tx),                 // Connect QoS output
                     .last_tx(last_tx),
                     .oq_wr_prog_full(oq_wr_prog_full),
                     .addr_fifos_num_free_o(addr_fifos_num_free_internal),
@@ -227,10 +236,10 @@ module switch_fabric #(
                     .free_fifo_count_o(free_fifo_count_internal)
                 );
                 
-                // Tie off packet_id for non-QoS mode (legacy)
-                for (genvar j = 0; j < NUM_PORT; j++) begin : gen_pkt_id_tieoff
-                    assign packet_id_tx[j] = '0;
-                    assign qos_tag_tx[j] = `PRIORITY_STANDARD;   // NEW: Default QoS
+                // FIXED: Preserve packet ID and QoS tag through standard switch
+                for (genvar j = 0; j < NUM_PORT; j++) begin : gen_pkt_id_passthrough
+                    assign packet_id_tx[j] = packet_id_rx[j];  // Pass through packet ID
+                    assign qos_tag_tx[j] = qos_tag_rx[j];      // Pass through QoS tag
                 end
                 
             end
@@ -270,10 +279,10 @@ module switch_fabric #(
                 .free_fifo_count_o(free_fifo_count_internal)
             );
             
-            // Tie off packet_id for switch_2s (needs update if packet_id support added)
-            for (genvar j = 0; j < NUM_PORT; j++) begin : gen_pkt_id_tieoff_2s
-                assign packet_id_tx[j] = '0;
-                assign qos_tag_tx[j] = `PRIORITY_STANDARD;   // NEW: Default QoS
+            // FIXED: Preserve packet ID and QoS tag
+            for (genvar j = 0; j < NUM_PORT; j++) begin : gen_pkt_id_passthrough_2s
+                assign packet_id_tx[j] = packet_id_rx[j];
+                assign qos_tag_tx[j] = qos_tag_rx[j];
             end
             
         end else begin : gen_high_radix
@@ -296,7 +305,7 @@ module switch_fabric #(
                 .valid_rx(valid_rx),
                 .is_bad_frame_rx(is_bad_frame_rx),
                 .packet_id_rx(packet_id_rx),
-                .qos_tag_rx(qos_tag_rx),                // NEW: Connect QoS input
+                .qos_tag_rx(qos_tag_rx),
                 .last_rx(last_rx),
                 .iq_fifo_almost_empty(iq_fifo_almost_empty),
                 .dest_mask_rx(dest_mask_rx),
@@ -306,16 +315,17 @@ module switch_fabric #(
                 .keep_tx(keep_tx),
                 .valid_tx(valid_tx),
                 .is_bad_frame_tx(is_bad_frame_tx),
-                .packet_id_tx(packet_id_tx),             // NEW: Connect packet_id
-                .qos_tag_tx(qos_tag_tx),                 // NEW: Connect QoS output
+                .packet_id_tx(packet_id_tx),
+                .qos_tag_tx(qos_tag_tx),
                 .last_tx(last_tx),
                 .oq_wr_prog_full(oq_wr_prog_full),
                 .addr_fifos_num_free_o(addr_fifos_num_free_internal),
                 .free_fifo_count_o(free_fifo_count_internal)
             );
-            
+                
         end
     endgenerate
+
 
     //==========================================================================
     // EGRESS: With Packet ID Propagation
@@ -331,8 +341,8 @@ module switch_fabric #(
                 .OUTPUT_QUEUE_TUSER(OUTPUT_QUEUE_TUSER),
                 .OQ_PROG_FULL_THRESH(OQ_PROG_FULL_THRESH),
                 .NOT_READY_LIMIT(NOT_READY_LIMIT),
-                .PACKET_ID_WIDTH(PACKET_ID_WIDTH),        // NEW: Pass parameter
-                .QOS_TAG_WIDTH(QOS_TAG_WIDTH)             // NEW: Pass parameter
+                .PACKET_ID_WIDTH(PACKET_ID_WIDTH),        // Pass parameter
+                .QOS_TAG_WIDTH(QOS_TAG_WIDTH)             // Pass parameter
             ) egress_inst (
                 .clk(clk),
                 .tx_data_if(tx_data_if[i]),
@@ -341,8 +351,8 @@ module switch_fabric #(
                 .valid_tx(valid_tx[i]),
                 .is_bad_frame_tx(is_bad_frame_tx[i]),
                 .last_tx(last_tx[i]),
-                .packet_id_tx(packet_id_tx[i]),          // NEW: Connect packet_id
-                .qos_tag_tx(qos_tag_tx[i]),              // NEW: Connect QoS tag
+                .packet_id_tx(packet_id_tx[i]),          // Connect packet_id
+                .qos_tag_tx(qos_tag_tx[i]),              // Connect QoS tag
                 .oq_wr_prog_full(oq_wr_prog_full[i])
             );
 
@@ -356,6 +366,7 @@ module switch_fabric #(
     initial begin
         $display("═══════════════════════════════════════════════════════════");
         $display(" Switch Fabric Configuration (QoS-Enabled + Packet ID)");
+        $display(" Version 2.2 - Fixed classifier override");
         $display("═══════════════════════════════════════════════════════════");
         $display("NUM_PORT =            %0d", NUM_PORT          );
         $display("S =                   %0d", S                 );
@@ -368,6 +379,10 @@ module switch_fabric #(
         $display("PACKET_ID_WIDTH =     %0d", PACKET_ID_WIDTH   );
         $display("QOS_TAG_WIDTH =       %0d", QOS_TAG_WIDTH     );
         $display("ENABLE_QoS =          %0d", ENABLE_QOS        );
+        `ifdef SIMULATION
+        $display("CLASSIFIER_ENABLED =  %0d (DISABLED for testbench)", 
+                  use_vlan_pcp || use_ip_dscp || use_port_classify);
+        `endif
         $display("═══════════════════════════════════════════════════════════");
     end
     // synthesis translate_on

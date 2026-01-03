@@ -92,7 +92,14 @@ module qos_checker_enhanced #(
         
         if (found_idx >= 0) begin
             latency_ns = real'($time - event_log[found_idx].tx_time);
-            qos_idx = int'(qos[1:0]);
+            
+            // FIXED: Use all 3 bits for QoS index, with bounds checking
+            qos_idx = int'(qos);
+            if (qos_idx >= QOS_LEVELS) begin
+                qos_idx = QOS_LEVELS - 1;  // Clamp to valid range
+                $warning("[QoS] Clamping QoS %0d to %0d (max QOS_LEVELS=%0d)",
+                        qos, qos_idx, QOS_LEVELS);
+            end
 
             // Update statistics
             if (latency_ns < min_latency[qos_idx])
@@ -111,6 +118,9 @@ module qos_checker_enhanced #(
                      id, qos, latency_ns);
 
             event_log.delete(found_idx);
+        end else begin
+            $warning("[QoS] RX unmatched: ID=%0d dst=%0d qos=%0d", 
+                     id, dst_port, qos);
         end
     endtask
 
