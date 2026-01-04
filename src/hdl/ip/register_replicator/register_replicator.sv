@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
-// `default_nettype none
+`default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-//
+// 
 // Create Date:  2025-04-19 11:20:33
 // Module Name: register_replicator
-// Project Name:
-// Target Devices:
+// Project Name: 
+// Target Devices: 
 // Tool Versions: Vivado 2022.2
-// Description:
-// Dependencies:
-//
-// Additional Comments:
+// Description: 
+// Dependencies: 
+// 
+// Additional Comments: 
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -40,7 +40,7 @@ module register_replicator #(
             reg_out [i] <= data_in;
         end
     end
-
+    
 endmodule
 
-`default_nettype wire
+`default_nettype wire 

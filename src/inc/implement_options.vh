@@ -22,9 +22,13 @@
 //═══════════════════════════════════════════════════════════════════════════
 // Port Configuration (both forms for compatibility)
 //═══════════════════════════════════════════════════════════════════════════
-`define NUM_PORT 10
-`define NUM_PORTS 10
+`ifndef NUM_PORT
+    `define NUM_PORT 10
+`endif
 
+`ifndef NUM_PORTS
+    `define NUM_PORTS `NUM_PORT
+`endif
 //═══════════════════════════════════════════════════════════════════════════
 // Data Path Widths
 //═══════════════════════════════════════════════════════════════════════════
@@ -49,10 +53,21 @@
 //═══════════════════════════════════════════════════════════════════════════
 // QoS Configuration
 //═══════════════════════════════════════════════════════════════════════════
-`define QOS_LEVELS 8
-`define QOS_TAG_WIDTH 3
-`define PRIORITY_LEVELS 8
-`define META_QOS_OFFSET 0
+`ifndef QOS_LEVELS
+    `define QOS_LEVELS 8
+`endif
+
+`ifndef QOS_TAG_WIDTH
+    `define QOS_TAG_WIDTH 3
+`endif
+
+`ifndef PRIORITY_LEVELS
+    `define PRIORITY_LEVELS `QOS_LEVELS
+`endif
+
+`ifndef META_QOS_OFFSET
+    `define META_QOS_OFFSET     0           // QoS tag position in metadata
+`endif
 
 //═══════════════════════════════════════════════════════════════════════════
 // Priority Level Definitions (802.1p compatible)

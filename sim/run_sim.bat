@@ -3,7 +3,7 @@ setlocal
 
 :: Set testbench name (default or from command line)
 if "%~1"=="" (
-    set TB=tb_fabric_qos
+    set TB=tb_fabric_basic
 ) else (
     set TB=%~1
 )
