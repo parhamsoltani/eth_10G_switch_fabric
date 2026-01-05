@@ -61,96 +61,110 @@ module ingress_line_voq #(
     logic [NUM_PORTS-1:0]         dest_mask_latched;
     logic                         dest_mask_valid;
 
+
     //==========================================================================
     // Header Parsing for QoS Classification
     //==========================================================================
-    logic [15:0] ethertype_reg;
-    logic [2:0]  vlan_pcp_reg;
-    logic [7:0]  ip_tos_reg;
-    logic [15:0] tcp_src_port_reg;
-    logic [15:0] tcp_dst_port_reg;
-    logic        is_first_beat;
-    logic [3:0]  beat_count;
+    reg [15:0] ethertype_reg;
+    reg [2:0]  vlan_pcp_reg;
+    reg [7:0]  ip_tos_reg;
+    reg [15:0] tcp_src_port_reg;
+    reg [15:0] tcp_dst_port_reg;
+    reg        is_first_beat;
+    reg [3:0]  beat_count;
 
-    // Parse headers from incoming data
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            ethertype_reg    <= 16'h0800;
-            vlan_pcp_reg     <= 3'b010;
-            ip_tos_reg       <= 8'h00;
-            tcp_src_port_reg <= 16'h0000;
-            tcp_dst_port_reg <= 16'h0000;
-            is_first_beat    <= 1'b1;
-            beat_count       <= 4'd0;
-        end else begin
-            if (rx_data_if.valid && rx_data_if.ready) begin
-                if (is_first_beat) begin
-                    beat_count <= 4'd1;
-                    is_first_beat <= 1'b0;
-                    
-                    // For 64-bit data width: first beat contains dst MAC (6B) + src MAC partial (2B)
-                    // For 32-bit: dst MAC partial
-                    if (DATA_WIDTH >= 64) begin
-                        // Bytes [0:5] = Dst MAC, [6:7] = Src MAC partial
-                        // Nothing to extract in first beat for classification
-                    end
-                end else begin
-                    beat_count <= beat_count + 1;
-                    
-                    // Extract fields based on beat count and data width
-                    if (DATA_WIDTH >= 64) begin
-                        case (beat_count)
-                            4'd1: begin
-                                // Bytes [8:11] = Src MAC cont, [12:13] = EtherType or VLAN tag
-                                ethertype_reg <= rx_data_if.data[47:32];
-                                // Check for VLAN (0x8100)
-                                if (rx_data_if.data[47:32] == 16'h8100) begin
-                                    vlan_pcp_reg <= rx_data_if.data[63:61];
-                                end
-                            end
-                            4'd2: begin
-                                // If VLAN tagged, this contains real EtherType + IP header start
-                                // If not VLAN, this is IP header
-                                if (ethertype_reg == 16'h8100) begin
-                                    ethertype_reg <= rx_data_if.data[15:0];
-                                    ip_tos_reg <= rx_data_if.data[23:16];
-                                end else begin
-                                    ip_tos_reg <= rx_data_if.data[7:0];
-                                end
-                            end
-                            4'd3: begin
-                                // TCP/UDP ports typically here
-                                tcp_src_port_reg <= rx_data_if.data[15:0];
-                                tcp_dst_port_reg <= rx_data_if.data[31:16];
-                            end
-                            default: ;
-                        endcase
+    generate
+    if (W_MINI >= 64) begin : gen_parse_64bit
+
+        always @(posedge clk or negedge rst_n) begin
+            if (!rst_n) begin
+                ethertype_reg    <= 16'h0800;
+                vlan_pcp_reg     <= 3'b010;
+                ip_tos_reg       <= 8'h00;
+                tcp_src_port_reg <= 16'h0000;
+                tcp_dst_port_reg <= 16'h0000;
+                is_first_beat    <= 1'b1;
+                beat_count       <= 4'd0;
+            end else begin
+                if (rx_data_if.valid && rx_data_if.ready) begin
+                    if (is_first_beat) begin
+                        beat_count <= 4'd1;
+                        is_first_beat <= 1'b0;
                     end else begin
-                        // 32-bit data width - adjust parsing accordingly
-                        case (beat_count)
-                            4'd3: ethertype_reg <= rx_data_if.data[15:0];
-                            4'd4: begin
-                                if (ethertype_reg == 16'h8100) begin
-                                    vlan_pcp_reg <= rx_data_if.data[15:13];
-                                end
-                            end
-                            4'd5: ip_tos_reg <= rx_data_if.data[7:0];
-                            4'd7: begin
-                                tcp_src_port_reg <= rx_data_if.data[15:0];
-                                tcp_dst_port_reg <= rx_data_if.data[31:16];
-                            end
-                            default: ;
-                        endcase
+                        beat_count <= beat_count + 1;
                     end
-                end
-                
-                if (rx_data_if.last) begin
-                    is_first_beat <= 1'b1;
-                    beat_count <= 4'd0;
+
+                    case (beat_count)
+                        4'd1: begin
+                            ethertype_reg <= {rx_data_if.data[39:32], rx_data_if.data[47:40]};
+                            if ({rx_data_if.data[39:32], rx_data_if.data[47:40]} == 16'h8100) begin
+                                vlan_pcp_reg <= rx_data_if.data[55:53];
+                            end
+                        end
+                        4'd2: begin
+                            if (ethertype_reg == 16'h8100) begin
+                                ethertype_reg <= {rx_data_if.data[7:0], rx_data_if.data[15:8]};
+                                ip_tos_reg <= rx_data_if.data[23:16];
+                            end else if (ethertype_reg == 16'h0800) begin
+                                ip_tos_reg <= rx_data_if.data[15:8];
+                            end
+                        end
+                        4'd3: begin
+                            tcp_src_port_reg <= {rx_data_if.data[7:0], rx_data_if.data[15:8]};
+                            tcp_dst_port_reg <= {rx_data_if.data[23:16], rx_data_if.data[31:24]};
+                        end
+                        default: ;
+                    endcase
+
+                    if (rx_data_if.last) begin
+                        is_first_beat <= 1'b1;
+                        beat_count <= 4'd0;
+                    end
                 end
             end
         end
+
+    end else begin : gen_parse_32bit
+
+        always @(posedge clk or negedge rst_n) begin
+            if (!rst_n) begin
+                ethertype_reg    <= 16'h0800;
+                vlan_pcp_reg     <= 3'b010;
+                ip_tos_reg       <= 8'h00;
+                tcp_src_port_reg <= 16'h0000;
+                tcp_dst_port_reg <= 16'h0000;
+                is_first_beat    <= 1'b1;
+                beat_count       <= 4'd0;
+            end else begin
+                if (rx_data_if.valid && rx_data_if.ready) begin
+                    if (is_first_beat) begin
+                        beat_count <= 4'd1;
+                        is_first_beat <= 1'b0;
+                    end else begin
+                        beat_count <= beat_count + 1;
+                    end
+
+                    case (beat_count)
+                        4'd3: ethertype_reg <= {rx_data_if.data[7:0], rx_data_if.data[15:8]};
+                        4'd4: if (ethertype_reg == 16'h8100) vlan_pcp_reg <= rx_data_if.data[7:5];
+                        4'd5: if (ethertype_reg == 16'h0800) ip_tos_reg <= rx_data_if.data[15:8];
+                        4'd8: begin
+                            tcp_src_port_reg <= {rx_data_if.data[7:0], rx_data_if.data[15:8]};
+                            tcp_dst_port_reg <= {rx_data_if.data[23:16], rx_data_if.data[31:24]};
+                        end
+                        default: ;
+                    endcase
+
+                    if (rx_data_if.last) begin
+                        is_first_beat <= 1'b1;
+                        beat_count <= 4'd0;
+                    end
+                end
+            end
+        end
+
     end
+    endgenerate
 
     //==========================================================================
     // QoS Classification

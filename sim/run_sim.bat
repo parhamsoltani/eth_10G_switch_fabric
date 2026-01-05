@@ -3,7 +3,7 @@ setlocal
 
 :: Set testbench name (default or from command line)
 if "%~1"=="" (
-    set TB=tb_fabric_qos_sweep
+    set TB=tb_ethernet_switch
 ) else (
     set TB=%~1
 )

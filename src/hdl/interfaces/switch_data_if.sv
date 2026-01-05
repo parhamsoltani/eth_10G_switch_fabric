@@ -4,9 +4,11 @@
 `ifndef SWITCH_DATA_IF_SV
 `define SWITCH_DATA_IF_SV
 
+`include "fabric_params.vh"
+
 interface switch_data_if #(
-    parameter DATA_WIDTH    = 32,
-    parameter ID_WIDTH      = 10,
+    parameter DATA_WIDTH    = `DATA_WIDTH,      // Was 32, now uses define (64)
+    parameter ID_WIDTH      = `PACKET_ID_WIDTH, // Was 10, now uses define
     parameter KEEP_WIDTH    = $clog2((DATA_WIDTH/8) + 1)
 );
     // Data path signals
@@ -19,7 +21,7 @@ interface switch_data_if #(
     // Metadata
     logic                       is_bad_frame;
     logic [ID_WIDTH-1:0]        id;
-    logic [2:0]                 qos_tag;
+    logic [`QOS_TAG_WIDTH-1:0]  qos_tag;        // Use define for consistency
 
     // FIXED: Added master_mp/slave_mp for array instantiation compatibility
     modport master_mp (
