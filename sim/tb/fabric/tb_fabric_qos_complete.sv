@@ -19,6 +19,7 @@ module tb_fabric_qos_complete;
     parameter XPQ_DEPTH = `X;
     parameter QOS_TAG_WIDTH = 3;
     parameter ENABLE_QOS = 1;
+    parameter ID_WIDTH = 8;
 
     parameter SYS_PERIOD = 1.499;
     localparam TB = "tb_fabric_qos_complete";
@@ -195,7 +196,7 @@ module tb_fabric_qos_complete;
     endtask
 
     //==========================================================================
-    // Traffic Generation (your pattern)
+    // Traffic Generation - FIXED: Proper dynamic array allocation
     //==========================================================================
     task automatic send_packet_qos(
         input int src,
@@ -206,19 +207,26 @@ module tb_fabric_qos_complete;
     );
         automatic int pkt_id = next_pkt_id++;
         automatic bit [NUM_PORT-1:0] dst_mask = (1 << dst);
+        automatic bit [7:0] raw_data[];
+        automatic Fabric_frame_tr frame;
 
-        Fabric_frame_tr frame = Fabric_frame_tr::create_from_raw(
-            .raw_data(new[size]),
+        // Allocate dynamic array separately (FIX for "new" syntax error)
+        raw_data = new[size];
+        
+        // Randomize payload
+        for (int b = 0; b < size; b++)
+            raw_data[b] = $urandom;
+
+        // Create frame using allocated array
+        frame = Fabric_frame_tr::create_from_raw(
+            .raw_data(raw_data),
             .dest(dst_mask),
             .ifg_clk(ifg_clk),
             .is_bad_frame(1'b0),
             .id(pkt_id)
         );
 
-        // Set QoS in metadata (assuming you add qos field to Fabric_frame_tr)
-        // frame.qos = qos;
-
-        qos_check.record_tx(pkt_id[7:0], src, dst, qos);
+        qos_check.record_tx(pkt_id[ID_WIDTH-1:0], src, dst, qos);
         frame_mailbox_in[src].put(frame.do_copy());
         @frame_sent[src];
     endtask

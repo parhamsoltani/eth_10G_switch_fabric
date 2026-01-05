@@ -3,7 +3,7 @@ setlocal
 
 :: Set testbench name (default or from command line)
 if "%~1"=="" (
-    set TB=tb_fabric_basic
+    set TB=tb_fabric_qos_sweep
 ) else (
     set TB=%~1
 )
@@ -15,7 +15,7 @@ if "%~2"=="batch" (
     set SIM_MODE=gui
 )
 
-:: set SIM_MODE=batch
+:: set SIM_MODE=batch   
 
 echo ════════════════════════════════════════════════════════════
 echo   QuestaSim/ModelSim Simulation Launcher
@@ -32,6 +32,12 @@ if not defined XILINX_VIVADO (
 
 :: Run simulation
 cd /d "%~dp0"
-vsim -do "set TB %TB%; set env(SIM_MODE) %SIM_MODE%; do sim_qos.tcl"
+if "%SIM_MODE%"=="batch" (
+    vsim -c -do "set TB %TB%; set SIM_MODE batch; do sim_qos.tcl"
+) else (
+    vsim -do "set TB %TB%; set SIM_MODE gui; do sim_qos.tcl"
+)
+
 
 endlocal
+exit /b %ERRORLEVEL%

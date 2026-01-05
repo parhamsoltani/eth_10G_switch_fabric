@@ -5,7 +5,7 @@
 // Engineer: Parham Soltani
 //
 // Create Date:  2025-08-04 18:41:14
-// Module Name: dest_finder_row_matching
+// Module Name: dest_finder_row_matching (Fixed version with pending tracking)
 // Project Name:
 // Target Devices:
 // Tool Versions: Vivado 2022.2
@@ -69,6 +69,7 @@ module dest_finder_row_matching #(
 
     reg [NUM_PORT-1:0]         possible_dests_1 = 0;
     reg [NUM_PORT-1:0]         recent_dests_1   = 0;
+    reg [NUM_PORT-1:0]         pending_dests_1  = 0;  // FIX: Added pending tracking
 
     wire [NUM_PORT_LOG-1:0]    dest_candidate_1;
     wire                       dest_candidate_valid_1;
@@ -79,34 +80,42 @@ module dest_finder_row_matching #(
     wire [NUM_PORT_LOG-1:0]    prev_dest_1       = current_dests_1[final_stage_counter];
     wire                       prev_dest_valid_1 = current_dests_valid_1[final_stage_counter];
 
-
-
     reg dest_ready_1;
     reg dest_ready_2;
 
     assign dest_valid_o_1 = dest_valid_reg_1;
     assign dest_o_1       = dest_reg_1;
 
-    // Build candidate mask and clear chosen bit (same pattern as original)
+    //==========================================================================
+    // FIX: Channel 1 possible_dests - no race condition
+    //==========================================================================
+    wire [NUM_PORT-1:0] possible_dests_next_1;
+    assign possible_dests_next_1 = none_mepty_ports_1 & (~recent_dests_1) & (~block_ports) & (~pending_dests_1);
+
     always @(posedge clk) begin
-        possible_dests_1 <= (~recent_dests_1) & none_mepty_ports_1 & (~block_ports);
-        if (dest_candidate_valid_1) begin
-            possible_dests_1[dest_candidate_1] <= 0;
-        end
+        possible_dests_1 <= possible_dests_next_1;
     end
 
-
+    //==========================================================================
+    // FIX: Channel 1 pending tracking
+    //==========================================================================
+    always @(posedge clk) begin
+        if (current_dests_valid_1[free_recent_counter]) begin
+            pending_dests_1[current_dests_1[free_recent_counter]] <= 1'b0;
+        end
+        if (dest_candidate_valid_1 && dest_ready_1) begin
+            pending_dests_1[dest_candidate_1] <= 1'b1;
+        end
+    end
 
     always @(posedge clk) begin
         if (current_dests_valid_1[free_recent_counter]) begin
             recent_dests_1[current_dests_1[free_recent_counter]] <= 0;
         end
-        if (dest_candidate_valid_1) begin
+        if (dest_candidate_valid_1 && dest_ready_1) begin
             recent_dests_1[dest_candidate_1] <= 1;
         end
     end
-
-
 
     //==========================================================================
     // Channel 2 state
@@ -116,6 +125,7 @@ module dest_finder_row_matching #(
 
     reg [NUM_PORT-1:0]         possible_dests_2 = 0;
     reg [NUM_PORT-1:0]         recent_dests_2   = 0;
+    reg [NUM_PORT-1:0]         pending_dests_2  = 0;  // FIX: Added pending tracking
 
     wire [NUM_PORT_LOG-1:0]    dest_candidate_2;
     wire                       dest_candidate_valid_2;
@@ -129,25 +139,40 @@ module dest_finder_row_matching #(
     assign dest_valid_o_2 = dest_valid_reg_2;
     assign dest_o_2       = dest_reg_2;
 
+    //==========================================================================
+    // FIX: Channel 2 possible_dests - no race condition
+    //==========================================================================
+    wire [NUM_PORT-1:0] possible_dests_next_2;
+    assign possible_dests_next_2 = none_mepty_ports_2 & (~recent_dests_2) & (~block_ports) & (~pending_dests_2);
+
     always @(posedge clk) begin
-        possible_dests_2 <= (~recent_dests_2) & none_mepty_ports_2 & (~block_ports);
-        if (dest_candidate_valid_2) begin
-            possible_dests_2[dest_candidate_2] <= 0;
-        end
+        possible_dests_2 <= possible_dests_next_2;
     end
 
-
+    //==========================================================================
+    // FIX: Channel 2 pending tracking
+    //==========================================================================
+    always @(posedge clk) begin
+        if (current_dests_valid_2[free_recent_counter]) begin
+            pending_dests_2[current_dests_2[free_recent_counter]] <= 1'b0;
+        end
+        if (dest_candidate_valid_2 && dest_ready_2) begin
+            pending_dests_2[dest_candidate_2] <= 1'b1;
+        end
+    end
 
     always @(posedge clk) begin
         if (current_dests_valid_2[free_recent_counter]) begin
             recent_dests_2[current_dests_2[free_recent_counter]] <= 0;
         end
-        if (dest_candidate_valid_2) begin
+        if (dest_candidate_valid_2 && dest_ready_2) begin
             recent_dests_2[dest_candidate_2] <= 1;
         end
     end
 
-
+    //==========================================================================
+    // Buffering state
+    //==========================================================================
     reg [NUM_PORT_LOG-1:0] buf_data1 = 0;
     reg [NUM_PORT_LOG-1:0] buf_data2 = 0;
     reg                    buf_val1  = 0;
@@ -163,11 +188,9 @@ module dest_finder_row_matching #(
     wire [1:0] num_valid_1 = new_val1 + buf_val1;
     wire [1:0] num_valid_2 = new_val2 + buf_val2;
 
-
-
-
-
-
+    //==========================================================================
+    // Main arbitration logic
+    //==========================================================================
     always @(posedge clk) begin
         // defaults each cycle
         dest_valid_reg_1 <= 1'b0;
@@ -491,10 +514,9 @@ module dest_finder_row_matching #(
 
     end
 
-
-
-
-
+    //==========================================================================
+    // Priority Encoders
+    //==========================================================================
 
     // first_none_zero_except_k for channel 1
     first_none_zero_except_k #(

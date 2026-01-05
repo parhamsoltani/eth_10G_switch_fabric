@@ -3,23 +3,25 @@
 
 `include "fabric_params.vh"
 
-module switch_fabric #(
+module switch_fabric_qos #(
     parameter NUM_PORTS         = `NUM_PORTS,
     parameter DATA_WIDTH        = `DATA_WIDTH,
     parameter ID_WIDTH          = `PACKET_ID_WIDTH,
     parameter VOQ_DEPTH         = `VOQ_DEPTH_PER_QOS,
     parameter XPQ_DEPTH         = `XPQ_DEPTH,
-    parameter PACKET_BUF_DEPTH  = `PACKET_BUFFER_DEPTH
+    parameter PACKET_BUF_DEPTH  = `PACKET_BUFFER_DEPTH,
+    parameter QOS_TAG_WIDTH     = 3,
+    parameter INPUT_QUEUE_DEPTH = 16
 )(
     input  logic clk,
     input  logic rst_n,
 
     // External interfaces
-    switch_data_if              rx_data_if [NUM_PORTS],
-    switch_metadata_if          rx_meta_if [NUM_PORTS],
-    switch_data_if              tx_data_if [NUM_PORTS],
+    switch_data_if.slave        rx_data_if [NUM_PORTS],
+    switch_metadata_if.slave    rx_meta_if [NUM_PORTS],
+    switch_data_if.master       tx_data_if [NUM_PORTS],
 
-    // AXI4-Lite microprocessor interface (NEW)
+    // AXI4-Lite microprocessor interface
     input  wire [15:0]          uif_awaddr,
     input  wire                 uif_awvalid,
     output wire                 uif_awready,
@@ -45,6 +47,11 @@ module switch_fabric #(
 );
 
     // =========================================================================
+    // Local Parameters
+    // =========================================================================
+    localparam KEEP_WIDTH = $clog2((DATA_WIDTH/8) + 1);
+
+    // =========================================================================
     // Internal Wiring
     // =========================================================================
 
@@ -55,43 +62,47 @@ module switch_fabric #(
     logic [NUM_PORTS-1:0]   id_release_req;
     logic [ID_WIDTH-1:0]    release_id [NUM_PORTS];
 
-    // VOQ stage
-    logic                   voq_wr_valid [NUM_PORTS][NUM_PORTS];
-    logic [DATA_WIDTH-1:0]  voq_wr_data [NUM_PORTS];
-    logic [DATA_WIDTH/8-1:0] voq_wr_keep [NUM_PORTS];
-    logic                   voq_wr_last [NUM_PORTS];
-    logic [ID_WIDTH-1:0]    voq_wr_id [NUM_PORTS];
-    logic                   voq_wr_is_bad [NUM_PORTS];
-    logic [2:0]             voq_wr_qos [NUM_PORTS];
-    logic                   voq_wr_ready [NUM_PORTS][NUM_PORTS];
+    // VOQ write interface from ingress (per source port, broadcasted to all dest VOQs)
+    logic                       voq_wr_valid [NUM_PORTS][NUM_PORTS];
+    logic [DATA_WIDTH-1:0]      voq_wr_data [NUM_PORTS];
+    logic [KEEP_WIDTH-1:0]      voq_wr_keep [NUM_PORTS];
+    logic                       voq_wr_last [NUM_PORTS];
+    logic [ID_WIDTH-1:0]        voq_wr_id [NUM_PORTS];
+    logic                       voq_wr_is_bad [NUM_PORTS];
+    logic [QOS_TAG_WIDTH-1:0]   voq_wr_qos [NUM_PORTS];
+    logic                       voq_wr_ready [NUM_PORTS][NUM_PORTS];
 
-    logic                   voq_rd_valid [NUM_PORTS][NUM_PORTS];
-    logic [DATA_WIDTH-1:0]  voq_rd_data [NUM_PORTS][NUM_PORTS];
-    logic [DATA_WIDTH/8-1:0] voq_rd_keep [NUM_PORTS][NUM_PORTS];
-    logic                   voq_rd_last [NUM_PORTS][NUM_PORTS];
-    logic [ID_WIDTH-1:0]    voq_rd_id [NUM_PORTS][NUM_PORTS];
-    logic                   voq_rd_is_bad [NUM_PORTS][NUM_PORTS];
-    logic [2:0]             voq_rd_qos [NUM_PORTS][NUM_PORTS];
-    logic                   voq_rd_ready [NUM_PORTS][NUM_PORTS];
+    // Flattened ready signal per source port (AND of all dest readies for active dests)
+    logic                       voq_wr_ready_flat [NUM_PORTS];
+
+    // VOQ read interface (per src/dst pair)
+    logic                       voq_rd_valid [NUM_PORTS][NUM_PORTS];
+    logic [DATA_WIDTH-1:0]      voq_rd_data [NUM_PORTS][NUM_PORTS];
+    logic [KEEP_WIDTH-1:0]      voq_rd_keep [NUM_PORTS][NUM_PORTS];
+    logic                       voq_rd_last [NUM_PORTS][NUM_PORTS];
+    logic [ID_WIDTH-1:0]        voq_rd_id [NUM_PORTS][NUM_PORTS];
+    logic                       voq_rd_is_bad [NUM_PORTS][NUM_PORTS];
+    logic [QOS_TAG_WIDTH-1:0]   voq_rd_qos [NUM_PORTS][NUM_PORTS];
+    logic                       voq_rd_ready [NUM_PORTS][NUM_PORTS];
 
     // XPQ stage
-    logic                   xpq_wr_valid [NUM_PORTS][NUM_PORTS];
-    logic [DATA_WIDTH-1:0]  xpq_wr_data [NUM_PORTS][NUM_PORTS];
-    logic [DATA_WIDTH/8-1:0] xpq_wr_keep [NUM_PORTS][NUM_PORTS];
-    logic                   xpq_wr_last [NUM_PORTS][NUM_PORTS];
-    logic [ID_WIDTH-1:0]    xpq_wr_id [NUM_PORTS][NUM_PORTS];
-    logic                   xpq_wr_is_bad [NUM_PORTS][NUM_PORTS];
-    logic [2:0]             xpq_wr_qos [NUM_PORTS][NUM_PORTS];
-    logic                   xpq_wr_ready [NUM_PORTS][NUM_PORTS];
+    logic                       xpq_wr_valid [NUM_PORTS][NUM_PORTS];
+    logic [DATA_WIDTH-1:0]      xpq_wr_data [NUM_PORTS][NUM_PORTS];
+    logic [KEEP_WIDTH-1:0]      xpq_wr_keep [NUM_PORTS][NUM_PORTS];
+    logic                       xpq_wr_last [NUM_PORTS][NUM_PORTS];
+    logic [ID_WIDTH-1:0]        xpq_wr_id [NUM_PORTS][NUM_PORTS];
+    logic                       xpq_wr_is_bad [NUM_PORTS][NUM_PORTS];
+    logic [QOS_TAG_WIDTH-1:0]   xpq_wr_qos [NUM_PORTS][NUM_PORTS];
+    logic                       xpq_wr_ready [NUM_PORTS][NUM_PORTS];
 
-    logic                   xpq_rd_valid [NUM_PORTS][NUM_PORTS];
-    logic [DATA_WIDTH-1:0]  xpq_rd_data [NUM_PORTS][NUM_PORTS];
-    logic [DATA_WIDTH/8-1:0] xpq_rd_keep [NUM_PORTS][NUM_PORTS];
-    logic                   xpq_rd_last [NUM_PORTS][NUM_PORTS];
-    logic [ID_WIDTH-1:0]    xpq_rd_id [NUM_PORTS][NUM_PORTS];
-    logic                   xpq_rd_is_bad [NUM_PORTS][NUM_PORTS];
-    logic [2:0]             xpq_rd_qos [NUM_PORTS][NUM_PORTS];
-    logic                   xpq_rd_ready [NUM_PORTS][NUM_PORTS];
+    logic                       xpq_rd_valid [NUM_PORTS][NUM_PORTS];
+    logic [DATA_WIDTH-1:0]      xpq_rd_data [NUM_PORTS][NUM_PORTS];
+    logic [KEEP_WIDTH-1:0]      xpq_rd_keep [NUM_PORTS][NUM_PORTS];
+    logic                       xpq_rd_last [NUM_PORTS][NUM_PORTS];
+    logic [ID_WIDTH-1:0]        xpq_rd_id [NUM_PORTS][NUM_PORTS];
+    logic                       xpq_rd_is_bad [NUM_PORTS][NUM_PORTS];
+    logic [QOS_TAG_WIDTH-1:0]   xpq_rd_qos [NUM_PORTS][NUM_PORTS];
+    logic                       xpq_rd_ready [NUM_PORTS][NUM_PORTS];
 
     // QoS configuration signals (from microprocessor)
     logic qos_enable_micro;
@@ -118,23 +129,39 @@ module switch_fabric #(
         .free_id_count(free_ids)
     );
 
-    //═══════════════════════════════════════════════════════════════════════════
-    // Fabric Ingress (WITH QoS INTEGRATION)
-    //═══════════════════════════════════════════════════════════════════════════
+    // =========================================================================
+    // Fabric Ingress (Using ingress_line_voq with QoS)
+    // =========================================================================
 
     generate
         for (genvar i = 0; i < NUM_PORTS; i++) begin : gen_ingress_port
 
-            ingress_line_wrapper #(
+            // Convert 2D ready array to 1D for ingress_line_voq
+            logic voq_ready_1d [NUM_PORTS];
+            
+            for (genvar j = 0; j < NUM_PORTS; j++) begin : gen_ready_conv
+                assign voq_ready_1d[j] = voq_wr_ready[i][j];
+            end
+
+            ingress_line_voq #(
+                .NUM_PORT(NUM_PORTS),
                 .DATA_WIDTH(DATA_WIDTH),
                 .NUM_PORTS(NUM_PORTS),
                 .ID_WIDTH(ID_WIDTH),
-                .ENABLE_QOS(`ENABLE_QOS)  // CHANGED: Now uses wrapper
+                .W_MINI(DATA_WIDTH),
+                .KEEP_WIDTH(KEEP_WIDTH),
+                .PACKET_ID_WIDTH(ID_WIDTH),
+                .QOS_TAG_WIDTH(QOS_TAG_WIDTH),
+                .INPUT_QUEUE_DEPTH(INPUT_QUEUE_DEPTH)
             ) ingress_inst (
                 .clk(clk),
                 .rst_n(rst_n),
+
+                // External RX interface
                 .rx_data_if(rx_data_if[i]),
                 .rx_meta_if(rx_meta_if[i]),
+
+                // To VOQ stage
                 .voq_wr_valid(voq_wr_valid[i]),
                 .voq_wr_data(voq_wr_data[i]),
                 .voq_wr_keep(voq_wr_keep[i]),
@@ -142,10 +169,14 @@ module switch_fabric #(
                 .voq_wr_id(voq_wr_id[i]),
                 .voq_wr_is_bad(voq_wr_is_bad[i]),
                 .voq_wr_qos(voq_wr_qos[i]),
-                .voq_wr_ready(voq_wr_ready[i]),
+                .voq_wr_ready(voq_ready_1d),
+
+                // Packet ID Manager interface
                 .id_alloc_req(id_alloc_req[i]),
                 .id_alloc_grant(id_alloc_grant[i]),
                 .allocated_id(allocated_id[i]),
+
+                // QoS Configuration
                 .qos_enable(qos_enable_micro),
                 .use_vlan_pcp(use_vlan_pcp_micro),
                 .use_ip_dscp(use_ip_dscp_micro),
@@ -159,10 +190,9 @@ module switch_fabric #(
     // VOQ Array (NUM_PORTS × NUM_PORTS)
     // =========================================================================
 
-    genvar src, dst;
     generate
-        for (src = 0; src < NUM_PORTS; src++) begin : gen_voq_src
-            for (dst = 0; dst < NUM_PORTS; dst++) begin : gen_voq_dst
+        for (genvar src = 0; src < NUM_PORTS; src++) begin : gen_voq_src
+            for (genvar dst = 0; dst < NUM_PORTS; dst++) begin : gen_voq_dst
 
                 voq_buffer #(
                     .DATA_WIDTH(DATA_WIDTH),
@@ -234,8 +264,8 @@ module switch_fabric #(
     // =========================================================================
 
     generate
-        for (src = 0; src < NUM_PORTS; src++) begin : gen_xpq_src
-            for (dst = 0; dst < NUM_PORTS; dst++) begin : gen_xpq_dst
+        for (genvar src = 0; src < NUM_PORTS; src++) begin : gen_xpq_src
+            for (genvar dst = 0; dst < NUM_PORTS; dst++) begin : gen_xpq_dst
 
                 packet_buffer #(
                     .DATA_WIDTH(DATA_WIDTH),
@@ -294,9 +324,9 @@ module switch_fabric #(
         .release_id(release_id)
     );
 
-    //═══════════════════════════════════════════════════════════════════════════
-    // Microprocessor Interface (NEW)
-    //═══════════════════════════════════════════════════════════════════════════
+    // =========================================================================
+    // Microprocessor Interface
+    // =========================================================================
 
     micro_interface_qos_enhanced #(
         .NUM_PORTS(NUM_PORTS),
@@ -334,16 +364,15 @@ module switch_fabric #(
         .rx_pkt_count(pkt_count_rx),
         .tx_pkt_count(pkt_count_tx),
         .drop_count(pkt_drop_count),
-        .qos_stats()  // TODO: Connect per-QoS statistics from VOQs
+        .qos_stats()
     );
 
     // =========================================================================
     // Statistics Counters
     // =========================================================================
 
-    genvar p;
     generate
-        for (p = 0; p < NUM_PORTS; p++) begin : gen_stats
+        for (genvar p = 0; p < NUM_PORTS; p++) begin : gen_stats
 
             always_ff @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin

@@ -1,276 +1,245 @@
 `timescale 1ns / 1ps
-// `default_nettype none
-//////////////////////////////////////////////////////////////////////////////////
-// Company: IUST
-// Engineer: Parham Soltani
-//
-// Create Date:  2025-03-24 17:56:42
-// Module Name: tb_top
-// Project Name: switch 10*10g
-// Target Devices: ku3p
-// Tool Versions: Vivado 2022.2
-// Description:
-// Dependencies:
-//
-// Additional Comments:
 
-//////////////////////////////////////////////////////////////////////////////////
+`include "fabric_params.vh"
 
-`include "sim_options.vh"
-`include "implement_options.vh"
 module tb_ethernet_switch;
 
-    parameter NUM_PORT = `NUM_PORT;
-    parameter LINE_RATE           = `LINE_RATE; // 10, 25
+    //==========================================================================
+    // Parameters
+    //==========================================================================
+    parameter NUM_PORT      = `NUM_PORTS;
+    parameter DATA_WIDTH    = `DATA_WIDTH;
+    parameter ID_WIDTH      = `PACKET_ID_WIDTH;
+    parameter KEEP_WIDTH    = $clog2(DATA_WIDTH/8 + 1);
 
-    parameter MICRO_DATA_WIDTH = 16;
-    parameter MICRO_ADDR_WIDTH = 16;
+    parameter TX_PERIOD     = 3.2;   // 10G
+    parameter SYS_PERIOD    = 1.499;
 
+    //==========================================================================
+    // Clock and Reset
+    //==========================================================================
+    logic sys_clk;
+    logic sys_reset;
 
-
-    parameter   S                       = `S;            // speed up
-    parameter   W_MINI                  = `W;            // bus data width (mini cell data width)
-    // parameter   W_MINI                  = LINE_RATE == 10? 64 :128;           // bus data width (mini cell data width)
-    parameter   MAIN_MEM_DEPTH          = `D;           // main mem depth
-    parameter   XPQ_DEPTH               = `X;
-    parameter   OUTPUT_QUEUE_DEPTH      = `OUTPUT_QUEUE_DEPTH;
-    parameter   MULTICAST_SUPPORT       = `MULTICAST_SUPPORT;
-    parameter   MULTICAST_RATE          = `U;        // Address fifos depth = MULTICAST_RATE* MAIN_MEM_DEPTH
-    parameter   PACKET_ID_WIDTH         = 8;
-    parameter   QOS_TAG_WIDTH           = 1;
-
-
-
-
-
-    parameter TX_PERIOD = LINE_RATE == 10 ? 3.2 : 1.28;
-    parameter SYS_PERIOD =  1.499;  // 1.2195 : 410 MHz clock,  1.499: 345 MHz clock
-
-
-    // Clock and Reset Signals
-    reg sys_clk;
-    reg tx_tester_clk [NUM_PORT];
-    reg rx_tester_clk [NUM_PORT];
-    reg sys_reset;
-
-    // AXI Stream Interfaces
-    axis_if #(.DATA_WIDTH(64), .USER_WIDTH(1)) tx_axis_tester [NUM_PORT](); // Generator to DUT (master)
-    axis_if #(.DATA_WIDTH(64), .USER_WIDTH(1)) rx_axis_dut [NUM_PORT](); // Generator to DUT (master)
-    axis_if #(.DATA_WIDTH(64), .USER_WIDTH(1)) rx_axis_tester [NUM_PORT](); // DUT to Monitor (slave)
-
-    // micro interface
-    micro_if #(.MICRO_ADDR_WIDTH(MICRO_ADDR_WIDTH), .MICRO_DATA_WIDTH(MICRO_DATA_WIDTH)) m_if();
-
-    // Mailboxes
-    mailbox dut_frame_out_mailbox [NUM_PORT];
-    mailbox dut_frame_in_mailbox [NUM_PORT];
-    mailbox expected_mailbox [NUM_PORT];
-
-    // End of simulation event
-    bit end_of_sim;
-
-
-
-    wire [3:0] xg_ctl_tx_ipg_value [NUM_PORT];
-
-
-
-
-
-
-    // Generate Clock ========================================
     initial begin
-        $timeformat(-9, 2, " ns", 20);
         sys_clk = 0;
         forever #(SYS_PERIOD) sys_clk = ~sys_clk;
     end
 
-    generate
-    for (genvar i=0; i<NUM_PORT; ++i) begin : gen_clock
-        initial begin
-            tx_tester_clk[i] = 0;
-            #1;
-            forever #(TX_PERIOD) tx_tester_clk[i] = ~tx_tester_clk[i]; // 156.25 MHz clock
-        end
-
-        initial begin
-            rx_tester_clk[i] = 0;
-            #2;
-            forever #(TX_PERIOD) rx_tester_clk[i] = ~rx_tester_clk[i]; // 156.25 MHz clock
-        end
-
-        assign rx_axis_dut[i].clk = tx_tester_clk[i];
-        assign rx_axis_tester[i].clk = rx_tester_clk[i];
-
-
-        assign tx_axis_tester[i].clk    = rx_axis_dut[i].clk;
-        assign tx_axis_tester[i].tready = 1'b1;
-        assign rx_axis_dut[i].tdata            = tx_axis_tester[i].tdata ;
-        assign rx_axis_dut[i].tkeep            = tx_axis_tester[i].tkeep ;
-        assign rx_axis_dut[i].tvalid           = tx_axis_tester[i].tvalid;
-        assign rx_axis_dut[i].tlast            = tx_axis_tester[i].tlast ;
-        assign rx_axis_dut[i].tuser            = tx_axis_tester[i].tuser ;
-
+    initial begin
+        sys_reset = 1;
+        repeat (20) @(posedge sys_clk);
+        sys_reset = 0;
+        $display("[%0t] Reset released", $time);
     end
-    endgenerate
 
-    assign m_if.clk = sys_clk;
+    //==========================================================================
+    // DUT Signals (Flattened Arrays)
+    //==========================================================================
+    // RX Data
+    logic [DATA_WIDTH-1:0]       rx_data      [NUM_PORT];
+    logic [KEEP_WIDTH-1:0]       rx_keep      [NUM_PORT];
+    logic                        rx_valid     [NUM_PORT];
+    logic                        rx_last      [NUM_PORT];
+    logic                        rx_is_bad    [NUM_PORT];
+    logic                        rx_ready     [NUM_PORT];
 
-    // ===========================================================
+    // RX Metadata
+    logic [NUM_PORT-1:0]         rx_dest_mask [NUM_PORT];
+    logic [2:0]                  rx_qos_tag   [NUM_PORT];
+    logic                        rx_meta_valid[NUM_PORT];
+    logic                        rx_meta_ready[NUM_PORT];
 
+    // TX Data
+    logic [DATA_WIDTH-1:0]       tx_data      [NUM_PORT];
+    logic [KEEP_WIDTH-1:0]       tx_keep      [NUM_PORT];
+    logic                        tx_valid     [NUM_PORT];
+    logic                        tx_last      [NUM_PORT];
+    logic                        tx_is_bad    [NUM_PORT];
+    logic [2:0]                  tx_qos_tag   [NUM_PORT];
+    logic                        tx_ready     [NUM_PORT];
 
+    // Status
+    logic [31:0]                 status_pkt_rx[NUM_PORT];
+    logic [31:0]                 status_pkt_tx[NUM_PORT];
+    logic [ID_WIDTH:0]           status_free_ids;
 
+    //==========================================================================
+    // DUT Instantiation
+    //==========================================================================
+    wrapper_switch_fabric #(
+        .NUM_PORTS(NUM_PORT),
+        .DATA_WIDTH(DATA_WIDTH),
+        .ID_WIDTH(ID_WIDTH)
+    ) u_dut (
+        .clk(sys_clk),
+        .reset(sys_reset),
+        
+        // RX Data
+        .rx_data(rx_data),
+        .rx_keep(rx_keep),
+        .rx_valid(rx_valid),
+        .rx_last(rx_last),
+        .rx_is_bad_frame(rx_is_bad),
+        .rx_ready(rx_ready),
+        
+        // RX Metadata
+        .rx_dest_port_mask(rx_dest_mask),
+        .rx_qos_tag(rx_qos_tag),
+        .rx_meta_valid(rx_meta_valid),
+        .rx_meta_ready(rx_meta_ready),
+        
+        // TX Data
+        .tx_data(tx_data),
+        .tx_keep(tx_keep),
+        .tx_valid(tx_valid),
+        .tx_last(tx_last),
+        .tx_is_bad_frame(tx_is_bad),
+        .tx_qos_tag(tx_qos_tag),
+        .tx_ready(tx_ready),
+        
+        // Status
+        .status_pkt_rx(status_pkt_rx),
+        .status_pkt_tx(status_pkt_tx),
+        .status_free_ids(status_free_ids)
+    );
 
+    //==========================================================================
+    // Initialize TX Ready (always accept)
+    //==========================================================================
+    initial begin
+        for (int i = 0; i < NUM_PORT; i++) begin
+            tx_ready[i] = 1'b1;
+        end
+    end
 
-    // ================== for tx of dut, make tready 0 based on ifg
-    // preample (7) + SFD(1) + CRC (4) + IFG (11) = 23 >= 2clk + 7 byte
+    //==========================================================================
+    // Initialize RX Signals
+    //==========================================================================
+    initial begin
+        for (int i = 0; i < NUM_PORT; i++) begin
+            rx_data[i]       = '0;
+            rx_keep[i]       = '0;
+            rx_valid[i]      = 1'b0;
+            rx_last[i]       = 1'b0;
+            rx_is_bad[i]     = 1'b0;
+            rx_dest_mask[i]  = '0;
+            rx_qos_tag[i]    = 3'b010;  // Medium priority default
+            rx_meta_valid[i] = 1'b0;
+        end
+    end
 
-    generate
-    for (genvar i=0; i<NUM_PORT; ++i) begin : gen_tready
+    //==========================================================================
+    // Test Stimulus
+    //==========================================================================
+    
+    // Task to send a packet
+    task automatic send_packet(
+        input int src_port,
+        input int dst_port,
+        input int pkt_len,
+        input logic [2:0] qos
+    );
+        int beats;
+        beats = (pkt_len + DATA_WIDTH/8 - 1) / (DATA_WIDTH/8);
+        
+        // Send metadata first
+        @(posedge sys_clk);
+        rx_dest_mask[src_port]  = (1 << dst_port);
+        rx_qos_tag[src_port]    = qos;
+        rx_meta_valid[src_port] = 1'b1;
+        
+        @(posedge sys_clk);
+        while (!rx_meta_ready[src_port]) @(posedge sys_clk);
+        rx_meta_valid[src_port] = 1'b0;
+        
+        // Send data beats
+        for (int b = 0; b < beats; b++) begin
+            @(posedge sys_clk);
+            rx_data[src_port]  = {$random, $random};
+            rx_keep[src_port]  = (b == beats-1) ? (pkt_len % (DATA_WIDTH/8)) : (DATA_WIDTH/8);
+            if (rx_keep[src_port] == 0) rx_keep[src_port] = DATA_WIDTH/8;
+            rx_valid[src_port] = 1'b1;
+            rx_last[src_port]  = (b == beats-1);
+            rx_is_bad[src_port] = 1'b0;
+            
+            while (!rx_ready[src_port]) @(posedge sys_clk);
+        end
+        
+        @(posedge sys_clk);
+        rx_valid[src_port] = 1'b0;
+        rx_last[src_port]  = 1'b0;
+        
+        $display("[%0t] Sent packet: Port %0d -> Port %0d, len=%0d, QoS=%0d", 
+                 $time, src_port, dst_port, pkt_len, qos);
+    endtask
 
-        initial begin
-            forever begin
-                rx_axis_tester[i].tready <= 1;
-                @(posedge rx_axis_tester[i].tlast);
-                @(posedge rx_axis_tester[i].clk);
-                rx_axis_tester[i].tready <= 0;
-                repeat (2) begin
-                    @(posedge rx_axis_tester[i].clk);
+    // Monitor TX
+    initial begin
+        forever begin
+            @(posedge sys_clk);
+            for (int i = 0; i < NUM_PORT; i++) begin
+                if (tx_valid[i] && tx_ready[i] && tx_last[i]) begin
+                    $display("[%0t] Received packet on Port %0d, QoS=%0d", 
+                             $time, i, tx_qos_tag[i]);
                 end
             end
         end
     end
-    endgenerate
-    // ===========================================================
 
-
-
-
-
-    // Reset Initialization
+    //==========================================================================
+    // Main Test
+    //==========================================================================
     initial begin
-        sys_reset = 0;
-        repeat (100) @(posedge sys_clk);
-        $display("reset switch!");
-        sys_reset = 1;
+        $timeformat(-9, 2, " ns", 20);
+        $display("========================================");
+        $display("  Ethernet Switch QoS Testbench");
+        $display("  NUM_PORTS=%0d, DATA_WIDTH=%0d", NUM_PORT, DATA_WIDTH);
+        $display("========================================");
+        
+        // Wait for reset
+        @(negedge sys_reset);
         repeat (10) @(posedge sys_clk);
-        sys_reset = 0;
-    end
-
-
-
-
-
-
-
-
-
-
-
-
-    // Instantiate Frame Generator
-    generator_frame #(
-        .NUM_PORT(NUM_PORT),
-        .MICRO_DATA_WIDTH(MICRO_DATA_WIDTH),
-        .MICRO_ADDR_WIDTH(MICRO_ADDR_WIDTH)
-    ) gen_inst (
-        .sys_clk   (sys_clk),
-        .sys_reset (sys_reset),
-        .axis      (tx_axis_tester),  // Connect AXI interface
-        .end_of_sim (end_of_sim),
-        .m_if(m_if)
-    );
-
-
-
-
-    // Instantiate Switch Wrapper (DUT)
-    ethernet_switch #(
-        .MICRO_ADDR_WIDTH       (MICRO_ADDR_WIDTH),
-        .MICRO_DATA_WIDTH       (MICRO_DATA_WIDTH),
-        .LINE_RATE              (LINE_RATE),
-        .NUM_PORT              (NUM_PORT),
-        .S                     (S),
-        .W_MINI                (W_MINI),
-        .MAIN_MEM_DEPTH        (MAIN_MEM_DEPTH),
-        .XPQ_DEPTH             (XPQ_DEPTH),
-        .OUTPUT_QUEUE_DEPTH    (OUTPUT_QUEUE_DEPTH),
-        .MULTICAST_SUPPORT     (MULTICAST_SUPPORT),
-        .MULTICAST_RATE        (MULTICAST_RATE),
-        .PACKET_ID_WIDTH       (PACKET_ID_WIDTH),
-        .QOS_TAG_WIDTH         (QOS_TAG_WIDTH)
-    ) u_ethernet_switch (
-        .sys_clk                (sys_clk),
-        .reset                  (sys_reset),
-        .rx_axis                (rx_axis_dut),
-        .tx_axis                (rx_axis_tester),
-        .xg_ctl_tx_ipg_value    (xg_ctl_tx_ipg_value),
-        .m_if_in(m_if)
-    );
-
-    // Instantiate Monitors
-    monitor #(
-        .NUM_PORT(NUM_PORT)
-    ) u_monitor_dut_tx (
-        .axis          (rx_axis_tester),  // Monitor DUT TX output
-        .frame_mailbox (dut_frame_out_mailbox)
-    );
-
-
-
-    monitor #(
-        .NUM_PORT(NUM_PORT)
-    ) u_monitor_dut_rx (
-        .axis          (tx_axis_tester),  // Monitor DUT RX input
-        .frame_mailbox (dut_frame_in_mailbox)
-    );
-
-
-
-
-    // Instantiate Switch Model
-    switch_model #(
-        .NUM_PORT(NUM_PORT)
-    ) switch_model_inst (
-        .sys_clk            (sys_clk),
-        .sys_reset          (sys_reset),
-        .frame_mailbox_in   (dut_frame_in_mailbox),
-        .frame_mailbox_out  (expected_mailbox)
-    );
-
-
-
-    // Instantiate Scoreboard
-    score_board #(
-        .NUM_PORT(NUM_PORT)
-    ) scoreboard_inst (
-        .sys_clk         (sys_clk),
-        .sys_reset       (sys_reset),
-        .actual_mailbox  (dut_frame_out_mailbox),
-        .expected_mailbox(expected_mailbox),
-        .end_of_sim      (end_of_sim)
-    );
-
-
-
-
-
-    // Simulation End Condition
-    initial begin
-        @(posedge end_of_sim);
+        
+        // Test 1: Basic unicast
+        $display("\n--- Test 1: Basic Unicast ---");
+        send_packet(0, 1, 64, 3'b010);
+        repeat (50) @(posedge sys_clk);
+        
+        // Test 2: Different QoS levels
+        $display("\n--- Test 2: QoS Priority ---");
+        fork
+            send_packet(0, 2, 128, 3'b000);  // Low priority
+            send_packet(1, 2, 128, 3'b111);  // High priority
+        join
         repeat (100) @(posedge sys_clk);
-        $write("========================================\n");
-        $write("********* Simulation finished **********\n");
-        $write("========================================\n");
-        $stop;
+        
+        // Test 3: Multiple ports
+        $display("\n--- Test 3: Multi-port ---");
+        for (int i = 0; i < NUM_PORT; i++) begin
+            fork
+                automatic int src = i;
+                automatic int dst = (i + 1) % NUM_PORT;
+                send_packet(src, dst, 256, src[2:0]);
+            join_none
+        end
+        wait fork;
+        repeat (200) @(posedge sys_clk);
+        
+        // Done
+        $display("\n========================================");
+        $display("  Test Complete");
+        $display("========================================");
+        
+        repeat (100) @(posedge sys_clk);
+        $finish;
     end
 
-
-
+    // Timeout
+    initial begin
+        #1000000;
+        $display("TIMEOUT!");
+        $finish;
+    end
 
 endmodule
-
-
-
-
-`default_nettype wire

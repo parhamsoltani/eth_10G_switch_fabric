@@ -15,19 +15,24 @@ vlib $LIB_NAME
 vmap work $LIB_NAME
 
 # ===========================================================================
-# Set compilation options with BOTH include paths
+# Set compilation options with ALL include paths
 # ===========================================================================
 
+# Get the simulation directory (where we run from - should be sim/)
 set SIM_DIR [pwd]
-set SRC_INC_DIR "${SIM_DIR}/../src/inc"
-set SIM_INC_DIR "${SIM_DIR}/inc"
 
+# Normalize paths to handle Windows/Linux differences
+set SRC_INC_DIR [file normalize "${SIM_DIR}/../src/inc"]
+set SIM_INC_DIR [file nativename [file normalize "${SIM_DIR}/inc"]]
+
+# Build include options with both directories
 set INCLUDE_OPTS "+incdir+${SRC_INC_DIR}+${SIM_INC_DIR} +define+SIMULATION"
 
 puts ""
 puts "========================================="
 puts "Compiling for tb_fabric_basic..."
 puts "========================================="
+puts "SIM_DIR: $SIM_DIR"
 puts "Source include: $SRC_INC_DIR"
 puts "Sim include: $SIM_INC_DIR"
 puts "Include options: $INCLUDE_OPTS"
@@ -227,6 +232,9 @@ vlog -sv $INCLUDE_OPTS tb/fabric/tb_fabric_basic.sv
 
 puts ""
 puts "========================================="
-puts "COMPILATION COMPLETE - NO ERRORS!"
+puts "COMPILATION COMPLETE!"
 puts "========================================="
+puts ""
+puts "To run simulation:"
+puts "  vsim -voptargs=+acc tb_fabric_basic work.glbl"
 puts ""

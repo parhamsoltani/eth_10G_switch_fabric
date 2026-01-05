@@ -26,6 +26,7 @@ module tb_fabric_qos_enhanced;
     parameter MULTICAST_RATE = `U;
     parameter PACKET_ID_WIDTH = 8;
     parameter QOS_TAG_WIDTH = 3;
+    parameter ID_WIDTH = PACKET_ID_WIDTH;
 
     parameter SYS_PERIOD = 1.499;  // Match your timing.xdc
 
@@ -189,14 +190,16 @@ module tb_fabric_qos_enhanced;
         // Test 3: Congestion (matches your generator_frame all-to-one pattern)
         $display("[%0t] TEST 3: Congestion Scenario", $time);
         fork
-            for (int s = 0; s < NUM_PORT; s++) begin
-                if (s != 5) begin
-                    automatic int src = s;
-                    fork
-                        repeat (10) begin
-                            send_packet_qos(src, 5, 512, 3'b001, $urandom_range(20,40));
-                        end
-                    join_none
+            begin
+                for (int s = 0; s < NUM_PORT; s++) begin
+                    if (s != 5) begin
+                        automatic int src = s;
+                        fork
+                            repeat (10) begin
+                                send_packet_qos(src, 5, 512, 3'b001, $urandom_range(20,40));
+                            end
+                        join_none
+                    end
                 end
             end
         join
@@ -212,7 +215,7 @@ module tb_fabric_qos_enhanced;
     end
 
     //==========================================================================
-    // Tasks (match your generator_frame.sv style)
+    // Tasks - FIXED: Proper dynamic array allocation
     //==========================================================================
     task automatic send_packet_qos(
         input int src,
@@ -225,18 +228,24 @@ module tb_fabric_qos_enhanced;
         automatic bit [47:0] src_mac = reverse_mac(48'h00_80_16_00_00_00);
         automatic bit [47:0] dst_mac = reverse_mac(48'h00_80_16_00_00_00);
         automatic bit [NUM_PORT-1:0] dst_mask = (1 << dst);
+        automatic bit [7:0] raw_data[];
+        automatic Fabric_frame_tr frame;
 
-        Fabric_frame_tr frame = Fabric_frame_tr::create_from_raw(
-            .raw_data(new[size]),
+        // Allocate dynamic array separately (FIX for "new" syntax error)
+        raw_data = new[size];
+
+        // Randomize payload
+        for (int b = 0; b < size; b++)
+            raw_data[b] = $urandom;
+
+        // Create frame using allocated array
+        frame = Fabric_frame_tr::create_from_raw(
+            .raw_data(raw_data),
             .dest(dst_mask),
             .ifg_clk(ifg_clk),
             .is_bad_frame(1'b0),
             .id(pkt_id)
         );
-
-        // Randomize payload
-        for (int b = 0; b < size; b++)
-            frame.data[b] = $random;
 
         qos_check.record_tx(pkt_id[ID_WIDTH-1:0], src, dst, qos);
         frame_mailbox_in[src].put(frame.do_copy());

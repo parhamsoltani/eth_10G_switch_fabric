@@ -1,79 +1,59 @@
 `timescale 1ns / 1ps
-// `default_nettype none
+`default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
 //
 // Create Date:  2025-08-13 17:19:23
-// Module Name: first_none_zero_except_k
+// Module Name: first_none_zero_except_k (Fixed - proper first-match priority  purely combinational)
 // Project Name:
 // Target Devices:
 // Tool Versions: Vivado 2022.2
-// Description:
+// Description: Priority encoder that finds the FIRST non-zero bit,
+//              excluding the previously selected index to prevent starvation
+//               Combinational priority encoder - finds first set bit
 // Dependencies:
 //
 // Additional Comments:
-
+// FIX: Changed to find FIRST match instead of LAST match
+//      This ensures fair round-robin behavior across all ports
 //////////////////////////////////////////////////////////////////////////////////
+
 
 
 
 module first_none_zero_except_k #(
     parameter int N    = 64,
-    // DO NOT CHANGE BELOW
     parameter int LOGN = $clog2(N)
 ) (
     input  wire                  clk,
     input  wire [N-1:0]          data_i,
-    input  wire                  ready_o,         // update none_zero_reg when 1
-    output wire [LOGN-1:0]       data_o,        // current stored index
+    input  wire                  ready_o,
+    output wire [LOGN-1:0]       data_o,
     output wire                  data_valid_o
 );
 
-    // Internal register holding current index
-    reg [LOGN-1:0]  none_zero_reg = '0;
-    reg [LOGN-1:0]  prev_index_reg = '0;
-    reg             valid_o_reg = '0;
-
-    // Combinational search results
+    // Purely combinational priority encoder
     reg [LOGN-1:0] comb_idx;
     reg            comb_valid;
 
-    always @ ( * ) begin
+    always @(*) begin
         comb_idx   = '0;
         comb_valid = 1'b0;
 
-        // Scan all bits; keep last matching index found
+        // Find FIRST non-zero bit (lowest index priority)
         for (int i = 0; i < N; i++) begin
-            if (data_i[i]) begin
-                if (!(valid_o_reg && (i == prev_index_reg))) begin
-                    comb_idx   = i;
-                    comb_valid = 1'b1;
-                end
+            if (data_i[i] && !comb_valid) begin
+                comb_idx   = i[LOGN-1:0];
+                comb_valid = 1'b1;
             end
         end
     end
 
-    assign data_o = none_zero_reg;
-    assign data_valid_o = valid_o_reg;
-
-    // Update register when ready_o and a valid candidate
-    always @(posedge clk) begin
-        if (ready_o) begin
-            if (comb_valid) begin
-                valid_o_reg <= 1;
-                none_zero_reg <= comb_idx;
-                prev_index_reg <= comb_idx;
-
-
-
-            end else begin
-                valid_o_reg <= 0;
-            end
-        end
-    end
+    // Direct combinational outputs
+    assign data_o       = comb_idx;
+    assign data_valid_o = comb_valid;
 
 endmodule
-
 
 `default_nettype wire

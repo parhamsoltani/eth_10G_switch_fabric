@@ -5,7 +5,7 @@
 // Engineer: Parham Soltani
 //
 // Create Date:  2025-11-25
-// Module Name: dest_finder_row_matching_qos
+// Module Name: dest_finder_row_matching_qos (Fixed with pending tracking)
 // Project Name:
 // Target Devices:
 // Tool Versions: Vivado 2022.2
@@ -17,7 +17,7 @@
 // - Maintains 2-channel matching for conflict resolution
 // - Adds QoS priority preemption
 // - Preserves all timing characteristics of original design
-// - FIXED: Added metadata input ports for QoS extraction
+// - FIXED: Added pending_dests tracking to prevent race conditions
 //////////////////////////////////////////////////////////////////////////////////
 
 `include "fabric_params.vh"
@@ -38,11 +38,11 @@ module dest_finder_row_matching_qos #(
 
     // Channel 1 inputs
     input  wire [NUM_PORT-1:0]      none_mepty_ports_1,
-    input  wire [META_DATA_WIDTH-1:0] metadata_1 [NUM_PORT],  // ← ADDED
+    input  wire [META_DATA_WIDTH-1:0] metadata_1 [NUM_PORT],
 
     // Channel 2 inputs
     input  wire [NUM_PORT-1:0]      none_mepty_ports_2,
-    input  wire [META_DATA_WIDTH-1:0] metadata_2 [NUM_PORT],  // ← ADDED
+    input  wire [META_DATA_WIDTH-1:0] metadata_2 [NUM_PORT],
 
     // Shared inputs
     input  wire [NUM_PORT-1:0]      block_ports,
@@ -62,8 +62,6 @@ module dest_finder_row_matching_qos #(
     //==========================================================================
     // QoS Tag Extraction (from metadata)
     //==========================================================================
-    // Metadata structure: {minicells_keep[S], last_keep[KEEP_WIDTH],
-    //                       is_bad_frame[1], last_index[S_LOG], qos[QOS_TAG_WIDTH]}
     localparam QOS_OFFSET = `META_QOS_OFFSET;
 
     function automatic logic [QOS_TAG_WIDTH-1:0] extract_qos(
@@ -71,7 +69,6 @@ module dest_finder_row_matching_qos #(
     );
         logic [QOS_TAG_WIDTH-1:0] qos_val;
         qos_val = meta[QOS_OFFSET +: QOS_TAG_WIDTH];
-        // Clamp to valid range
         return (qos_val >= QOS_LEVELS) ? (QOS_LEVELS - 1) : qos_val;
     endfunction
 
@@ -113,6 +110,7 @@ module dest_finder_row_matching_qos #(
     reg [NUM_PORT_LOG-1:0]     dest_reg_1       = 0;
     reg [NUM_PORT-1:0]         possible_dests_1 = 0;
     reg [NUM_PORT-1:0]         recent_dests_1   = 0;
+    reg [NUM_PORT-1:0]         pending_dests_1  = 0;  // FIX: Added pending tracking
 
     wire [NUM_PORT_LOG-1:0]    dest_candidate_1;
     wire                       dest_candidate_valid_1;
@@ -125,10 +123,25 @@ module dest_finder_row_matching_qos #(
     assign dest_valid_o_1 = dest_valid_reg_1;
     assign dest_o_1       = dest_reg_1;
 
+    //==========================================================================
+    // FIX: Channel 1 possible_dests - no race condition
+    //==========================================================================
+    wire [NUM_PORT-1:0] possible_dests_next_1;
+    assign possible_dests_next_1 = none_mepty_ports_1 & (~recent_dests_1) & (~block_ports) & (~pending_dests_1);
+
     always @(posedge clk) begin
-        possible_dests_1 <= (~recent_dests_1) & none_mepty_ports_1 & (~block_ports);
-        if (dest_candidate_valid_1) begin
-            possible_dests_1[dest_candidate_1] <= 0;
+        possible_dests_1 <= possible_dests_next_1;
+    end
+
+    //==========================================================================
+    // FIX: Channel 1 pending tracking
+    //==========================================================================
+    always @(posedge clk) begin
+        if (current_dests_valid_1[free_recent_counter]) begin
+            pending_dests_1[current_dests_1[free_recent_counter]] <= 1'b0;
+        end
+        if (dest_candidate_valid_1 && dest_ready_1) begin
+            pending_dests_1[dest_candidate_1] <= 1'b1;
         end
     end
 
@@ -136,7 +149,7 @@ module dest_finder_row_matching_qos #(
         if (current_dests_valid_1[free_recent_counter]) begin
             recent_dests_1[current_dests_1[free_recent_counter]] <= 0;
         end
-        if (dest_candidate_valid_1) begin
+        if (dest_candidate_valid_1 && dest_ready_1) begin
             recent_dests_1[dest_candidate_1] <= 1;
         end
     end
@@ -148,6 +161,7 @@ module dest_finder_row_matching_qos #(
     reg [NUM_PORT_LOG-1:0]     dest_reg_2       = 0;
     reg [NUM_PORT-1:0]         possible_dests_2 = 0;
     reg [NUM_PORT-1:0]         recent_dests_2   = 0;
+    reg [NUM_PORT-1:0]         pending_dests_2  = 0;  // FIX: Added pending tracking
 
     wire [NUM_PORT_LOG-1:0]    dest_candidate_2;
     wire                       dest_candidate_valid_2;
@@ -160,10 +174,25 @@ module dest_finder_row_matching_qos #(
     assign dest_valid_o_2 = dest_valid_reg_2;
     assign dest_o_2       = dest_reg_2;
 
+    //==========================================================================
+    // FIX: Channel 2 possible_dests - no race condition
+    //==========================================================================
+    wire [NUM_PORT-1:0] possible_dests_next_2;
+    assign possible_dests_next_2 = none_mepty_ports_2 & (~recent_dests_2) & (~block_ports) & (~pending_dests_2);
+
     always @(posedge clk) begin
-        possible_dests_2 <= (~recent_dests_2) & none_mepty_ports_2 & (~block_ports);
-        if (dest_candidate_valid_2) begin
-            possible_dests_2[dest_candidate_2] <= 0;
+        possible_dests_2 <= possible_dests_next_2;
+    end
+
+    //==========================================================================
+    // FIX: Channel 2 pending tracking
+    //==========================================================================
+    always @(posedge clk) begin
+        if (current_dests_valid_2[free_recent_counter]) begin
+            pending_dests_2[current_dests_2[free_recent_counter]] <= 1'b0;
+        end
+        if (dest_candidate_valid_2 && dest_ready_2) begin
+            pending_dests_2[dest_candidate_2] <= 1'b1;
         end
     end
 
@@ -171,7 +200,7 @@ module dest_finder_row_matching_qos #(
         if (current_dests_valid_2[free_recent_counter]) begin
             recent_dests_2[current_dests_2[free_recent_counter]] <= 0;
         end
-        if (dest_candidate_valid_2) begin
+        if (dest_candidate_valid_2 && dest_ready_2) begin
             recent_dests_2[dest_candidate_2] <= 1;
         end
     end
@@ -556,7 +585,7 @@ module dest_finder_row_matching_qos #(
     ) u_first_none_zero_qos_1 (
         .clk              (clk),
         .data_i           (possible_dests_1),
-        .metadata_i       (metadata_1),          // ← CONNECTED
+        .metadata_i       (metadata_1),
         .qos_enable       (qos_enable),
         .ready_o          (dest_ready_1),
         .data_o           (dest_candidate_1),
@@ -571,7 +600,7 @@ module dest_finder_row_matching_qos #(
     ) u_first_none_zero_qos_2 (
         .clk              (clk),
         .data_i           (possible_dests_2),
-        .metadata_i       (metadata_2),          // ← CONNECTED
+        .metadata_i       (metadata_2),
         .qos_enable       (qos_enable),
         .ready_o          (dest_ready_2),
         .data_o           (dest_candidate_2),

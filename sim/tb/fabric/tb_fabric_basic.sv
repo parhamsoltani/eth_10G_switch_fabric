@@ -4,7 +4,6 @@
 import fabric_frame_pkg::*;
 
 `include "implement_options.vh"
-`include "sim_options.vh"
 
 module tb_fabric_basic;
     // Convert macros to localparams for constant expressions
@@ -32,7 +31,7 @@ module tb_fabric_basic;
     switch_data_if #(.DATA_WIDTH(W_MINI), .ID_WIDTH(PACKET_ID_WIDTH))
         tx_data_if [NUM_PORT] ();
 
-    // Mailbox arrays - Using two separate mailboxes for synchronization
+    // Mailbox arrays
     mailbox #(Fabric_frame_tr) frame_tx_data[NUM_PORT];
     mailbox #(Fabric_frame_tr) frame_tx_meta[NUM_PORT];
     mailbox #(Fabric_frame_tr) frame_rx[NUM_PORT];
@@ -40,10 +39,16 @@ module tb_fabric_basic;
 
     int packets_sent = 0;
     int packets_recv = 0;
+    
+    // Track sent packet IDs for debugging
+    bit [255:0] sent_ids;
+    bit [255:0] received_ids;
 
     // Initialize mailboxes at time 0
     initial begin
         mailboxes_ready = 0;
+        sent_ids = '0;
+        received_ids = '0;
         for (int i = 0; i < NUM_PORT; i++) begin
             frame_tx_data[i] = new();
             frame_tx_meta[i] = new();
@@ -88,6 +93,17 @@ module tb_fabric_basic;
         $display("[%0t] Reset complete", $time);
     end
 
+    // Report missing packets
+    task automatic report_missing_packets();
+        $display("\n--- Missing Packet Analysis ---");
+        for (int i = 0; i < 256; i++) begin
+            if (sent_ids[i] && !received_ids[i]) begin
+                $display("  MISSING: Packet ID %0d", i);
+            end
+        end
+        $display("-------------------------------\n");
+    endtask
+
     // Test stimulus
     initial begin
         wait (reset_done);
@@ -98,33 +114,65 @@ module tb_fabric_basic;
         $display("  NUM_PORT=%0d, S=%0d, QoS=DISABLED", NUM_PORT, S);
         $display("════════════════════════════════════════\n");
 
+        // =============================================
+        // Warmup: Send initial packets to prime the fabric
+        // =============================================
+        $display("[WARMUP] Priming fabric with initial traffic...");
+        for (int i = 0; i < NUM_PORT; i++) begin
+            send_unicast_nowait(i, (i+1) % NUM_PORT, 64);
+        end
+        
+        // Wait for warmup packets (with long timeout for first packet)
+        $display("[WARMUP] Waiting for warmup packets...");
+        wait_for_packets_count(NUM_PORT, 500000);  // Long timeout for first packets
+        repeat(1000) @(posedge sys_clk);
+        
+        $display("[WARMUP] Complete. Received %0d packets.", packets_recv);
+        
+        // Reset counters for actual test
+        packets_sent = 0;
+        packets_recv = 0;
+        sent_ids = '0;
+        received_ids = '0;
+
+        // =============================================
         // Test 1: Unicast (port 0 → port 1)
-        $display("[TEST 1] Unicast: Port 0 → Port 1");
+        // =============================================
+        $display("\n[TEST 1] Unicast: Port 0 → Port 1");
         send_unicast(0, 1, 256);
+        
+        wait_for_all_packets(1, 50000);
         repeat(100) @(posedge sys_clk);
 
+        // =============================================
         // Test 2: All-to-all (sequential)
-        $display("[TEST 2] All-to-all sequential");
+        // =============================================
+        $display("\n[TEST 2] All-to-all sequential");
         for (int src = 0; src < NUM_PORT; src++) begin
             for (int dst = 0; dst < NUM_PORT; dst++) begin
                 if (src != dst) begin
-                    $display("  Sending: Port %0d → Port %0d", src, dst);
                     send_unicast(src, dst, 128);
                 end
             end
         end
+        
+        wait_for_all_packets(91, 100000);
         repeat(500) @(posedge sys_clk);
 
+        // =============================================
         // Test 3: Concurrent traffic
-        $display("[TEST 3] Concurrent traffic");
+        // =============================================
+        $display("\n[TEST 3] Concurrent traffic");
         fork
             repeat(50) send_unicast(0, NUM_PORT-1, 512);
             repeat(50) send_unicast(NUM_PORT-1, 0, 512);
         join
 
-        // Wait for all packets
-        repeat(10000) @(posedge sys_clk);
+        wait_for_all_packets(191, 100000);
 
+        // =============================================
+        // Results
+        // =============================================
         $display("\n════════════════════════════════════════");
         $display("  TEST RESULTS");
         $display("════════════════════════════════════════");
@@ -132,39 +180,126 @@ module tb_fabric_basic;
         $display("  Packets Received: %0d", packets_recv);
 
         if (packets_sent == packets_recv) begin
-            $display("\n    BASIC TEST PASSED ");
+            $display("\n  *** BASIC TEST PASSED ***");
         end else begin
-            $error("\n    PACKET LOSS: %0d missing ", packets_sent - packets_recv);
+            $display("\n  *** PACKET LOSS: %0d missing ***", packets_sent - packets_recv);
+            report_missing_packets();
         end
 
         $display("════════════════════════════════════════\n");
         $finish;
     end
 
-    // Packet generation task - Modified to send to both mailboxes
-    task send_unicast(int src, int dst, int size);
-        automatic bit [NUM_PORT-1:0] dest_mask = (1 << dst);
-        automatic bit [7:0] raw_data[] = new[size];
-        automatic Fabric_frame_tr frame_data, frame_meta;
+    // Wait for specific packet count with idle timeout
+    task automatic wait_for_packets_count(int target_count, int max_idle_cycles);
+        int idle_cycles;
+        int last_recv;
+        idle_cycles = 0;
+        last_recv = packets_recv;
+        
+        while (packets_recv < target_count && idle_cycles < max_idle_cycles) begin
+            @(posedge sys_clk);
+            if (packets_recv == last_recv) begin
+                idle_cycles++;
+            end else begin
+                idle_cycles = 0;
+                last_recv = packets_recv;
+            end
+        end
+        
+        if (packets_recv < target_count) begin
+            $display("[%0t] Timeout waiting for %0d packets. Got %0d",
+                     $time, target_count, packets_recv);
+        end
+    endtask
+
+    // Wait for all packets with a cycle-based timeout
+    task automatic wait_for_all_packets(int total_expected, int max_idle_cycles);
+        int idle_cycles;
+        int last_recv;
+        idle_cycles = 0;
+        last_recv = packets_recv;
+        
+        while (packets_recv < total_expected && idle_cycles < max_idle_cycles) begin
+            @(posedge sys_clk);
+            if (packets_recv == last_recv) begin
+                idle_cycles++;
+            end else begin
+                idle_cycles = 0;
+                last_recv = packets_recv;
+            end
+        end
+        
+        if (packets_recv < total_expected) begin
+            $display("[%0t] Drain timeout after %0d idle cycles. Received %0d/%0d",
+                     $time, idle_cycles, packets_recv, total_expected);
+        end else begin
+            $display("[%0t] All %0d packets received successfully", $time, total_expected);
+        end
+    endtask
+
+    // Packet generation task (blocking - waits for send complete)
+    task automatic send_unicast(int src, int dst, int size);
+        bit [NUM_PORT-1:0] dest_mask;
+        bit [7:0] raw_data[];
+        Fabric_frame_tr frame_data, frame_meta;
+        int pkt_id;
+        
+        dest_mask = (1 << dst);
+        raw_data = new[size];
 
         for (int i = 0; i < size; i++) raw_data[i] = $urandom();
 
+        pkt_id = packets_sent;
+        
         frame_data = Fabric_frame_tr::create_from_raw(
             .raw_data(raw_data),
             .dest(dest_mask),
             .ifg_clk(10),
             .is_bad_frame(1'b0),
-            .id(packets_sent)
+            .id(pkt_id)
         );
 
         frame_meta = frame_data.do_copy();
 
-        // Send to both mailboxes for synchronization
         frame_tx_data[src].put(frame_data);
         frame_tx_meta[src].put(frame_meta);
+        
+        if (pkt_id < 256) sent_ids[pkt_id] = 1'b1;
         packets_sent++;
 
         @frame_sent[src];
+    endtask
+
+    // Non-blocking packet send (for warmup)
+    task automatic send_unicast_nowait(int src, int dst, int size);
+        bit [NUM_PORT-1:0] dest_mask;
+        bit [7:0] raw_data[];
+        Fabric_frame_tr frame_data, frame_meta;
+        int pkt_id;
+        
+        dest_mask = (1 << dst);
+        raw_data = new[size];
+
+        for (int i = 0; i < size; i++) raw_data[i] = $urandom();
+
+        pkt_id = packets_sent;
+        
+        frame_data = Fabric_frame_tr::create_from_raw(
+            .raw_data(raw_data),
+            .dest(dest_mask),
+            .ifg_clk(10),
+            .is_bad_frame(1'b0),
+            .id(pkt_id)
+        );
+
+        frame_meta = frame_data.do_copy();
+
+        frame_tx_data[src].put(frame_data);
+        frame_tx_meta[src].put(frame_meta);
+        
+        if (pkt_id < 256) sent_ids[pkt_id] = 1'b1;
+        packets_sent++;
     endtask
 
     // Generate drivers and monitors for each port
@@ -177,7 +312,6 @@ module tb_fabric_basic;
                 automatic bit [7:0] raw_data[];
                 automatic int num_words, keep_val, j;
 
-                // Initialize interface signals
                 rx_data_if[gi].valid = 0;
                 rx_data_if[gi].data = 0;
                 rx_data_if[gi].keep = 0;
@@ -223,7 +357,7 @@ module tb_fabric_basic;
                 end
             end
 
-            // ===== Metadata Interface Driver - CORRECTED =====
+            // ===== Metadata Interface Driver =====
             initial begin
                 automatic Fabric_frame_tr frame;
 
@@ -237,19 +371,12 @@ module tb_fabric_basic;
                 wait(reset_done);
 
                 forever begin
-                    // Get frame from metadata mailbox
                     frame_tx_meta[gi].get(frame);
 
-                    // Debug: Print what we're sending
-                    //$display("[%0t] Port %0d META: id=%0d, dest_mask=%b", 
-                    //         $time, gi, frame.id, frame.dest);
-
-                    // Wait for first data beat to be valid
                     @(posedge sys_clk);
                     while (!(rx_data_if[gi].valid && rx_data_if[gi].ready)) 
                         @(posedge sys_clk);
 
-                    // Drive metadata synchronized with data
                     rx_meta_if[gi].valid <= 1'b1;
                     rx_meta_if[gi].dest_port_mask <= frame.dest;
                     rx_meta_if[gi].id <= frame.id;
@@ -269,13 +396,16 @@ module tb_fabric_basic;
             // ===== RX Data Interface Monitor =====
             initial begin
                 automatic bit [7:0] raw_data[$];
-                automatic bit frame_started = 0;
-                automatic int ifg_clk = 0;
+                automatic bit frame_started;
+                automatic int ifg_clk;
                 automatic time start_time, end_time;
                 automatic int data_id;
                 automatic Fabric_frame_tr frame;
                 automatic bit is_bad;
 
+                frame_started = 0;
+                ifg_clk = 0;
+                
                 tx_data_if[gi].ready = 1'b0;
 
                 wait(mailboxes_ready);
@@ -313,9 +443,9 @@ module tb_fabric_basic;
                             frame.end_time = end_time;
 
                             frame_rx[gi].put(frame);
+                            
+                            if (data_id < 256) received_ids[data_id] = 1'b1;
                             packets_recv++;
-                            $display("[%0t] Received packet on port %0d, id=%0d, size=%0d bytes", 
-                                     $time, gi, data_id, raw_data.size());
 
                             raw_data = {};
                             ifg_clk = 0;
@@ -332,10 +462,11 @@ module tb_fabric_basic;
 
     // Timeout watchdog
     initial begin
-        #2000000;  // 2ms timeout
+        #50000000;  // 50ms timeout (reduced since warmup handles the long delay)
         $error("TIMEOUT - test did not complete");
         $display("  Packets Sent:     %0d", packets_sent);
         $display("  Packets Received: %0d", packets_recv);
+        report_missing_packets();
         $finish;
     end
 

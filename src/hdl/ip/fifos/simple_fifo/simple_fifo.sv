@@ -1,60 +1,58 @@
+
+
+
+`timescale 1ns / 1ps
 // `default_nettype none
-
-
 
 module simple_fifo
 #(
-	parameter	DATA_WIDTH		    = 136,
+    parameter   DATA_WIDTH          = 136,
     parameter   FIFO_DEPTH          = 16,       // must be power of two
-	parameter	XPM_READ_LATENCY    = 1,    // 0 is fwft
-    parameter   PROG_FULL_THRESH = 10,
-   // DO NOT CHANGE!
-   parameter   FIFO_DEPTH_INT      = FIFO_DEPTH < 16 ? 16 : 2**($clog2(FIFO_DEPTH)),
-   parameter   PROG_FULL_THRESH_INT = FIFO_DEPTH_INT-PROG_FULL_THRESH > 10 && PROG_FULL_THRESH > 5 ?
-                               FIFO_DEPTH_INT-PROG_FULL_THRESH : 10
+    parameter   XPM_READ_LATENCY    = 1,        // 0 is fwft
+    parameter   PROG_FULL_THRESH    = 10,
+    // DO NOT CHANGE!
+    parameter   FIFO_DEPTH_INT      = FIFO_DEPTH < 16 ? 16 : 2**($clog2(FIFO_DEPTH)),
+    parameter   PROG_FULL_THRESH_INT = FIFO_DEPTH_INT-PROG_FULL_THRESH > 10 && PROG_FULL_THRESH > 5 ?
+                                FIFO_DEPTH_INT-PROG_FULL_THRESH : 10
 )
 (
-	input	wire						clk_i,
+    input   wire                        clk_i,
     input   wire                        reset_i,
 
-	input	wire						push_i,
+    input   wire                        push_i,
 
-	input	wire	[DATA_WIDTH-1:0]	push_data_i,
+    input   wire    [DATA_WIDTH-1:0]    push_data_i,
 
-	input	wire						pop_i,
+    input   wire                        pop_i,
 
-	output	wire	[DATA_WIDTH-1:0]	pop_data_o,
+    output  wire    [DATA_WIDTH-1:0]    pop_data_o,
     output  wire                        full_o,
     output  wire                        prog_full_o,
     output  wire                        empty_o
 );
 
-    localparam  FIFO_MEMORY_TYPE   = FIFO_DEPTH_INT    > 64 ? "block" : "distributed";
-
-
-    localparam  CASCADE_HEIGHT          = FIFO_MEMORY_TYPE == "ultra" ? FIFO_DEPTH_INT/4000: 0;
-    localparam  DATA_COUNT_WIDTH        = $clog2(FIFO_DEPTH_INT) + 1;
-    localparam  READ_MODE               = XPM_READ_LATENCY == 0 ? "fwft" : "std";
-
+    localparam  FIFO_MEMORY_TYPE    = FIFO_DEPTH_INT > 64 ? "block" : "distributed";
+    localparam  DATA_COUNT_WIDTH    = $clog2(FIFO_DEPTH_INT) + 1;
+    localparam  READ_MODE           = XPM_READ_LATENCY == 0 ? "fwft" : "std";
 
     xpm_fifo_sync #(
-        .CASCADE_HEIGHT(CASCADE_HEIGHT),          // DECIMAL
-        .DOUT_RESET_VALUE("0"),                   // String
-        .ECC_MODE("no_ecc"),                      // String
-        .FIFO_MEMORY_TYPE(FIFO_MEMORY_TYPE),      // String
-        .FIFO_READ_LATENCY(XPM_READ_LATENCY),     // DECIMAL
-        .FIFO_WRITE_DEPTH(FIFO_DEPTH_INT),            // DECIMAL Defines the FIFO Write Depth, must be power of two
-        .FULL_RESET_VALUE(0),                     // DECIMAL
-        .PROG_EMPTY_THRESH(10),                   // DECIMAL
-        .PROG_FULL_THRESH(PROG_FULL_THRESH_INT),                    // DECIMAL
-        .RD_DATA_COUNT_WIDTH(DATA_COUNT_WIDTH),   // DECIMAL
-        .READ_DATA_WIDTH(DATA_WIDTH),             // DECIMAL
-        .READ_MODE(READ_MODE),                        // String
-        .SIM_ASSERT_CHK(0),                       // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-        .USE_ADV_FEATURES("0002"),                // String; default = "0707"
-        .WAKEUP_TIME(0),                          // DECIMAL
-        .WRITE_DATA_WIDTH(DATA_WIDTH),            // DECIMAL
-        .WR_DATA_COUNT_WIDTH(DATA_COUNT_WIDTH)    // DECIMAL
+        // REMOVED CASCADE_HEIGHT - let XPM use default (fixes ModelSim error)
+        .DOUT_RESET_VALUE("0"),
+        .ECC_MODE("no_ecc"),
+        .FIFO_MEMORY_TYPE(FIFO_MEMORY_TYPE),
+        .FIFO_READ_LATENCY(XPM_READ_LATENCY),
+        .FIFO_WRITE_DEPTH(FIFO_DEPTH_INT),
+        .FULL_RESET_VALUE(0),
+        .PROG_EMPTY_THRESH(10),
+        .PROG_FULL_THRESH(PROG_FULL_THRESH_INT),
+        .RD_DATA_COUNT_WIDTH(DATA_COUNT_WIDTH),
+        .READ_DATA_WIDTH(DATA_WIDTH),
+        .READ_MODE(READ_MODE),
+        .SIM_ASSERT_CHK(0),
+        .USE_ADV_FEATURES("0002"),
+        .WAKEUP_TIME(0),
+        .WRITE_DATA_WIDTH(DATA_WIDTH),
+        .WR_DATA_COUNT_WIDTH(DATA_COUNT_WIDTH)
     ) xpm_fifo_sync_inst (
         .almost_empty(),
         .almost_full(),
@@ -74,20 +72,18 @@ module simple_fifo
         .wr_ack(),
         .wr_data_count(),
         .wr_rst_busy(),
-        .injectdbiterr(),
-        .injectsbiterr(),
+        .injectdbiterr(1'b0),
+        .injectsbiterr(1'b0),
         .rd_en(pop_i),
         .rst(reset_i),
-        .sleep(),
+        .sleep(1'b0),
         .wr_clk(clk_i),
         .wr_en(push_i)
     );
 
-
-
 endmodule
 
-
+`default_nettype wire
 
 
 

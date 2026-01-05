@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps
-// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
@@ -7,7 +6,7 @@
 // Create Date:  2025-11-25
 // Module Name: switch_fabric_qos_wrapper
 // Description: Top-level wrapper with runtime QoS enable/disable
-// Instantiates your switch_fabric with QoS enhancements
+// FIXED: Corrected interface connections to match actual module ports
 //////////////////////////////////////////////////////////////////////////////////
 
 `include "fabric_params.vh"
@@ -24,15 +23,15 @@ module switch_fabric_qos_wrapper #(
     parameter   MULTICAST_RATE          = `U,
     parameter   PACKET_ID_WIDTH         = `PACKET_ID_WIDTH,
     parameter   QOS_TAG_WIDTH           = `QOS_TAG_WIDTH,
-    parameter   ENABLE_QOS              = 1  // Compile-time enable
+    parameter   ENABLE_QOS              = 1
 ) (
     input   wire                                clk,
     input   wire                                reset,
 
-    // Data interfaces (your existing pattern)
-    switch_data_if.slave_mp                     rx_data_if  [NUM_PORT],
-    switch_metadata_if.slave_mp                 rx_meta_if  [NUM_PORT],
-    switch_data_if.master_mp                    tx_data_if  [NUM_PORT],
+    // Data interfaces
+    switch_data_if.slave                        rx_data_if  [NUM_PORT],
+    switch_metadata_if.slave                    rx_meta_if  [NUM_PORT],
+    switch_data_if.master                       tx_data_if  [NUM_PORT],
 
     // Microprocessor interface for runtime control
     input  wire [15:0]                          uif_addr,
@@ -48,93 +47,124 @@ module switch_fabric_qos_wrapper #(
 );
 
     localparam KEEP_WIDTH = $clog2((W_MINI/8) + 1);
+    localparam QOS_LEVELS = `QOS_LEVELS;
 
     //==========================================================================
-    // Internal wires (from ingress wrappers to fabric)
+    // Internal Reset
     //==========================================================================
-    wire                        int_rd_en_rx [NUM_PORT];
-    wire [W_MINI-1:0]           int_data_rx [NUM_PORT];
-    wire [KEEP_WIDTH-1:0]       int_keep_rx [NUM_PORT];
-    wire                        int_valid_rx [NUM_PORT];
-    wire                        int_is_bad_frame_rx [NUM_PORT];
-    wire [PACKET_ID_WIDTH-1:0]  int_packet_id_rx [NUM_PORT];
-    wire                        int_last_rx [NUM_PORT];
-    wire                        int_iq_almost_empty [NUM_PORT];
-    wire [NUM_PORT-1:0]         int_dest_mask_rx [NUM_PORT];
-    wire                        int_dest_mask_valid_rx [NUM_PORT];
-    wire [QOS_TAG_WIDTH-1:0]    int_qos_tag_rx [NUM_PORT];
+    wire rst_n = ~reset;
 
-    // Fabric outputs (cell2packet → egress)
-    wire [W_MINI-1:0]           int_data_tx [NUM_PORT];
-    wire [KEEP_WIDTH-1:0]       int_keep_tx [NUM_PORT];
-    wire                        int_valid_tx [NUM_PORT];
-    wire                        int_is_bad_frame_tx [NUM_PORT];
-    wire                        int_last_tx [NUM_PORT];
+    //==========================================================================
+    // Internal wires for fabric
+    //==========================================================================
+    // RX path to fabric
+    wire [W_MINI-1:0]           fabric_data_rx      [NUM_PORT];
+    wire [KEEP_WIDTH-1:0]       fabric_keep_rx      [NUM_PORT];
+    wire                        fabric_valid_rx     [NUM_PORT];
+    wire                        fabric_is_bad_frame_rx [NUM_PORT];
+    wire [PACKET_ID_WIDTH-1:0]  fabric_packet_id_rx [NUM_PORT];
+    wire                        fabric_last_rx      [NUM_PORT];
+    wire                        fabric_iq_almost_empty [NUM_PORT];
+    wire [NUM_PORT-1:0]         fabric_dest_mask_rx [NUM_PORT];
+    wire                        fabric_dest_mask_valid_rx [NUM_PORT];
+    wire                        fabric_rd_en_rx     [NUM_PORT];
 
-    // Backpressure from egress
-    wire                        int_oq_prog_full [NUM_PORT];
+    // TX path from fabric
+    wire [W_MINI-1:0]           fabric_data_tx      [NUM_PORT];
+    wire [KEEP_WIDTH-1:0]       fabric_keep_tx      [NUM_PORT];
+    wire                        fabric_valid_tx     [NUM_PORT];
+    wire                        fabric_is_bad_frame_tx [NUM_PORT];
+    wire                        fabric_last_tx      [NUM_PORT];
+    wire [PACKET_ID_WIDTH-1:0]  fabric_packet_id_tx [NUM_PORT];
+    wire [QOS_TAG_WIDTH-1:0]    fabric_qos_tag_tx   [NUM_PORT];
+    wire                        fabric_oq_prog_full [NUM_PORT];
 
     // QoS controls from microinterface
     wire qos_enable_rt;
     wire use_vlan_pcp_rt;
     wire use_ip_dscp_rt;
     wire use_port_classify_rt;
+    wire [15:0] aging_threshold_rt;
 
-    // Monitoring signals
-    wire [NUM_PORT-1:0] port_link_up;
-    wire [NUM_PORT-1:0] port_rx_active;
-    wire [NUM_PORT-1:0] port_tx_active;
-    wire [NUM_PORT-1:0] port_rx_valid;
-    wire [NUM_PORT-1:0] port_tx_valid;
-    wire [QOS_TAG_WIDTH-1:0] port_rx_qos [NUM_PORT];
-    wire [QOS_TAG_WIDTH-1:0] port_tx_qos [NUM_PORT];
+    // Statistics for micro interface
+    reg [31:0] rx_pkt_count [NUM_PORT];
+    reg [31:0] tx_pkt_count [NUM_PORT];
+    reg [31:0] drop_count   [NUM_PORT];
+    reg [31:0] qos_stats    [NUM_PORT][QOS_LEVELS];
 
     //==========================================================================
-    // Ingress Line Wrappers (per port)
+    // Interface to Wire Conversion (RX Path - Input Stage)
     //==========================================================================
     generate
-        for (genvar i = 0; i < NUM_PORT; i++) begin : gen_ingress
+        for (genvar i = 0; i < NUM_PORT; i++) begin : gen_rx_interface_conv
 
-            ingress_line_wrapper #(
-                .NUM_PORT(NUM_PORT),
-                .W_MINI(W_MINI),
-                .KEEP_WIDTH(KEEP_WIDTH),
-                .PACKET_ID_WIDTH(PACKET_ID_WIDTH),
-                .QOS_TAG_WIDTH(QOS_TAG_WIDTH),
-                .INPUT_QUEUE_DEPTH(16),
-                .ENABLE_QOS(ENABLE_QOS)
-            ) u_ingress_wrapper (
-                .clk(clk),
-                .rst_n(~reset),
-                .rx_data_if(rx_data_if[i]),
-                .rx_meta_if(rx_meta_if[i]),
-                .rd_en_rx(int_rd_en_rx[i]),
-                .data_rx(int_data_rx[i]),
-                .keep_rx(int_keep_rx[i]),
-                .valid_rx(int_valid_rx[i]),
-                .is_bad_frame_rx(int_is_bad_frame_rx[i]),
-                .packet_id_rx(int_packet_id_rx[i]),
-                .last_rx(int_last_rx[i]),
-                .iq_fifo_almost_empty(int_iq_almost_empty[i]),
-                .dest_mask_rx(int_dest_mask_rx[i]),
-                .dest_mask_valid_rx(int_dest_mask_valid_rx[i]),
-                .qos_tag_rx(int_qos_tag_rx[i]),
-                .use_vlan_pcp(use_vlan_pcp_rt),
-                .use_ip_dscp(use_ip_dscp_rt),
-                .use_port_classify(use_port_classify_rt)
+            // Input queue FIFO for each port
+            localparam IQ_TUSER_WIDTH = 1 + PACKET_ID_WIDTH + KEEP_WIDTH;
+            
+            wire [W_MINI-1:0]           iq_wr_tdata;
+            wire [IQ_TUSER_WIDTH-1:0]   iq_wr_tuser;
+            wire                        iq_wr_tvalid;
+            wire                        iq_wr_tlast;
+            wire                        iq_wr_tready;
+            
+            wire [W_MINI-1:0]           iq_rd_tdata;
+            wire [IQ_TUSER_WIDTH-1:0]   iq_rd_tuser;
+            wire                        iq_rd_tvalid;
+            wire                        iq_rd_tlast;
+            wire                        iq_rd_tready;
+            wire                        iq_rd_almost_empty;
+
+            // Connect from interface to FIFO input
+            assign iq_wr_tdata  = rx_data_if[i].data;
+            assign iq_wr_tuser  = {rx_data_if[i].is_bad_frame, rx_data_if[i].id[PACKET_ID_WIDTH-1:0], rx_data_if[i].keep};
+            assign iq_wr_tvalid = rx_data_if[i].valid;
+            assign iq_wr_tlast  = rx_data_if[i].last;
+            assign rx_data_if[i].ready = iq_wr_tready;
+
+            // Input Queue FIFO
+            axis_fifo #(
+                .TDATA_WIDTH(W_MINI),
+                .TUSER_WIDTH(IQ_TUSER_WIDTH),
+                .FIFO_DEPTH(16),
+                .PROG_FULL_THRESH(12)
+            ) input_queue_inst (
+                .async_rst      (reset),
+                .clk            (clk),
+                .wr_tdata       (iq_wr_tdata),
+                .wr_tuser       (iq_wr_tuser),
+                .wr_tvalid      (iq_wr_tvalid),
+                .wr_tlast       (iq_wr_tlast),
+                .wr_tready      (iq_wr_tready),
+                .wr_prog_full   (),
+                .rd_tdata       (iq_rd_tdata),
+                .rd_tuser       (iq_rd_tuser),
+                .rd_tvalid      (iq_rd_tvalid),
+                .rd_tlast       (iq_rd_tlast),
+                .rd_tready      (iq_rd_tready),
+                .rd_almost_empty(iq_rd_almost_empty)
             );
 
-            // Monitoring
-            assign port_rx_valid[i] = int_valid_rx[i];
-            assign port_rx_qos[i]   = int_qos_tag_rx[i];
-            assign port_tx_valid[i] = int_valid_tx[i];
-            assign port_tx_qos[i]   = int_qos_tag_rx[i];  // Passthrough (preserved in fabric)
+            // Connect FIFO output to fabric
+            assign iq_rd_tready = fabric_rd_en_rx[i];
+            
+            assign fabric_data_rx[i]        = iq_rd_tdata;
+            assign fabric_keep_rx[i]        = iq_rd_tuser[KEEP_WIDTH-1:0];
+            assign fabric_packet_id_rx[i]   = iq_rd_tuser[KEEP_WIDTH +: PACKET_ID_WIDTH];
+            assign fabric_is_bad_frame_rx[i]= iq_rd_tuser[IQ_TUSER_WIDTH-1];
+            assign fabric_valid_rx[i]       = iq_rd_tvalid;
+            assign fabric_last_rx[i]        = iq_rd_tlast;
+            assign fabric_iq_almost_empty[i]= iq_rd_almost_empty;
+
+            // Destination mask from metadata interface
+            assign fabric_dest_mask_rx[i]       = rx_meta_if[i].dest_port_mask;
+            assign fabric_dest_mask_valid_rx[i] = rx_meta_if[i].valid;
+            assign rx_meta_if[i].ready          = 1'b1;  // Always accept metadata
 
         end
     endgenerate
 
     //==========================================================================
-    // Egress Line Modules (your existing egress_switch)
+    // Egress Modules (TX Path - Output Stage)
     //==========================================================================
     generate
         for (genvar i = 0; i < NUM_PORT; i++) begin : gen_egress
@@ -146,74 +176,29 @@ module switch_fabric_qos_wrapper #(
                 .OUTPUT_QUEUE_DEPTH(OUTPUT_QUEUE_DEPTH),
                 .OUTPUT_QUEUE_TUSER(1 + KEEP_WIDTH),
                 .OQ_PROG_FULL_THRESH(30),
-                .NOT_READY_LIMIT(20)
+                .NOT_READY_LIMIT(20),
+                .PACKET_ID_WIDTH(PACKET_ID_WIDTH),
+                .QOS_TAG_WIDTH(QOS_TAG_WIDTH)
             ) u_egress (
                 .clk(clk),
                 .tx_data_if(tx_data_if[i]),
-                .data_tx(int_data_tx[i]),
-                .keep_tx(int_keep_tx[i]),
-                .valid_tx(int_valid_tx[i]),
-                .is_bad_frame_tx(int_is_bad_frame_tx[i]),
-                .last_tx(int_last_tx[i]),
-                .oq_wr_prog_full(int_oq_prog_full[i])
+                .data_tx(fabric_data_tx[i]),
+                .keep_tx(fabric_keep_tx[i]),
+                .valid_tx(fabric_valid_tx[i]),
+                .is_bad_frame_tx(fabric_is_bad_frame_tx[i]),
+                .last_tx(fabric_last_tx[i]),
+                .packet_id_tx(fabric_packet_id_tx[i]),
+                .qos_tag_tx(fabric_qos_tag_tx[i]),
+                .oq_wr_prog_full(fabric_oq_prog_full[i])
             );
 
         end
     endgenerate
 
     //==========================================================================
-    // Core Switch Fabric (your existing switch_fabric.sv)
+    // Core Switch Fabric
     //==========================================================================
-    // For QoS-aware fabric, you'd instantiate switch_high_radix_matching with
-    // dest_finder_row_matching_qos. For now, we use standard fabric with QoS
-    // metadata passed through.
-
-    // Temporary wire arrays to match your fabric's array-of-wires style
-    wire [W_MINI-1:0] fabric_data_rx [NUM_PORT];
-    wire [KEEP_WIDTH-1:0] fabric_keep_rx [NUM_PORT];
-    wire fabric_valid_rx [NUM_PORT];
-    wire fabric_is_bad_frame_rx [NUM_PORT];
-    wire [PACKET_ID_WIDTH-1:0] fabric_packet_id_rx [NUM_PORT];
-    wire fabric_last_rx [NUM_PORT];
-    wire fabric_iq_almost_empty [NUM_PORT];
-    wire [NUM_PORT-1:0] fabric_dest_mask_rx [NUM_PORT];
-    wire fabric_dest_mask_valid_rx [NUM_PORT];
-    wire fabric_rd_en_rx [NUM_PORT];
-
-    wire [W_MINI-1:0] fabric_data_tx [NUM_PORT];
-    wire [KEEP_WIDTH-1:0] fabric_keep_tx [NUM_PORT];
-    wire fabric_valid_tx [NUM_PORT];
-    wire fabric_is_bad_frame_tx [NUM_PORT];
-    wire fabric_last_tx [NUM_PORT];
-    wire fabric_oq_prog_full [NUM_PORT];
-
     generate
-        for (genvar i = 0; i < NUM_PORT; i++) begin : gen_fabric_conn
-            assign fabric_data_rx[i]            = int_data_rx[i];
-            assign fabric_keep_rx[i]            = int_keep_rx[i];
-            assign fabric_valid_rx[i]           = int_valid_rx[i];
-            assign fabric_is_bad_frame_rx[i]    = int_is_bad_frame_rx[i];
-            assign fabric_packet_id_rx[i]       = int_packet_id_rx[i];
-            assign fabric_last_rx[i]            = int_last_rx[i];
-            assign fabric_iq_almost_empty[i]    = int_iq_almost_empty[i];
-            assign fabric_dest_mask_rx[i]       = int_dest_mask_rx[i];
-            assign fabric_dest_mask_valid_rx[i] = int_dest_mask_valid_rx[i];
-            assign int_rd_en_rx[i]              = fabric_rd_en_rx[i];
-
-            assign int_data_tx[i]            = fabric_data_tx[i];
-            assign int_keep_tx[i]            = fabric_keep_tx[i];
-            assign int_valid_tx[i]           = fabric_valid_tx[i];
-            assign int_is_bad_frame_tx[i]    = fabric_is_bad_frame_tx[i];
-            assign int_last_tx[i]            = fabric_last_tx[i];
-            assign fabric_oq_prog_full[i]    = int_oq_prog_full[i];
-        end
-    endgenerate
-
-    // NOTE: To use QoS-aware matching, replace switch_fabric instantiation with:
-    // switch_high_radix_matching_qos #(...) or switch_2s_qos #(...)
-    // For backward compatibility, we keep standard fabric here
-
-    generate;
         if (NUM_PORT <= S) begin : gen_under_s
             switch_s #(
                 .NUM_PORT(NUM_PORT),
@@ -319,62 +304,107 @@ module switch_fabric_qos_wrapper #(
     endgenerate
 
     //==========================================================================
+    // Statistics Collection
+    //==========================================================================
+    generate
+        for (genvar i = 0; i < NUM_PORT; i++) begin : gen_stats
+            // RX packet counter
+            always @(posedge clk) begin
+                if (reset) begin
+                    rx_pkt_count[i] <= 32'h0;
+                end else if (fabric_valid_rx[i] && fabric_rd_en_rx[i] && fabric_last_rx[i]) begin
+                    rx_pkt_count[i] <= rx_pkt_count[i] + 1;
+                end
+            end
+
+            // TX packet counter
+            always @(posedge clk) begin
+                if (reset) begin
+                    tx_pkt_count[i] <= 32'h0;
+                end else if (fabric_valid_tx[i] && fabric_last_tx[i]) begin
+                    tx_pkt_count[i] <= tx_pkt_count[i] + 1;
+                end
+            end
+
+            // Drop counter (placeholder - would need actual drop signal from fabric)
+            always @(posedge clk) begin
+                if (reset) begin
+                    drop_count[i] <= 32'h0;
+                end
+            end
+
+            // QoS statistics (placeholder)
+            for (genvar q = 0; q < QOS_LEVELS; q++) begin : gen_qos_stats
+                always @(posedge clk) begin
+                    if (reset) begin
+                        qos_stats[i][q] <= 32'h0;
+                    end
+                end
+            end
+        end
+    endgenerate
+
+    //==========================================================================
     // Microprocessor Interface with QoS Statistics
     //==========================================================================
+    
+    // AXI handshake state machine signals
+    reg        axi_awready_reg;
+    reg        axi_wready_reg;
+    reg        axi_bvalid_reg;
+    reg        axi_arready_reg;
+    reg        axi_rvalid_reg;
+    reg [31:0] axi_rdata_reg;
+
     micro_interface_qos_enhanced #(
-        .NUM_PORT(NUM_PORT),
-        .QOS_LEVELS(3),
-        .QOS_TAG_WIDTH(QOS_TAG_WIDTH),
+        .NUM_PORTS(NUM_PORT),
         .ADDR_WIDTH(16),
-        .DATA_WIDTH(32)
+        .DATA_WIDTH(32),
+        .QOS_LEVELS(QOS_LEVELS)
     ) u_micro_if (
         .clk(clk),
-        .rst_n(~reset),
+        .rst_n(rst_n),
 
-        // Simplified AXI (convert from your uif_ signals)
+        // AXI4-Lite interface
         .s_axi_awaddr(uif_addr),
         .s_axi_awvalid(uif_wr_en),
         .s_axi_awready(),
+
         .s_axi_wdata(uif_wr_data),
-        .s_axi_wstrb(4'hF),
         .s_axi_wvalid(uif_wr_en),
         .s_axi_wready(),
+
         .s_axi_bresp(),
         .s_axi_bvalid(),
         .s_axi_bready(1'b1),
+
         .s_axi_araddr(uif_addr),
         .s_axi_arvalid(uif_rd_en),
         .s_axi_arready(),
+
         .s_axi_rdata(uif_rd_data),
         .s_axi_rresp(),
         .s_axi_rvalid(),
         .s_axi_rready(1'b1),
 
-        // Monitoring
-        .port_link_up(port_link_up),
-        .port_rx_active(port_rx_active),
-        .port_tx_active(port_tx_active),
-        .port_rx_valid(port_rx_valid),
-        .port_tx_valid(port_tx_valid),
-        .port_rx_qos(port_rx_qos),
-        .port_tx_qos(port_tx_qos),
-
-        // Controls
+        // QoS Configuration Outputs
         .qos_enable(qos_enable_rt),
         .use_vlan_pcp(use_vlan_pcp_rt),
         .use_ip_dscp(use_ip_dscp_rt),
-        .use_port_classify(use_port_classify_rt)
+        .use_port_classify(use_port_classify_rt),
+        .aging_threshold(aging_threshold_rt),
+
+        // Statistics Inputs
+        .rx_pkt_count(rx_pkt_count),
+        .tx_pkt_count(tx_pkt_count),
+        .drop_count(drop_count),
+        .qos_stats(qos_stats)
     );
 
     //==========================================================================
-    // Statistics overflow detection
+    // Statistics overflow detection (placeholder)
     //==========================================================================
-    // (Your pattern for error flagging)
-    generate
-        for (genvar i = 0; i < NUM_PORT; i++) begin : gen_overflow
-            assign qos_stats_overflow[i] = 1'b0;  // Placeholder
-        end
-    endgenerate
+    assign qos_stats_overflow = {NUM_PORT{1'b0}};
 
 endmodule
 

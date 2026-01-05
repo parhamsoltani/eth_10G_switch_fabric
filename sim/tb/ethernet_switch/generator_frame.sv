@@ -1,280 +1,177 @@
 `timescale 1ns / 1ps
-// `default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
-// Company: IUST
-// Engineer: Parham Soltani
-//
-// Create Date:  2025-03-26 12:10:03
-// Module Name: generator_frame
-// Project Name: switch
-// Target Devices: ku3p
-// Tool Versions: Vivado 2022.2
-// Description:
-// Dependencies:
-//
-// Additional Comments:
-
+// Frame Generator Module
 //////////////////////////////////////////////////////////////////////////////////
 
-//import class_pkg::*;
+`include "fabric_params.vh"
 
-`include "sim_options.vh"
+import ethernet_frame_pkg::*;
 
 module generator_frame #(
-    parameter   NUM_PORT = 10,
-    parameter MICRO_DATA_WIDTH = 16,
-    parameter MICRO_ADDR_WIDTH = 16
-) (
-    input   wire        sys_clk,
-    input   wire        sys_reset,
-    axis_if.master_mp      axis      [NUM_PORT],
-    output  bit         end_of_sim,
-    micro_if.master_mp  m_if
+    parameter NUM_PORT = `NUM_PORTS,
+    parameter DATA_WIDTH = 64,
+    parameter KEEP_WIDTH = DATA_WIDTH/8
+)(
+    input  wire clk,
+    input  wire rst_n,
+    
+    // Control interface
+    input  wire start,
+    input  wire [31:0] num_frames,
+    input  wire [1:0]  traffic_pattern,  // 0=random, 1=sequential, 2=hotspot
+    input  wire [31:0] frame_delay,
+    output reg  done,
+    
+    // Frame output via mailbox
+    output ethernet_frame tx_frame,
+    output reg tx_frame_valid,
+    input  wire tx_frame_ready,
+    
+    // Statistics
+    output reg [31:0] frames_generated
 );
 
+    // Traffic patterns
+    localparam PATTERN_RANDOM     = 2'd0;
+    localparam PATTERN_SEQUENTIAL = 2'd1;
+    localparam PATTERN_HOTSPOT    = 2'd2;
 
+    // State machine
+    typedef enum logic [2:0] {
+        IDLE,
+        GENERATE,
+        SEND,
+        DELAY,
+        COMPLETE
+    } state_e;
+    
+    state_e state;
+    
+    // Internal signals
+    reg [31:0] frame_count;
+    reg [31:0] delay_count;
+    reg [3:0]  next_dest;
+    reg [3:0]  current_src;
+    
+    ethernet_frame current_frame;
 
-    `ifdef SIM_SPEED_UP
-        localparam NUM_FRAME_PER_PORT = 100;
-    `else
-        localparam NUM_FRAME_PER_PORT = 2000;
-    `endif
+    // Random number for various uses
+    int rand_val;
 
-
-
-
-    mailbox     gen_to_driver_mailbox   [NUM_PORT];
-
-    Micro_driver #(.MICRO_DATA_WIDTH(MICRO_DATA_WIDTH), .MICRO_ADDR_WIDTH(MICRO_ADDR_WIDTH)) m_if_driver;
-
-    event       frame_sent              [NUM_PORT];
-
-    Ethernet_frame frame [NUM_PORT];
-    int seq_number [NUM_PORT];
-    int total_num_frames = 0;
-
-    bit [47:0] src_mac;
-    bit [47:0] dest_mac;
-
-    bit [NUM_PORT-1:0] src_mac_mask;
-    bit [NUM_PORT-1:0] dest_mac_mask;
-
-    logic [15:0] m_if_data_out;
-
-
-    int j;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    initial begin
-        end_of_sim = 0;
-
-        for (int i = 0; i < NUM_PORT; ++i) begin
-            gen_to_driver_mailbox[i] = new();
-            seq_number[i] = 0;
-        end
-
-        m_if_driver = new(m_if);
-
-
-
-
-
-        repeat (600) @(posedge sys_clk); // wait for stability
-
-        repeat (10) $display(" ");
-        $display("driving starts ....\n");
-        repeat (2) $display(" ");
-
-
-
-        // config micro interface ==========================
-
-        m_if_driver.read_reg(16'hf000,m_if_data_out, "Line rate");
-
-        m_if_driver.read_reg(16'h0000,m_if_data_out, "Num ports");
-
-        m_if_driver.write_reg(16'h0001,1'b1, "save switch state");
-        m_if_driver.write_reg(16'h0001,1'b0, "save switch state");
-        m_if_driver.read_reg(16'h0002,m_if_data_out, "addr_fifos_num_free_reg");
-        m_if_driver.read_reg(16'h0003,m_if_data_out, "free_fifo_count_reg");
-
-
-        repeat (600) @(posedge sys_clk); // wait for stability
-        // ===========================================
-
-
-
-
-
-
-
-        for (int thread_i = 0; thread_i < NUM_PORT; ++thread_i) begin
-            automatic int i = thread_i;
-            fork begin
-
-
-                repeat (NUM_FRAME_PER_PORT) begin
-
-                    // macs are byte byte form left to right indexing from 0 -> 5
-                    src_mac = reverse_mac(48'h00_80_16_00_00_00);
-
-                    dest_mac = reverse_mac(48'h00_80_16_00_00_00);
-                    // dest_mac = reverse_mac(48'h01_80_16_00_00_00, 3); // multicast
-                    // dest_mac = reverse_mac(48'hff_ff_ff_ff_ff_ff); // broadcast
-
-                    src_mac_mask = generate_mask_for_port(i);
-                    // dest_mac_mask = generate_mask_for_port(0);
-                    // dest_mac_mask = generate_mask_for_port(i);
-                    dest_mac_mask = generate_mask_for_port($urandom_range(0,NUM_PORT-1));
-                    // dest_mac_mask = generate_random_mask_port();
-                    // dest_mac_mask = generate_multicast_mask(10);
-
-                    frame[i] = Ethernet_frame::create(
-                        .dest_mac(dest_mac),
-                        .src_mac(src_mac),
-                        .src_port(src_mac_mask),
-                        .dest_port(dest_mac_mask),
-                        .length($urandom_range(60, 72)), // -crc(4)
-                        .seq_number(seq_number[i]),
-                        .ifg_clk($urandom_range(20, 40)),  // per clock
-                        .bad_frame_prob(0) // real number between 0,1
-                    );
-
-                    // for debug ================================
-                    // frame[i].do_print(
-                    //     .name("generator frame"),
-                    //     .include_data(0)
-                    // );
-                    // =========================================
-
-                    gen_to_driver_mailbox[i].put(frame[i]);
-
-
-                    seq_number[i]++;
-                    total_num_frames++;
-                    @frame_sent[i];
+    // State machine
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            state <= IDLE;
+            done <= 1'b0;
+            tx_frame_valid <= 1'b0;
+            frames_generated <= 32'h0;
+            frame_count <= 32'h0;
+            delay_count <= 32'h0;
+            next_dest <= 4'h0;
+            current_src <= 4'h0;
+            current_frame = null;
+        end else begin
+            case (state)
+                IDLE: begin
+                    done <= 1'b0;
+                    tx_frame_valid <= 1'b0;
+                    if (start) begin
+                        frame_count <= 32'h0;
+                        frames_generated <= 32'h0;
+                        state <= GENERATE;
+                    end
                 end
-            end join_none
+
+                GENERATE: begin
+                    // Create new frame
+                    current_frame = new();
+                    
+                    // Randomize base frame
+                    if (!current_frame.randomize()) begin
+                        $error("Frame randomization failed");
+                    end
+                    
+                    // Set source port (round-robin through ports)
+                    current_src = frame_count % NUM_PORT;
+                    current_frame.src_port = current_src;
+                    
+                    // Set destination based on pattern
+                    case (traffic_pattern)
+                        PATTERN_RANDOM: begin
+                            rand_val = $urandom_range(0, NUM_PORT-1);
+                            while (rand_val == current_src) begin
+                                rand_val = $urandom_range(0, NUM_PORT-1);
+                            end
+                            current_frame.set_unicast(rand_val);
+                        end
+                        
+                        PATTERN_SEQUENTIAL: begin
+                            next_dest = (current_src + 1) % NUM_PORT;
+                            current_frame.set_unicast(next_dest);
+                        end
+                        
+                        PATTERN_HOTSPOT: begin
+                            // 50% to port 0, rest distributed
+                            if ($urandom_range(0, 1) == 0 && current_src != 0) begin
+                                current_frame.set_unicast(0);
+                            end else begin
+                                rand_val = $urandom_range(1, NUM_PORT-1);
+                                while (rand_val == current_src) begin
+                                    rand_val = $urandom_range(1, NUM_PORT-1);
+                                end
+                                current_frame.set_unicast(rand_val);
+                            end
+                        end
+                        
+                        default: begin
+                            current_frame.set_unicast((current_src + 1) % NUM_PORT);
+                        end
+                    endcase
+                    
+                    // Set timing
+                    current_frame.tx_time = $time;
+                    
+                    state <= SEND;
+                end
+
+                SEND: begin
+                    tx_frame = current_frame;
+                    tx_frame_valid <= 1'b1;
+                    
+                    if (tx_frame_ready) begin
+                        tx_frame_valid <= 1'b0;
+                        frames_generated <= frames_generated + 1;
+                        frame_count <= frame_count + 1;
+                        
+                        if (frame_count + 1 >= num_frames) begin
+                            state <= COMPLETE;
+                        end else if (frame_delay > 0) begin
+                            delay_count <= frame_delay;
+                            state <= DELAY;
+                        end else begin
+                            state <= GENERATE;
+                        end
+                    end
+                end
+
+                DELAY: begin
+                    tx_frame_valid <= 1'b0;
+                    if (delay_count > 0) begin
+                        delay_count <= delay_count - 1;
+                    end else begin
+                        state <= GENERATE;
+                    end
+                end
+
+                COMPLETE: begin
+                    tx_frame_valid <= 1'b0;
+                    done <= 1'b1;
+                    state <= IDLE;
+                end
+
+                default: state <= IDLE;
+            endcase
         end
-        wait fork;
-
-        for (int i = 0; i < 10000; ++i) @(posedge sys_clk);
-
-        m_if_driver.write_reg(16'h0001,1'b1, "save switch state");
-        m_if_driver.write_reg(16'h0001,1'b0, "save switch state");
-        m_if_driver.read_reg(16'h0002,m_if_data_out, "addr_fifos_num_free_reg");
-        m_if_driver.read_reg(16'h0003,m_if_data_out, "free_fifo_count_reg");
-
-        for (int i = 0; i < 1000; ++i) @(posedge sys_clk);
-
-        end_of_sim = 1;
-
-        $display("========================================");
-        $display("total number of generated frames = %d", total_num_frames);
-        $display("========================================\n");
     end
 
-
-
-
-
-
-
-
-
-
-    generate
-        for (genvar g = 0; g < NUM_PORT; ++g) begin
-
-            mailbox     gen_to_driver_mailbox_temp;
-
-            initial begin
-                wait (gen_to_driver_mailbox[g] != null);
-
-                gen_to_driver_mailbox_temp = gen_to_driver_mailbox[g];
-            end
-
-            axi_driver u_axi_driver (
-                .axis(axis[g]),
-                .frame_mailbox(gen_to_driver_mailbox_temp),
-                .frame_sent(frame_sent[g])
-            );
-        end
-    endgenerate
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    function bit [47:0] reverse_mac(bit [47:0] base_mac);
-        base_mac = {<<8{base_mac}};
-        return base_mac;
-    endfunction
-
-
-
-
-    function bit [NUM_PORT-1:0] generate_mask_for_port(int port);
-        automatic bit [NUM_PORT-1:0] port_mask = 1 << port;  // Set only the 'port' bit
-        return port_mask;
-    endfunction
-
-    function bit [NUM_PORT-1:0] generate_random_mask_port();
-        automatic int rand_port = $urandom_range(0, NUM_PORT-1);
-        return generate_mask_for_port(rand_port);
-    endfunction
-
-    function bit [NUM_PORT-1:0] generate_multicast_mask(int num_multicast);
-        automatic bit [NUM_PORT-1:0] multicast_mask = 0;
-        automatic int count = 0;
-        automatic int rand_bit = 0;
-
-        // Randomly set 'num_multicast' bits in multicast_mask
-        while (count < num_multicast) begin
-            rand_bit = $urandom_range(0, NUM_PORT-1);
-            if (!multicast_mask[rand_bit]) begin
-                multicast_mask[rand_bit] = 1;
-                count++;
-            end
-        end
-
-        return multicast_mask;
-    endfunction
-
-
-
-
-
-
-
 endmodule
-
-
-
-`default_nettype wire
