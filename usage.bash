@@ -28,3 +28,12 @@ vivado -mode batch -source vivado_qos_build.tcl
 
 vivado -mode tcl
 Vivado% source vivado_qos_build.tcl
+
+
+# to avoid IO Utilization
+# 1) build.bat
+# 2) add hdl directory to design sources
+# 3) fpga_top.sv as top
+# 4) synthesis
+# 5) implementation
+# timing may fail but implementation works

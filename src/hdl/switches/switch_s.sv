@@ -1,25 +1,25 @@
 `timescale 1ns / 1ps
-// `default_nettype none
+`default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Company: IUST
 // Engineer: Parham Soltani
-//
+// 
 // Create Date:  2025-08-02 16:33:51
 // Module Name: switch_s
-// Project Name:
-// Target Devices:
+// Project Name: 
+// Target Devices: 
 // Tool Versions: Vivado 2022.2
-// Description:
-// Dependencies:
-//
-// Additional Comments:
+// Description: 
+// Dependencies: 
+// 
+// Additional Comments: 
 
 //////////////////////////////////////////////////////////////////////////////////
 
 
 
 module switch_s #(
-    parameter   NUM_PORT                = 10,            // number of ports
+    parameter   NUM_PORT                = 10,            // number of ports     
     parameter   S                       = 10,            // speed up
     parameter   W_MINI                  = 64,            // bus data width (mini cell data width)
     parameter   MAIN_MEM_DEPTH          = 512,           // main mem depth
@@ -58,17 +58,17 @@ module switch_s #(
 );
 
 
-
+    
 
     //==============================================================================
     // local parameters and integers
     //==============================================================================
     localparam S_LOG = $clog2(S);
     localparam NUM_PORT_LOG = $clog2(NUM_PORT);
-
+    
     localparam MAIN_MEM_READ_LATENCY        = 2;
 
-    localparam DFIFO_META_DATA_WIDTH = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH + QOS_TAG_WIDTH; // valids+last minicell keep+is_bad_frame+last_minicell_index
+    localparam DFIFO_META_DATA_WIDTH = S + KEEP_WIDTH + 1 + S_LOG; // valids+last minicell keep+is_bad_frame+last_minicell_index
     localparam DFIFO_READY_THRESHOLD = 2*S+20;
 
 
@@ -170,7 +170,7 @@ module switch_s #(
 
     reg [S_LOG-1:0]                     rr_counter [S];
     reg                                 rr_sel [S];
-
+ 
 
     initial begin
         for (int i = 0; i < S; i++) begin
@@ -219,7 +219,7 @@ module switch_s #(
             assign c2p_last_cell_i[i]        = dfifo_pop_last_o;
 
 
-
+            
         end
     endgenerate
 
@@ -232,7 +232,7 @@ module switch_s #(
     assign dest_finder_rr_counter = rr_counter[0];
 
 
-
+    
 
     generate
         for (genvar i = 0; i < S; i++) begin : gen_main_mem_inputs
@@ -263,7 +263,7 @@ module switch_s #(
             assign data_tx [i]          = c2p_data_tx[i];
             assign keep_tx [i]          = c2p_keep_tx[i];
             assign valid_tx [i]         = c2p_valid_tx[i];
-            assign is_bad_frame_tx [i]  = c2p_is_bad_frame_tx[i];
+            assign is_bad_frame_tx [i]  = c2p_is_bad_frame_tx[i];        
             assign last_tx [i]          = c2p_last_tx[i];
         end
     endgenerate
@@ -345,28 +345,25 @@ module switch_s #(
     endgenerate
 
 
-    cell_to_packet_s_port_with_barrel #(
-        .S(S),
-        .W_MINI(W_MINI),
-        .PACKET_ID_WIDTH(PACKET_ID_WIDTH),
-        .QOS_TAG_WIDTH(QOS_TAG_WIDTH)
-    ) c2p_barrel (
-        .clk(clk),
-        .start_of_cell_i(c2p_start_of_cell_i),
-        .metadata_i(c2p_metadata_i),
-        .last_cell_i(c2p_last_cell_i),
-        .barrel_sel(rr_counter[0]),   // or correct RR signal
-        .data_i(main_mem_rd_data_o),
-
-        .data_tx(data_tx),
-        .keep_tx(keep_tx),
-        .valid_tx(valid_tx),
-        .is_bad_frame_tx(is_bad_frame_tx),
-        .last_tx(last_tx),
-        .packet_id_tx(/* connect */),
-        .qos_tag_tx(/* connect */)
-    );
-
+    generate
+        for (genvar i = 0; i < NUM_PORT; i++) begin : gen_c2p
+            cell_to_packet #(
+                .S(S),
+                .W_MINI(W_MINI)
+            ) c2p (
+                .clk        (clk),
+                .start_of_cell_i(c2p_start_of_cell_i[i]),
+                .data_i(c2p_data_i[i]),
+                .metadata_i(c2p_metadata_i[i]),
+                .last_cell_i(c2p_last_cell_i[i]),
+                .data_tx(c2p_data_tx[i]),
+                .keep_tx(c2p_keep_tx[i]),
+                .valid_tx(c2p_valid_tx[i]),
+                .is_bad_frame_tx(c2p_is_bad_frame_tx[i]),
+                .last_tx(c2p_last_tx[i])
+            );
+        end
+    endgenerate
 
 
     dest_finder_s #(
@@ -464,7 +461,7 @@ module switch_s #(
         end
     endgenerate
 
-
+    
 
 
     delayed_regs #(
@@ -489,4 +486,4 @@ module switch_s #(
 
 endmodule
 
-`default_nettype wire
+`default_nettype wire 
