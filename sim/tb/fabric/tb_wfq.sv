@@ -226,9 +226,9 @@ module tb_wfq;
         $display("\n  Bandwidth Ratio (P7/P0):  %.2f:1", ratio);
         
         if (ratio > 5.0 && ratio < 200.0) begin
-            $display("\n  ✓ WEIGHTED FAIR QUEUING WORKING");
+            $display("\n   WEIGHTED FAIR QUEUING WORKING");
         end else begin
-            $display("\n  ⚠ WARNING: Ratio outside expected range (5-200)");
+            $display("\n   WARNING: Ratio outside expected range (5-200)");
         end
         $display("════════════════════════════════════════════════════════\n");
     endtask

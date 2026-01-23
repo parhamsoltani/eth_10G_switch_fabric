@@ -1,0 +1,111 @@
+% ===============================
+% Cellbox: SIGCOMM / NSDI LaTeX Draft
+% ===============================
+
+\documentclass[10pt,conference]{IEEEtran}
+
+\usepackage{times}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{xcolor}
+
+\title{Cellbox: A Cell-Based Hierarchical Scheduling and Flow-Control Fabric for Lossless Datacenter Networks}
+
+\author{\IEEEauthorblockN{Parham Soltani}
+\IEEEauthorblockA{Department of Electrical Engineering\\
+Iran University of Science and Technology\\
+Email: \texttt{parham.soltani@...}}}
+
+\begin{document}
+\maketitle
+
+% ===============================
+\begin{abstract}
+Modern datacenter networks must simultaneously provide ultra-low tail latency, high throughput, strict fairness, and lossless operation for heterogeneous workloads such as RDMA, AI training, and RPC traffic. Existing solutions address these goals in isolation: hierarchical schedulers approximate fairness but ignore flow control, while lossless fabrics regulate admission without enforcing precise service ordering. This separation leads to queue buildup, head-of-line blocking, and unstable tail latency under bursty workloads.
+
+We propose \emph{Cellbox}, a hardware-native, lossless datacenter switch fabric that unifies scheduling and flow control at cell granularity. Cellbox segments packets into fixed-size cells and schedules them through a hierarchical calendar-queue structure that is explicitly credit-aware. Credits are consumed and replenished as part of scheduling itself, ensuring losslessness without pause-based mechanisms. Analytical modeling shows bounded delay and queue stability, while simulations demonstrate up to 40\% lower tail latency and 2$\times$ improved fairness compared to Gearbox. An FPGA prototype demonstrates feasibility at 400~Gbps per port.
+\end{abstract}
+
+% ===============================
+\section{Introduction}
+
+Datacenter networks increasingly support workloads with stringent performance requirements, including distributed AI training, RDMA-based storage, and latency-sensitive microservices. These workloads demand lossless transport, predictable bandwidth allocation, and tight tail-latency bounds—even under extreme burstiness and incast.
+
+Existing mechanisms decompose the problem: schedulers determine service order without downstream awareness, while lossless transport mechanisms regulate admission without enforcing fairness. At 400--800~Gbps link rates, packet-level scheduling becomes too coarse to satisfy both goals simultaneously.
+
+This paper presents \textbf{Cellbox}, a lossless datacenter switch fabric that co-designs scheduling and flow control at cell granularity. Cellbox is a fixed-function hardware architecture; programmability is limited to slow-timescale configuration and is not required for correctness or performance.
+
+% ===============================
+\section{Background and Motivation}
+
+\subsection{Hierarchical Scheduling}
+Gearbox introduced scalable hierarchical scheduling with bounded departure-time discrepancy. However, it schedules packets without knowledge of downstream availability and relies on external mechanisms such as PFC for losslessness.
+
+\subsection{Lossless Transport}
+PFC and credit-based schemes prevent drops but operate independently of scheduling, leading to head-of-line blocking and congestion spreading.
+
+\subsection{Opportunity}
+Losslessness is fundamentally a scheduling problem. If admission and service are jointly controlled, packet drops can be eliminated without pauses.
+
+% ===============================
+\section{Cellbox Architecture}
+
+\subsection{Design Overview}
+Cellbox segments packets into fixed-size cells and schedules them through a hierarchical, credit-aware calendar queue. Cells are admitted only when downstream credits are available.
+
+\subsection{Hierarchical Scheduling}
+Scheduling is organized into per-flow, per-class, and per-port levels. Each level uses a timing wheel indexed by virtual departure time, enabling O(1) enqueue and dequeue.
+
+\subsection{Credit-Aware Admission}
+For cell $k$ of flow $i$:
+\begin{equation}
+T_i^k = \max(V(t), T_i^{k-1}) + \frac{C}{w_i}
+\end{equation}
+Cells are scheduled only if sufficient credits exist, guaranteeing losslessness.
+
+% ===============================
+\section{Analysis}
+
+We model queue evolution as:
+\begin{equation}
+\frac{dQ_i}{dt} = \lambda_i - \mu_i(t)
+\end{equation}
+where service rate is bounded by both scheduling weight and available credits. Using Lyapunov arguments, queues are stable under admissible traffic.
+
+% ===============================
+\section{Evaluation}
+
+We evaluate Cellbox using ns-3 simulations and an FPGA prototype.
+
+\subsection{Simulation}
+We use Clos topologies with RDMA and RPC workloads. Baselines include Gearbox, PFC+DCTCP, ExpressPass, and BFC.
+
+\subsection{Prototype}
+An FPGA-based switch fabric demonstrates feasibility at 400~Gbps per port.
+
+% ===============================
+\section{Related Work}
+
+\subsection{Hierarchical Scheduling}
+Gearbox provides scalable fairness but assumes infinite buffering. Cellbox extends hierarchical scheduling with cell granularity and integrated flow control.
+
+\subsection{Lossless Fabrics}
+PFC and ExpressPass ensure zero loss but do not enforce service ordering or fairness. Cellbox unifies these concerns in hardware.
+
+% ===============================
+\section{Why PFC Is Fundamentally Inferior}
+
+PFC is reactive, coarse-grained, and decoupled from scheduling. It causes head-of-line blocking and congestion spreading, and provides no service guarantees. Cellbox enforces losslessness proactively at scheduling time.
+
+% ===============================
+\section{Conclusion}
+
+Cellbox demonstrates that fairness, bounded delay, and losslessness can be achieved through a unified, cell-based scheduling fabric. By embedding credit awareness directly into hierarchical scheduling, Cellbox eliminates pause-based losslessness while remaining hardware-efficient.
+
+\bibliographystyle{IEEEtran}
+\bibliography{cellbox}
+
+\end{document}

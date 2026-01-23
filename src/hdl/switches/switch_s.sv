@@ -68,7 +68,7 @@ module switch_s #(
 
     localparam MAIN_MEM_READ_LATENCY        = 2;
 
-    localparam DFIFO_META_DATA_WIDTH = S + KEEP_WIDTH + 1 + S_LOG; // valids+last minicell keep+is_bad_frame+last_minicell_index
+    localparam DFIFO_META_DATA_WIDTH = S + KEEP_WIDTH + 1 + S_LOG + PACKET_ID_WIDTH + QOS_TAG_WIDTH; // valids+last minicell keep+is_bad_frame+last_minicell_index
     localparam DFIFO_READY_THRESHOLD = 2*S+20;
 
 
@@ -345,25 +345,28 @@ module switch_s #(
     endgenerate
 
 
-    generate
-        for (genvar i = 0; i < NUM_PORT; i++) begin : gen_c2p
-            cell_to_packet #(
-                .S(S),
-                .W_MINI(W_MINI)
-            ) c2p (
-                .clk        (clk),
-                .start_of_cell_i(c2p_start_of_cell_i[i]),
-                .data_i(c2p_data_i[i]),
-                .metadata_i(c2p_metadata_i[i]),
-                .last_cell_i(c2p_last_cell_i[i]),
-                .data_tx(c2p_data_tx[i]),
-                .keep_tx(c2p_keep_tx[i]),
-                .valid_tx(c2p_valid_tx[i]),
-                .is_bad_frame_tx(c2p_is_bad_frame_tx[i]),
-                .last_tx(c2p_last_tx[i])
-            );
-        end
-    endgenerate
+    cell_to_packet_s_port_with_barrel #(
+        .S(S),
+        .W_MINI(W_MINI),
+        .PACKET_ID_WIDTH(PACKET_ID_WIDTH),
+        .QOS_TAG_WIDTH(QOS_TAG_WIDTH)
+    ) c2p_barrel (
+        .clk(clk),
+        .start_of_cell_i(c2p_start_of_cell_i),
+        .metadata_i(c2p_metadata_i),
+        .last_cell_i(c2p_last_cell_i),
+        .barrel_sel(rr_counter[0]),   // or correct RR signal
+        .data_i(main_mem_rd_data_o),
+
+        .data_tx(data_tx),
+        .keep_tx(keep_tx),
+        .valid_tx(valid_tx),
+        .is_bad_frame_tx(is_bad_frame_tx),
+        .last_tx(last_tx),
+        .packet_id_tx(/* connect */),
+        .qos_tag_tx(/* connect */)
+    );
+
 
 
     dest_finder_s #(
