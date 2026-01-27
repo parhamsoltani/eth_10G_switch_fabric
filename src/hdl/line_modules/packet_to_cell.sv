@@ -10,6 +10,7 @@
 // 
 // MODIFIED: Added PACKET_ID_WIDTH parameter and packet_id propagation
 // FURTHER MODIFIED: Added QOS_TAG_WIDTH parameter and qos_tag propagation
+// TIMING FIX: Registered critical output signals
 //////////////////////////////////////////////////////////////////////////////////
 
 module packet_to_cell #(
@@ -110,14 +111,20 @@ module packet_to_cell #(
     p2c_state_t p2c_state = IDLE_NO_PACKET;
     p2c_state_t p2c_state_next;
 
-    assign dest_mask_o  = dest_mask_reg;
+    // TIMING FIX: Registered output signals
+    reg [NUM_PORT-1:0]          dest_mask_out_reg;
+    reg                         make_cell_out_reg;
+    reg                         last_cell_out_reg;
+    reg [META_DATA_WIDTH-1:0]   metadata_out_reg;
+
+    // Use registered outputs
+    assign dest_mask_o  = dest_mask_out_reg;
     assign pop_iq_o     = wr_en_next;
     assign wr_en_o      = wr_en_reg_D[1];
     assign data_o       = data_i_D[2];
-    assign make_cell_o  = make_cell_reg;
-    assign last_cell_o  = last_cell_reg;
-    // MODIFIED: Include packet_id and qos_tag in metadata output
-    assign metadata_o   = {packet_id_reg, qos_tag_reg, keep_minicell_reg, keep_last_reg, is_bad_frame_reg, last_minicell_index_reg};
+    assign make_cell_o  = make_cell_out_reg;
+    assign last_cell_o  = last_cell_out_reg;
+    assign metadata_o   = metadata_out_reg;
 
     //==============================================================================
     // Main Controls
@@ -319,6 +326,12 @@ module packet_to_cell #(
         force_to_send_reg       <= force_to_send_next;
         packet_id_reg           <= packet_id_next;   // NEW: Register packet_id
         qos_tag_reg             <= qos_tag_next;     // NEW: Register qos_tag
+        
+        // TIMING FIX: Register outputs for better timing
+        dest_mask_out_reg <= dest_mask_reg;
+        make_cell_out_reg <= make_cell_reg;
+        last_cell_out_reg <= last_cell_reg;
+        metadata_out_reg  <= {packet_id_reg, qos_tag_reg, keep_minicell_reg, keep_last_reg, is_bad_frame_reg, last_minicell_index_reg};
     end
 
     //==============================================================================

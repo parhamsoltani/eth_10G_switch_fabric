@@ -24,6 +24,8 @@ echo ═════════════════════════
 echo   [3/4] Advanced Timing Analysis (Histograms)
 echo ════════════════════════════════════════════════════════════
 vivado -mode batch -source scr\analysis\timing_analyzer.tcl
+REM vivado -mode batch -source scr\run_synth.tcl
+
 
 echo.
 echo ════════════════════════════════════════════════════════════

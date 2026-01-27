@@ -4,7 +4,7 @@
 // Engineer: Parham Soltani
 // Module Name: switch_fabric
 // Description: QoS-Enabled Switch Fabric with Packet ID Preservation
-// Version: 2.2 - Fixed QoS classifier override and packet ID propagation
+// Version: 2.3 - Timing fixes applied
 //////////////////////////////////////////////////////////////////////////////////
 
 `include "fabric_params.vh"
@@ -69,6 +69,24 @@ module switch_fabric #(
     wire [$clog2(MAIN_MEM_DEPTH):0] free_fifo_count_internal;
 
     //==========================================================================
+    // Reset Synchronization (for timing closure)
+    //==========================================================================
+    reg reset_sync_1, reset_sync_2;
+    wire rst_n_sync;
+    
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            reset_sync_1 <= 1'b1;
+            reset_sync_2 <= 1'b1;
+        end else begin
+            reset_sync_1 <= 1'b0;
+            reset_sync_2 <= reset_sync_1;
+        end
+    end
+    
+    assign rst_n_sync = ~reset_sync_2;
+
+    //==========================================================================
     // QoS Configuration - DISABLED FOR TESTBENCH CONTROL
     //==========================================================================
     // FIXED: Disable classifier in simulation to allow testbench control
@@ -102,7 +120,7 @@ module switch_fabric #(
                     .INPUT_QUEUE_TUSER(INPUT_QUEUE_TUSER)
                 ) ingress_inst (
                     .clk(clk),
-                    .rst_n(~reset),
+                    .rst_n(rst_n_sync),
                     .rx_data_if(rx_data_if[i]),
                     .rx_meta_if(rx_meta_if[i]),
                     .rd_en_rx(rd_en_rx[i]),
@@ -366,7 +384,7 @@ module switch_fabric #(
     initial begin
         $display("═══════════════════════════════════════════════════════════");
         $display(" Switch Fabric Configuration (QoS-Enabled + Packet ID)");
-        $display(" Version 2.2 - Fixed classifier override");
+        $display(" Version 2.3 - Timing fixes applied");
         $display("═══════════════════════════════════════════════════════════");
         $display("NUM_PORT =            %0d", NUM_PORT          );
         $display("S =                   %0d", S                 );

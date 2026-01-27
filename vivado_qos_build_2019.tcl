@@ -5,7 +5,7 @@
 #===============================================================================
 
 set PROJ_NAME "qos_fabric_10x10g"
-set TOP_MODULE "switch_fabric"
+set TOP_MODULE "fpga_top"
 set PART "xcku3p-ffvd900-2-i"
 
 # Paths

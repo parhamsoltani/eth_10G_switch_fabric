@@ -205,21 +205,42 @@ module ingress_line_qos #(
 
     //==========================================================================
     // Metadata Handling - Destination Mask
+    // MODIFIED: Registered ready output to fix setup timing violations
     //==========================================================================
     reg [NUM_PORT-1:0] dest_mask_latched;
     reg                dest_mask_valid_latched;
+    reg                rx_meta_ready_reg;       // ADDED: Registered ready signal
+    reg                rx_meta_ready_reg_d1;    // ADDED: Pipeline stage for timing
+
+    // Combinational next-state logic for ready
+    wire rx_meta_ready_next;
+    wire packet_complete;
+    
+    // Detect when current packet is complete
+    assign packet_complete = iq_rd_tvalid && rd_en_rx && iq_rd_tlast;
+    
+    // Ready when no valid destination mask is held, or when packet completes
+    assign rx_meta_ready_next = !dest_mask_valid_latched || packet_complete;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            dest_mask_latched <= '0;
+            dest_mask_latched       <= '0;
             dest_mask_valid_latched <= 1'b0;
+            rx_meta_ready_reg       <= 1'b1;    // Ready by default after reset
+            rx_meta_ready_reg_d1    <= 1'b1;    // Pipeline stage
         end else begin
-            if (rx_meta_if.valid && rx_meta_if.ready) begin
-                dest_mask_latched <= rx_meta_if.dest_port_mask;
+            // Pipeline the ready signal for better timing
+            rx_meta_ready_reg_d1 <= rx_meta_ready_next;
+            rx_meta_ready_reg    <= rx_meta_ready_reg_d1;
+            
+            // Capture metadata when valid handshake occurs
+            if (rx_meta_if.valid && rx_meta_ready_reg) begin
+                dest_mask_latched       <= rx_meta_if.dest_port_mask;
                 dest_mask_valid_latched <= 1'b1;
             end
-            // Clear after last beat is read
-            if (iq_rd_tvalid && rd_en_rx && iq_rd_tlast) begin
+            
+            // Clear valid flag after last beat is read
+            if (packet_complete) begin
                 dest_mask_valid_latched <= 1'b0;
             end
         end
@@ -228,9 +249,8 @@ module ingress_line_qos #(
     assign dest_mask_rx       = dest_mask_latched;
     assign dest_mask_valid_rx = dest_mask_valid_latched;
     
-    // Accept new metadata when previous packet is complete
-    assign rx_meta_if.ready   = !dest_mask_valid_latched || 
-                                (iq_rd_tvalid && rd_en_rx && iq_rd_tlast);
+    // MODIFIED: Use registered ready signal (breaks combinational path to output)
+    assign rx_meta_if.ready   = rx_meta_ready_reg;
 
 endmodule
 

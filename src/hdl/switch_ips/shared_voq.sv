@@ -9,6 +9,7 @@
 // Description: Shared VOQ with packet ID propagation
 //
 // MODIFIED: Added packet_id propagation through the datapath
+// TIMING FIX: Registered critical control signals
 //////////////////////////////////////////////////////////////////////////////////
 
 module shared_voq #(
@@ -159,6 +160,11 @@ module shared_voq #(
     reg [NUM_XPQ_LOG-1:0]           dest_q_reg;
     reg [S_LOG-1:0]                 dest_r_reg;
 
+    // TIMING FIX: Additional pipeline registers for critical outputs
+    reg                             cell_valid_reg;
+    reg [NUM_XPQ_LOG-1:0]           xpq_index_reg;
+    reg [S_LOG-1:0]                 dest_s_index_reg;
+
     //==============================================================================
     // assignments
     //==============================================================================
@@ -203,9 +209,10 @@ module shared_voq #(
 
     assign rd_en_rx = p2c_pop_iq_o;
 
-    assign cell_valid_o     = pop_i_D[5];
-    assign xpq_index_o      = dest_q_D[3];
-    assign dest_s_index_o   = dest_r_D[3];
+    // TIMING FIX: Use registered outputs
+    assign cell_valid_o     = cell_valid_reg;
+    assign xpq_index_o      = xpq_index_reg;
+    assign dest_s_index_o   = dest_s_index_reg;
     assign cell_metadata_o  = dfifo_pop_meta_data_o;
     assign last_cell_o      = dfifo_pop_last_o;
     assign none_mepty_fifos_o = dfifo_none_mepty_fifos;
@@ -217,6 +224,13 @@ module shared_voq #(
     always @(posedge clk) begin
         dest_q_reg <= pop_index_D[1] / S;
         dest_r_reg <= pop_index_D[1] % S;
+    end
+
+    // TIMING FIX: Pipeline the critical output signals
+    always @(posedge clk) begin
+        cell_valid_reg   <= pop_i_D[5];
+        xpq_index_reg    <= dest_q_D[3];
+        dest_s_index_reg <= dest_r_D[3];
     end
 
     always @(posedge clk) begin
