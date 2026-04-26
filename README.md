@@ -53,7 +53,7 @@ For 10 ports (single‑stage), latency is 10 ns and resource usage is approximat
 Vivado 2019.1+, ModelSim/QuestaSim 10.7c+, Python 3.8+, and GNU Make (optional) are required.
 
 **Clone repository**  
-Run `git clone https://github.com/parman/qos-switch-fabric.git` and change into `qos-switch-fabric/eth`.
+Run `git clone https://github.com/parhamsoltani/eth_10G.git` and change into `qos-switch-fabric/eth`.
 
 **Verify default configuration**  
 The default configuration is 10 ports at 10 Gbps each with 8 QoS levels and QoS enabled. No changes are needed for initial testing. The configuration file is `src/inc/implement_options.vh`.
