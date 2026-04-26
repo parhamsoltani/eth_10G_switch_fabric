@@ -148,4 +148,4 @@ The primary documentation is `doc/QoS_Ethernet_Switch_Fabric.pdf` (over 1600 pag
 
 ## License
 
-This design is Licensed under AGPL-3.0 license.
+This design is licensed under AGPL-3.0.
