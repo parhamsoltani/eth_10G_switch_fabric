@@ -148,4 +148,4 @@ The primary documentation is `doc/QoS_Ethernet_Switch_Fabric.pdf` (over 1600 pag
 
 ## License
 
-Copyright © 2025 Parman Company. All rights reserved. This design is proprietary and confidential. Unauthorized copying, distribution, or use is strictly prohibited. Internal use by licensed organizations and FPGA prototyping for evaluation are permitted under an appropriate license. Commercial deployment, redistribution of source code, reverse engineering, and ASIC synthesis are not permitted without explicit authorization. For licensing inquiries, contact alireza.abbasian@parman.com.
+This design is Licensed under MIT license.
