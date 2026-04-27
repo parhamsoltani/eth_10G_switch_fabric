@@ -142,7 +142,7 @@ To resolve hold violations, run full implementation (place and route) in Vivado 
 
 ## Documentation
 
-The primary documentation is `doc/QoS_Ethernet_Switch_Fabric.pdf` (over 1600 pages), covering architecture, topologies, cell‑switching mode, QoS implementation (classifiers, VOQs, schedulers), verification methodology, and synthesis and timing closure. Additional documents include `IMPLEMENTATION_STATUS.md` (feature matrix, known issues, roadmap) and `TIMING_CLOSURE_GUIDE.md` (Vivado synthesis tips, XDC examples, hold violation debugging).
+
 
 ---
 
