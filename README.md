@@ -83,32 +83,10 @@ This project implements a **fully parametric, QoS-aware Ethernet switch fabric**
 ### High-Level Block Diagram (10×10G Configuration)
  
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     10×10G ETHERNET SWITCH FABRIC                       │
-│                      (Single-Stage Crossbar Topology)                   │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌──────────────┐      ┌────────────────┐      ┌──────────────┐         │
-│  │  Ingress[0]  │      │                │      │  Egress[0]   │         │
-│  │  (QoS Class) │─────▶│   10×10 VOQ    │────▶│  (Reorder)   │         │
-│  │  64b@156MHz  │      │   Crosspoint   │      │  64b@156MHz  │         │
-│  └──────────────┘      │   (8 QoS/VOQ)  │      └──────────────┘         │
-│         ⋮               │                │              ⋮                │
-│  ┌──────────────┐      │                │      ┌──────────────┐         │
-│  │  Ingress[9]  │─ ───▶│                │─────▶│  Egress[9]  │         │
-│  └──────────────┘      └────────────────┘      └──────────────┘         │
-│                                │                                        │
-│                                ▼                                        │
-│                    ┌─────────────────────────┐                          │
-│                    │  AXI4-Lite uProcessor    │                         │
-│                    │  Interface (QoS Config)  │                         │
-│                    └─────────────────────────┘                          │
-│                                                                         │
-│  Total Resources (xcku3p-ffvd900):                                      │
-│   • LUTs:  7,792 (1.8%)   • FFs:  8,838 (1.0%)                          │
-│   • BRAMs: 20 (0.9%)      • DSPs: 0 (0%)                                │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+
+<img width="1408" height="768" alt="switch_diagram" src="https://github.com/user-attachments/assets/c88392ff-a1a3-43c8-8a5e-ce15e4d08790" />
+
+
 ```
  
 ### Data Path Flow (Per Packet)
