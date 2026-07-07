@@ -82,12 +82,12 @@ This project implements a **fully parametric, QoS-aware Ethernet switch fabric**
  
 ### High-Level Block Diagram (10×10G Configuration)
  
-```
+
 
 <img width="1408" height="768" alt="switch_diagram" src="https://github.com/user-attachments/assets/c88392ff-a1a3-43c8-8a5e-ce15e4d08790" />
 
 
-```
+
  
 ### Data Path Flow (Per Packet)
  
