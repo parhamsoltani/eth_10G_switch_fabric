@@ -26,7 +26,6 @@
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
-- [FAQ](#frequently-asked-questions-faq)
 ---
  
 ## Overview
@@ -1075,55 +1074,7 @@ Please include in your issue:
 - LUTs: ~1,200 (per 10 ports)
 - FFs: ~800
 - Latency: ~2 ns faster (no classification overhead)
-</details>
-<details>
-<summary><b>Q: Is there a GUI for configuration?</b></summary>
-**A:** Not yet. Currently using:
- 
-1. Python generator: `config_generator_qos.py` (recommended)
-2. Manual editing: `implement_options.vh`
-Planned for v1.1: web-based GUI for AXI4-Lite runtime configuration.
-</details>
-<details>
-<summary><b>Q: Why are there hold violations after synthesis?</b></summary>
-**A:** Expected. The design is in synthesis verification mode (no place & route). Hold violations occur due to unbalanced clock/data paths. See the [Timing Closure](#timing-closure) section for solutions:
- 
-- Option 1: Run full implementation (place & route)
-- Option 2: Add `set_false_path` to I/O (synthesis-only)
-</details>
-<details>
-<summary><b>Q: How do I wrap this for FPGA deployment?</b></summary>
-**A:** Create a top-level wrapper:
- 
-```systemverilog
-module switch_fabric_fpga_top (
-    // PCIe interface
-    input  pcie_clk,
-    input  pcie_rst_n,
-    // ... PCIe signals ...
- 
-    // Ethernet PHY interfaces (10 ports)
-    input  [9:0] eth_rx_clk,
-    input  [9:0][63:0] eth_rx_data,
-    // ... PHY signals ...
-);
- 
-    // Instantiate switch_fabric
-    switch_fabric u_fabric (
-        .clk(pcie_clk),
-        .rst_n(pcie_rst_n),
-        .rx_data_if(eth_rx_data),
-        // ...
-    );
- 
-    // Add PHY adapters (XGMII, SGMII, etc.)
-    // Add PCIe AXI bridge
-endmodule
-```
- 
-See `doc/` Part VI, Chapter 14 for the detailed integration guide.
-</details>
----
+
  
  
 ### Recommended Reading
