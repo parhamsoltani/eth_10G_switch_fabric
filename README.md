@@ -1096,7 +1096,7 @@ Please include in your issue:
  
 - **Corundum:** Open-source FPGA NIC (100G Ethernet)
 - **NetFPGA-SUME:** Reference Ethernet switch platform
-- **BESS:** Software packet processing framework (comparison baseline)
+- **NS-3:** Software packet processing simulator (comparison baseline)
 ---
  
 <div align="center">
