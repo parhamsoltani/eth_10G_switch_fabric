@@ -36,7 +36,7 @@ This project implements a **fully parametric, QoS-aware Ethernet switch fabric**
  
 | Traditional Switches | This Design |
 |---|---|
-| Fixed port count | **Parametric 10–128 ports** |
+| Fixed port count | **Parametric 8–128 ports** |
 | Store-and-forward (high latency) | **Cell-switching (100× lower)** |
 | Simple priority queues | **IEEE 802.1p 8-level QoS** |
 | Static memory allocation | **Dynamic linked-list FIFOs** |
