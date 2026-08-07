@@ -708,38 +708,30 @@ cd eth/sim
 # Run single test
 vsim -do "set TB tb_fabric_basic; do sim_qos.tcl"
  
-# Run regression suite
-./run_regression.sh
 ```
  
-**Expected output:**
-```
-═══════════════════════════════════════════════════════════
-  QoS FABRIC REGRESSION SUITE
-  Started: 2025-12-26 15:30:00
-═══════════════════════════════════════════════════════════
- 
-[1/6] Running tb_fabric_basic...              PASSED  (182μs)
-[2/6] Running tb_fabric_qos_sweep...          PASSED  (523μs)
-[3/6] Running tb_fabric_qos_stress...         PASSED  (1.2ms)
-[4/6] Running tb_qos_classifier_unit...       PASSED  (48μs)
-[5/6] Running tb_qos_scheduler_unit...        PASSED  (97μs)
-[6/6] Running tb_voq_unit...                  PASSED  (102μs)
- 
-═══════════════════════════════════════════════════════════
-  REGRESSION SUMMARY
-═══════════════════════════════════════════════════════════
-  Total Tests: 6
-  Passed:      6
-  Failed:      0
-  Coverage:    92.3% (line), 87.1% (branch)
-  Results:     regression_results_20251226_153000/
- 
-═══════════════════════════════════════════════════════════
-  ALL TESTS PASSED
-═══════════════════════════════════════════════════════════
-```
- 
+### Expected Output
+**tb_voq_unit**
+
+**tb_qos_scheduler**
+
+**tb_qos_classifier**
+
+**tb_qos_integration_manager**
+
+**tb_pipeline_mux**
+
+**tb_fifo_array**
+
+**tb_fabric_qos_sweep**
+
+**tb_fabric_qos_stress**
+
+**tb_fabric_basic**
+
+**tb_ethernet_switch**
+
+
 ### Waveform Analysis (ModelSim/QuestaSim GUI)
  
 ```tcl
@@ -1046,26 +1038,6 @@ Please include in your issue:
 - **Third-Party IP:**
   - Xilinx XPM (memory primitives, licensed via Vivado)
   - ARM AMBA AXI4 (public specification)
----
-
-
-## Roadmap
- 
-### Version 1.1 (Q2 2025)
-- [ ] Weighted Fair Queueing (WFQ) scheduler (IEEE 802.1Qav)
-- [ ] Per-flow QoS statistics (beyond per-port/per-QoS)
-- [ ] Time-Aware Shaper (IEEE 802.1Qbv for TSN)
-- [ ] Enhanced AXI4-Lite (interrupt support, burst reads)
-### Version 2.0 (Q4 2025)
-- [ ] 100G/200G line rate support (512-bit datapath)
-- [ ] Multi-FPGA fabric partitioning (scale to 256+ ports)
-- [ ] Hardware timestamps (IEEE 1588 PTPv2)
-- [ ] Congestion notification (IEEE 802.1Qau)
-### Future Considerations
-- [ ] ASIC synthesis scripts (Design Compiler)
-- [ ] Machine learning-based traffic prediction
-- [ ] In-network computing hooks (P4-inspired)
-- [ ] RDMA over Converged Ethernet (RoCE) support
 ---
  
 
