@@ -3,7 +3,7 @@
 > **High-performance, parametric Ethernet switching fabric with 8-level quality-of-service support**
 > Designed for data center, embedded networking, and telecommunications applications
  
-![License: GNU Affero General Public License v3.0](https://img.shields.io/badge/License-Proprietary-red.svg)
+
 ![Vivado: 2019.1+](https://img.shields.io/badge/Vivado-2019.1+-blue.svg)
 ![Status: Production](https://img.shields.io/badge/Status-Production-green.svg)
 ![Tests: Passing](https://img.shields.io/badge/Tests-10%2F10%20Passing-brightgreen.svg)
