@@ -708,37 +708,13 @@ cd eth/sim
 # Run single test
 vsim -do "set TB tb_fabric_basic; do sim_qos.tcl"
  
-# Run regression suite
-./run_regression.sh
 ```
  
-**Expected output:**
-```
-═══════════════════════════════════════════════════════════
-  QoS FABRIC REGRESSION SUITE
-  Started: 2025-12-26 15:30:00
-═══════════════════════════════════════════════════════════
- 
-[1/6] Running tb_fabric_basic...              PASSED  (182μs)
-[2/6] Running tb_fabric_qos_sweep...          PASSED  (523μs)
-[3/6] Running tb_fabric_qos_stress...         PASSED  (1.2ms)
-[4/6] Running tb_qos_classifier_unit...       PASSED  (48μs)
-[5/6] Running tb_qos_scheduler_unit...        PASSED  (97μs)
-[6/6] Running tb_voq_unit...                  PASSED  (102μs)
- 
-═══════════════════════════════════════════════════════════
-  REGRESSION SUMMARY
-═══════════════════════════════════════════════════════════
-  Total Tests: 6
-  Passed:      6
-  Failed:      0
-  Coverage:    92.3% (line), 87.1% (branch)
-  Results:     regression_results_20251226_153000/
- 
-═══════════════════════════════════════════════════════════
-  ALL TESTS PASSED
-═══════════════════════════════════════════════════════════
-```
+### Expected Output
+**tb_voq_unit**
+
+
+
  
 ### Waveform Analysis (ModelSim/QuestaSim GUI)
  
