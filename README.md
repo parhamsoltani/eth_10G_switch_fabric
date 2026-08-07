@@ -90,10 +90,9 @@ This project implements a **fully parametric, QoS-aware Ethernet switch fabric**
  
 ### Data Path Flow (Per Packet)
  
-```
+
 <img width="962" height="292" alt="pipeline" src="https://github.com/user-attachments/assets/3f4a96b7-1867-4add-b008-60a8839533a1" />
 
-```
  
 ### Memory Architecture
  
