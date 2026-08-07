@@ -713,9 +713,25 @@ vsim -do "set TB tb_fabric_basic; do sim_qos.tcl"
 ### Expected Output
 **tb_voq_unit**
 
+**tb_qos_scheduler**
+
+**tb_qos_classifier**
+
+**tb_qos_integration_manager**
+
+**tb_pipeline_mux**
+
+**tb_fifo_array**
+
+**tb_fabric_qos_sweep**
+
+**tb_fabric_qos_stress**
+
+**tb_fabric_basic**
+
+**tb_ethernet_switch**
 
 
- 
 ### Waveform Analysis (ModelSim/QuestaSim GUI)
  
 ```tcl
