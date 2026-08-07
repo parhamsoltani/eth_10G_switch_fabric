@@ -97,27 +97,8 @@ This project implements a **fully parametric, QoS-aware Ethernet switch fabric**
 ### Memory Architecture
  
 ```
-Main Packet Buffer (Shared Pool)
-┌──────────────────────────────────────────┐
-│  Cell Size: 64 bytes (512 bits)          │
-│  Depth: 2048 cells per port              │
-│  Total: 20,480 cells (1.31 MB)           │
-│                                          │
-│  Allocation: Linked-list free pool       │
-│  Multicast: Address replication          │
-│   (1 cell → N pointers, not N copies)    │
-└──────────────────────────────────────────┘
- 
-Virtual Output Queues (VOQ)
-┌──────────────────────────────────────────┐
-│  Per-Source Port: 10 VOQs                │
-│  Per-Destination: 8 priority levels      │
-│  Total VOQs: 10 ports × 8 QoS = 80       │
-│                                          │
-│  Depth: 64 entries per VOQ               │
-│  Entry: { cell_addr[15:0],               │
-│           sop, eop, multicast_bitmap }   │
-└──────────────────────────────────────────┘
+<img width="2262" height="1263" alt="linked_list_allocation" src="https://github.com/user-attachments/assets/09b715a6-1e40-4012-8da3-898932b9aaf0" />
+
 ```
  
 ### Topology Scaling
@@ -321,16 +302,8 @@ Edit `src/inc/implement_options.vh`:
  
 **Register Map** (Base address: 0x43C00000):
  
-| Address | Register | R/W | Description |
-|---|---|---|---|
-| 0x0000 | `FABRIC_ID` | RO | Device ID (0x50415245 = "PARE") |
-| 0x0004 | `FABRIC_VERSION` | RO | Version (0x01000000 = v1.0.0) |
-| 0x0008 | `NUM_PORTS` | RO | Configured port count (10) |
-| 0x000C | `QOS_LEVELS` | RO | Configured QoS levels (8) |
-| 0x0100 | `QOS_CONTROL` | RW | Enable classifiers (VLAN/DSCP/Port) |
-| 0x0104 | `QOS_AGE_THRESH` | RW | Anti-starvation cycles (default: 1000) |
-| 0x0200+ | `PORT_STATS[n]` | RO | Per-port RX/TX/drop counters |
-| 0x1000+ | `QOS_STATS[n][q]` | RO | Per-port, per-QoS packet counts |
+<img width="1036" height="801" alt="registermap" src="https://github.com/user-attachments/assets/5a792b81-0a8c-4057-92d1-c58042200e29" />
+
  
 **Example: Configure QoS via C code**
  
@@ -703,29 +676,71 @@ vsim -do "set TB tb_fabric_basic; do sim_qos.tcl"
  
 ### Expected Output
 **tb_voq_unit**
+
 <img width="799" height="1009" alt="tb_voq_unit_log" src="https://github.com/user-attachments/assets/185c1a29-8ac0-469d-82b8-3e2e824f23bf" />
 
+<img width="2230" height="1100" alt="tb_voq_unit_waveform" src="https://github.com/user-attachments/assets/a7d69dd5-1ba6-4ffe-b47a-05c3638f3cbe" />
 
 
 **tb_qos_scheduler**
 
+<img width="907" height="735" alt="tb_qos_scheduler_log" src="https://github.com/user-attachments/assets/f7d4fa3f-a184-48cf-9add-220a5a9dac8c" />
+
+<img width="2123" height="1139" alt="tb_qos_scheduler_waveform" src="https://github.com/user-attachments/assets/d2d9b32f-c456-47f2-9e7d-287cd7dcd042" />
 
 
 **tb_qos_classifier**
 
+<img width="700" height="838" alt="tb_qos_classifier_log" src="https://github.com/user-attachments/assets/8d433a40-9806-43fd-b46a-4fbb37746b7c" />
+
+<img width="2242" height="558" alt="tb_qos_classifier_waveform" src="https://github.com/user-attachments/assets/b55efbae-e977-43d5-ac71-0c8fe60c47b4" />
+
+
 **tb_qos_integration_manager**
+
+<img width="958" height="382" alt="tb_qos_integration_manager_log" src="https://github.com/user-attachments/assets/ee0dd2a4-296f-475a-af06-289cb37972d1" />
+
+<img width="2235" height="1220" alt="tb_qos_integration_manager_waveform" src="https://github.com/user-attachments/assets/83b4cfb6-8c38-4ddb-822c-8ba5f71afcb7" />
+
 
 **tb_pipeline_mux**
 
+<img width="881" height="109" alt="tb_pipeline_mux_log" src="https://github.com/user-attachments/assets/587f626e-c041-4aeb-bb8f-6f0d54ecdcb4" />
+
+<img width="2245" height="796" alt="tb_pipeline_mux" src="https://github.com/user-attachments/assets/fec40310-4258-4e52-8fd3-69796bad560b" />
+
+
 **tb_fifo_array**
+
+<img width="760" height="109" alt="tb_fifo_array_log" src="https://github.com/user-attachments/assets/03c2ba7c-3f6e-4ad7-b95a-76b03cd4f867" />
+
+<img width="2166" height="1152" alt="tb_fifo_array_waveform" src="https://github.com/user-attachments/assets/703ee8a0-e20c-46fb-92c8-a76849fd2f74" />
+
 
 **tb_fabric_qos_sweep**
 
+<img width="739" height="750" alt="tb_fabric_qos_sweep_log" src="https://github.com/user-attachments/assets/ffbdc9c5-d1d0-45e3-9663-e26373c507ab" />
+
+<img width="2366" height="463" alt="tb_fabric_qos_sweep_waveform" src="https://github.com/user-attachments/assets/9ea506bb-5789-4023-a6ae-7080b14fe0b1" />
+
+
 **tb_fabric_qos_stress**
+
+<img width="847" height="769" alt="tb_fabric_qos_stress_log" src="https://github.com/user-attachments/assets/0a0ef2d8-1d44-4266-8e9d-ccfcb73270c1" />
+
+<img width="2328" height="1258" alt="tb_fabric_qos_stress_waveform" src="https://github.com/user-attachments/assets/ae030a52-a859-4345-a551-95b03decd4b0" />
+
 
 **tb_fabric_basic**
 
+<img width="1883" height="671" alt="tb_fabric_basic" src="https://github.com/user-attachments/assets/a5ba757e-e1af-4278-8dfc-b923136f6a4d" />
+
+
 **tb_ethernet_switch**
+
+<img width="842" height="669" alt="tb_ethernet_switch_log" src="https://github.com/user-attachments/assets/c5329d11-e418-491a-99ec-81d1635042d2" />
+
+<img width="2262" height="1197" alt="tb_ethernet_switch_waveform" src="https://github.com/user-attachments/assets/18285695-cb0a-4812-8796-18ac3b9c4a81" />
 
 
 ### Waveform Analysis (ModelSim/QuestaSim GUI)
