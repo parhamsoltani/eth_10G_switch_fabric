@@ -96,10 +96,10 @@ This project implements a **fully parametric, QoS-aware Ethernet switch fabric**
  
 ### Memory Architecture
  
-```
+
 <img width="2262" height="1263" alt="linked_list_allocation" src="https://github.com/user-attachments/assets/09b715a6-1e40-4012-8da3-898932b9aaf0" />
 
-```
+
  
 ### Topology Scaling
  
