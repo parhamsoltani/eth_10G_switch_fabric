@@ -1039,26 +1039,6 @@ Please include in your issue:
   - Xilinx XPM (memory primitives, licensed via Vivado)
   - ARM AMBA AXI4 (public specification)
 ---
-
-
-## Roadmap
- 
-### Version 1.1 (Q2 2025)
-- [ ] Weighted Fair Queueing (WFQ) scheduler (IEEE 802.1Qav)
-- [ ] Per-flow QoS statistics (beyond per-port/per-QoS)
-- [ ] Time-Aware Shaper (IEEE 802.1Qbv for TSN)
-- [ ] Enhanced AXI4-Lite (interrupt support, burst reads)
-### Version 2.0 (Q4 2025)
-- [ ] 100G/200G line rate support (512-bit datapath)
-- [ ] Multi-FPGA fabric partitioning (scale to 256+ ports)
-- [ ] Hardware timestamps (IEEE 1588 PTPv2)
-- [ ] Congestion notification (IEEE 802.1Qau)
-### Future Considerations
-- [ ] ASIC synthesis scripts (Design Compiler)
-- [ ] Machine learning-based traffic prediction
-- [ ] In-network computing hooks (P4-inspired)
-- [ ] RDMA over Converged Ethernet (RoCE) support
----
  
 
 
