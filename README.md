@@ -91,16 +91,8 @@ This project implements a **fully parametric, QoS-aware Ethernet switch fabric**
 ### Data Path Flow (Per Packet)
  
 ```
-[RX Port 0-9] → [QoS Classifier] → [VOQ[src][dst][qos]] → [Crosspoint Arbiter]
-                     ↓                       ↓                       ↓
-              (VLAN/DSCP/Port)        (80 total VOQs)       (Strict Priority +
-               → 3-bit tag           (10 src × 8 qos)         Round Robin)
-                                                                       ↓
-                                                                [XPQ Reorder]
-                                                                       ↓
-                                                                [Egress FIFO]
-                                                                       ↓
-                                                                [TX Port 0-9]
+<img width="962" height="292" alt="pipeline" src="https://github.com/user-attachments/assets/3f4a96b7-1867-4add-b008-60a8839533a1" />
+
 ```
  
 ### Memory Architecture
@@ -712,8 +704,13 @@ vsim -do "set TB tb_fabric_basic; do sim_qos.tcl"
  
 ### Expected Output
 **tb_voq_unit**
+<img width="799" height="1009" alt="tb_voq_unit_log" src="https://github.com/user-attachments/assets/185c1a29-8ac0-469d-82b8-3e2e824f23bf" />
+
+
 
 **tb_qos_scheduler**
+
+
 
 **tb_qos_classifier**
 
