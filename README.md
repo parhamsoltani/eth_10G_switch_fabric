@@ -481,6 +481,9 @@ Store-and-forward:  1,200 ns (1500-byte frame @ 10G)
  
 Speedup: 26.8× faster
 ```
+
+<img width="938" height="418" alt="packet_cell_switching_delay" src="https://github.com/user-attachments/assets/41f879c0-f1f5-4938-a695-e970196d3d85" />
+
  
 ### Throughput Validation
  
